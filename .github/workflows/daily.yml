@@ -13,6 +13,10 @@ jobs:
       pages: write
       id-token: write
 
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: コードを取得
         uses: actions/checkout@v4
@@ -43,5 +47,11 @@ jobs:
           git diff --staged --quiet || git commit -m "ニュース更新: $(date '+%Y-%m-%d')"
           git push
 
+      - name: GitHub Pagesのアーティファクトをアップロード
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
       - name: GitHub Pagesにデプロイ
+        id: deployment
         uses: actions/deploy-pages@v4
