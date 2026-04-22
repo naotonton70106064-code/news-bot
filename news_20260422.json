@@ -1,23 +1,23 @@
 [
   {
-    "title": "From the stage to the future: Where are Startup Battlefield’s alumni now?",
-    "url": "https://techcrunch.com/2026/04/22/from-the-stage-to-the-future-where-are-startup-battlefields-alumni-now/",
+    "title": "How SpaceX preempted a $2B fundraise with a $60B buyout offer",
+    "url": "https://techcrunch.com/2026/04/22/how-spacex-preempted-a-2b-fundraise-with-a-60b-buyout-offer/",
     "source": "TechCrunch",
-    "summary": "【3行要約】\n1. TechCrunchの「Startup Battlefield」に出場したスタートアップの卒業生たちのその後を追跡調査した記事。\n2. 登壇後（コンフェッティが舞い落ちた後）に何が起きるのかを明らかにしようとしている。\n3. TechCrunchのポッドキャスト「Build Mode: The Founder Survival Guide」に出演した卒業生たちを取り上げている。\n\n【背景・ポイント】\n「Startup Battlefield」はTechCrunchが主催するスタートアップのピッチコンテストで、多くの注目企業を輩出してきた。本記事は、登壇後の創業者たちの歩みを追うことで、起業家たちにとってのリアルなロールモデルを提示する内容となっている。TechCrunchのポッドキャストと連動し、あらゆるステージの創業者に向けた実践的な知見を共有することを目的としている。",
-    "collected_at": "2026-04-22T19:10:05.050953"
+    "summary": "【3行要約】\n1. CursorはAI関連で今週20億ドルの資金調達ラウンドを締結する予定だった。\n2. しかしSpaceXが100億ドルの「協力費」と600億ドル規模の買収提案を行い、交渉が中断された。\n3. Cursorは既存の資金調達交渉を停止し、SpaceXのオファーの検討に転じた。\n\n【背景・ポイント】\nCursorはAIコーディングアシスタントとして急成長しているスタートアップであり、その高い評価額に対してSpaceXが大規模な買収提案を持ちかけた形となる。20億ドルの通常の資金調達に対し、600億ドルという桁違いのオファーは業界に大きな衝撃を与えており、AI技術をめぐる大企業間の争奪戦が激化していることを示している。",
+    "collected_at": "2026-04-22T20:07:02.971448"
   },
   {
-    "title": "Google Cloud launches two new AI chips to compete with Nvidia",
-    "url": "https://techcrunch.com/2026/04/22/google-cloud-next-new-tpu-ai-chips-compete-with-nvidia/",
+    "title": "France confirms data breach at government agency that manages citizens’ IDs",
+    "url": "https://techcrunch.com/2026/04/22/france-confirms-data-breach-at-government-agency-that-manages-citizens-ids/",
     "source": "TechCrunch",
-    "summary": "【3行要約】\n1. GoogleはCloud向けに2つの新しいAIチップ（TPU）を発表した。\n2. 新しいTPUは従来バージョンと比較して、処理速度が速くコストも低減されている。\n3. 現時点ではGoogleはNvidiaのチップもクラウドサービスに引き続き採用している。\n\n【背景・ポイント】\nGoogleはAIインフラ市場でNvidiaに対抗するため、独自開発のTPU（Tensor Processing Unit）の強化を進めている。ただし、多くの顧客がNvidiaのGPUを求めているため、Google CloudではNvidia製品も並行して提供し続けている。自社チップとNvidiaチップの両立という戦略で、クラウドAI市場でのシェア拡大を狙っている。",
-    "collected_at": "2026-04-22T19:10:10.313006"
+    "summary": "【3行要約】\n1. フランスの国民ID・パスポートなどの発行・管理を担う政府機関がサイバー攻撃を受けた。\n2. ハッカーによって、不特定多数の市民の個人情報が盗まれたことが確認された。\n3. フランス政府は今回のデータ漏洩を公式に認めた。\n\n【背景・ポイント】\n今回の攻撃を受けた機関はフランス市民の身分証明書やパスポートなど重要な公的書類を一元管理する機関であり、漏洩した情報の深刻度が懸念される。被害を受けた市民の具体的な人数は現時点では明らかにされておらず、今後の調査の行方が注目される。政府機関を標的としたサイバー攻撃は各国で増加しており、個人情報保護の観点から対策強化が急務となっている。",
+    "collected_at": "2026-04-22T20:07:09.376660"
   },
   {
-    "title": "Google turns Chrome into an AI co-worker for the workplace",
-    "url": "https://techcrunch.com/2026/04/22/google-turns-chrome-into-an-ai-coworker-for-the-workplace/",
+    "title": "Apple fixes bug that cops used to extract deleted chat messages from iPhones",
+    "url": "https://techcrunch.com/2026/04/22/apple-fixes-bug-that-cops-used-to-extract-deleted-chat-messages-from-iphones/",
     "source": "TechCrunch",
-    "summary": "【3行要約】\n1. GoogleはエンタープライズユーザーのChromeに、Gemini搭載の「自動ブラウズ」機能を導入した。\n2. この機能により、従業員はリサーチやデータ入力などの作業を自動化できるようになる。\n3. ChromeがAIを活用した職場の「共同作業者」としての役割を担うことを目指している。\n\n【背景・ポイント】\nGoogleはAIアシスタント「Gemini」をChromeブラウザに統合することで、企業の業務効率化を推進しようとしている。単純作業の自動化によって従業員の生産性向上が期待される一方、MicrosoftのCopilotなど競合他社のAI職場ツールとの競争が激化している。企業向けのAIブラウザ機能は、今後の働き方に大きな変革をもたらす可能性がある。",
-    "collected_at": "2026-04-22T19:10:15.815194"
+    "summary": "【3行要約】\n1. Appleは、法執行機関が削除済みのSignalメッセージをiPhoneから復元できるバグを修正した。\n2. このバグは、iPhoneおよびiPadに存在し、捜査機関がフォレンジックツールを使って読み取りに利用していた。\n3. Signalアプリで削除されたはずのメッセージが、実際にはデバイス上に残存していたことが問題の核心だった。\n\n【背景・ポイント】\nSignalは高いプライバシー保護で知られる暗号化メッセージアプリだが、今回のバグはOS側の問題により、削除済みメッセージがデバイス内に残ってしまっていた。法執行機関はフォレンジック（デジタル鑑識）ツールを活用することで、このデータにアクセスできる状態にあった。Appleが修正パッチを適用したことで、こうしたプライバシー上のリスクは解消された。",
+    "collected_at": "2026-04-22T20:07:15.375119"
   }
 ]
