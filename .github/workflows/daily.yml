@@ -1,0 +1,27 @@
+name: 毎日ニュース収集
+
+on:
+  schedule:
+    - cron: '0 19 * * *'  # UTC 19時 = JST 4時
+  workflow_dispatch:        # 手動実行もできるようにする
+
+jobs:
+  collect-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: コードを取得
+        uses: actions/checkout@v4
+
+      - name: Pythonセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: ライブラリインストール
+        run: pip install feedparser anthropic python-dotenv
+
+      - name: ニュース収集・要約実行
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python main.py
