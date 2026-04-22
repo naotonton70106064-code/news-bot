@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 2rem; }
+    .header { max-width: 800px; margin: 0 auto 2rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; cursor: pointer; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-short { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 10px; }
+    .card-footer { display: flex; justify-content: space-between; align-items: center; }
+    .expand-hint { font-size: 11px; color: #888; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.8; white-space: pre-wrap; margin-bottom: 1rem; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: flex; gap: 8px; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+
+  <script>
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    // JSONデータを直接埋め込む（後でPythonが自動生成）
+    const articles = [
+  {
+    "title": "Redwood Materials lays off 10% in restructuring to chase energy storage business",
+    "url": "https://techcrunch.com/2026/04/21/redwood-materials-lays-off-10-in-restructuring-to-chase-energy-storage-business/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. Redwood Materialsは、全従業員の約10%を削減するリストラを実施した。\n2. このリストラは、急成長するエネルギー貯蔵事業に対応するための組織再編が目的。\n3. TechCrunchが入手した社内メールにより、チームの再編成が行われていることが明らかになった。\n\n【背景・ポイント】\nRedwood Materialsはリチウムイオン電池のリサイクルを手掛ける企業で、近年エネルギー貯蔵分野への事業拡大を進めている。今回のリストラは業績不振によるものではなく、成長分野であるエネルギー貯蔵ビジネスに経営資源を集中させるための戦略的な組織改革と位置づけられている。",
+    "collected_at": "2026-04-22T19:43:54.697749"
+  },
+  {
+    "title": "Meta will record employees’ keystrokes and use it to train its AI models",
+    "url": "https://techcrunch.com/2026/04/21/meta-will-record-employees-keystrokes-and-use-it-to-train-its-ai-models/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. Metaが従業員のキーストローク（キー入力）やマウスの動きを記録する新しい社内ツールを導入した。\n2. 記録されたマウスの動きやボタンクリックなどのデータは、AIモデルのトレーニングに活用される。\n3. 従業員の操作行動そのものがAI学習のデータソースとして利用される仕組みとなっている。\n\n【背景・ポイント】\nMetaはAI開発競争において学習データの確保を強化しており、今回の取り組みは社内の人間の操作パターンをAIに学習させるための新たなアプローチとみられる。一方で、従業員のデジタル行動を監視・記録することに対して、プライバシーや労働環境上の懸念が生じる可能性もある。AI開発における「人間の行動データ」の重要性が改めて浮き彫りになった事例といえる。",
+    "collected_at": "2026-04-22T19:44:01.583716"
+  },
+  {
+    "title": "Unauthorized group has gained access to Anthropic’s exclusive cyber tool Mythos, report claims",
+    "url": "https://techcrunch.com/2026/04/21/unauthorized-group-has-gained-access-to-anthropics-exclusive-cyber-tool-mythos-report-claims/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. AnthropicのサイバーツールMythosへの不正アクセスがあったと報道された。\n2. Anthropicはテッククランチの取材に対し、現在調査中であることを明らかにした。\n3. 同社は、自社システムへの影響を示す証拠は現時点で確認されていないとしている。\n\n【背景・ポイント】\nAnthropicはChatGPTの競合であるClaudeを開発するAIスタートアップであり、今回は同社の限定的なサイバーツール「Mythos」への不正アクセス疑惑が浮上した。同社は被害の有無について慎重な姿勢を示しつつも、調査を進めていると説明している。AI企業を標的としたサイバー攻撃やセキュリティ上の脅威が増加する中、今後の調査結果が注目される。",
+    "collected_at": "2026-04-22T19:44:07.897868"
+  }
+];
+
+    const container = document.getElementById("container");
+
+    articles.forEach((article, i) => {
+      const lines = article.summary.split("\n").filter(l => l.trim());
+      const shortSummary = lines.slice(0, 3).join("\n");
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="card-main" onclick="toggle(${i})">
+          <div class="card-top">
+            <div class="title">${article.title}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-short">${shortSummary}</div>
+          <div class="card-footer">
+            <span class="expand-hint" id="hint-${i}">詳細を見る ▾</span>
+          </div>
+        </div>
+        <div class="detail" id="detail-${i}">
+          <div class="detail-text">${article.summary}</div>
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const hint = document.getElementById(`hint-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      hint.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      e.target.closest(".actions").innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      e.target.closest(".actions").innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>

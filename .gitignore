@@ -1,6 +1,4 @@
 venv/
 .env
-*.json
-dashboard_*.html
 __pycache__/
 *.pyc
