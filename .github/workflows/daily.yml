@@ -3,11 +3,13 @@ name: 毎日ニュース収集
 on:
   schedule:
     - cron: '0 19 * * *'  # UTC 19時 = JST 4時
-  workflow_dispatch:        # 手動実行もできるようにする
+  workflow_dispatch:
 
 jobs:
   collect-news:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: コードを取得
@@ -25,3 +27,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python main.py
+
+      - name: 結果をGitHubにコミット
+        run: |
+          git config use
