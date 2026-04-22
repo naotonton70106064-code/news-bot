@@ -3,21 +3,21 @@
     "title": "Redwood Materials lays off 10% in restructuring to chase energy storage business",
     "url": "https://techcrunch.com/2026/04/21/redwood-materials-lays-off-10-in-restructuring-to-chase-energy-storage-business/",
     "source": "TechCrunch",
-    "summary": "【3行要約】\n1. Redwood Materialsは、全従業員の約10%を削減するリストラを実施した。\n2. このリストラは、急成長するエネルギー貯蔵事業に対応するための組織再編が目的。\n3. TechCrunchが入手した社内メールにより、チームの再編成が行われていることが明らかになった。\n\n【背景・ポイント】\nRedwood Materialsはリチウムイオン電池のリサイクルを手掛ける企業で、近年エネルギー貯蔵分野への事業拡大を進めている。今回のリストラは業績不振によるものではなく、成長分野であるエネルギー貯蔵ビジネスに経営資源を集中させるための戦略的な組織改革と位置づけられている。",
-    "collected_at": "2026-04-22T19:43:54.697749"
+    "summary": "【3行要約】\n1. Redwood Materialsは、従業員の約10%を削減するリストラを実施した。\n2. このリストラは、急成長するエネルギー貯蔵事業に対応するための組織再編が目的。\n3. TechCrunchが入手した社内メールにより、この事実が明らかになった。\n\n【背景・ポイント】\nRedwood Materialsはバッテリーのリサイクル・製造を手がける企業で、電気自動車（EV）向け素材の供給で知られている。同社がエネルギー貯蔵（定置用蓄電池など）分野へのシフトを加速させる中、事業戦略の変化に合わせて組織体制を見直した形となる。人員削減は一部チームの再編を伴うものであり、成長分野への経営資源の集中が狙いとみられる。",
+    "collected_at": "2026-04-22T11:19:19.028715"
   },
   {
     "title": "Meta will record employees’ keystrokes and use it to train its AI models",
     "url": "https://techcrunch.com/2026/04/21/meta-will-record-employees-keystrokes-and-use-it-to-train-its-ai-models/",
     "source": "TechCrunch",
-    "summary": "【3行要約】\n1. Metaが従業員のキーストローク（キー入力）やマウスの動きを記録する新しい社内ツールを導入した。\n2. 記録されたマウスの動きやボタンクリックなどのデータは、AIモデルのトレーニングに活用される。\n3. 従業員の操作行動そのものがAI学習のデータソースとして利用される仕組みとなっている。\n\n【背景・ポイント】\nMetaはAI開発競争において学習データの確保を強化しており、今回の取り組みは社内の人間の操作パターンをAIに学習させるための新たなアプローチとみられる。一方で、従業員のデジタル行動を監視・記録することに対して、プライバシーや労働環境上の懸念が生じる可能性もある。AI開発における「人間の行動データ」の重要性が改めて浮き彫りになった事例といえる。",
-    "collected_at": "2026-04-22T19:44:01.583716"
+    "summary": "【3行要約】\n1. Metaは、従業員のマウスの動きやボタンのクリックを記録する新しい社内ツールを導入した。\n2. このツールで収集されたデータは、MetaのAIモデルのトレーニングに活用される。\n3. 従業員のキーストロークや操作履歴がAI学習データとして転用される仕組みとなっている。\n\n【背景・ポイント】\nMetaはAI開発を加速させるため、外部データだけでなく社内の行動データも活用する方針を取っている。従業員の日常的なPC操作を学習データ化することで、より自然な人間の操作パターンをAIに学習させる狙いがあると考えられる。一方で、従業員のプライバシーや監視に関する懸念が高まる可能性もある。",
+    "collected_at": "2026-04-22T11:19:25.262543"
   },
   {
     "title": "Unauthorized group has gained access to Anthropic’s exclusive cyber tool Mythos, report claims",
     "url": "https://techcrunch.com/2026/04/21/unauthorized-group-has-gained-access-to-anthropics-exclusive-cyber-tool-mythos-report-claims/",
     "source": "TechCrunch",
-    "summary": "【3行要約】\n1. AnthropicのサイバーツールMythosへの不正アクセスがあったと報道された。\n2. Anthropicはテッククランチの取材に対し、現在調査中であることを明らかにした。\n3. 同社は、自社システムへの影響を示す証拠は現時点で確認されていないとしている。\n\n【背景・ポイント】\nAnthropicはChatGPTの競合であるClaudeを開発するAIスタートアップであり、今回は同社の限定的なサイバーツール「Mythos」への不正アクセス疑惑が浮上した。同社は被害の有無について慎重な姿勢を示しつつも、調査を進めていると説明している。AI企業を標的としたサイバー攻撃やセキュリティ上の脅威が増加する中、今後の調査結果が注目される。",
-    "collected_at": "2026-04-22T19:44:07.897868"
+    "summary": "【3行要約】\n1. Anthropicの独自サイバーツール「Mythos」に、権限のないグループがアクセスしたという報告が浮上した。\n2. Anthropicはこの主張についてTechCrunchに対し、現在調査中であることを明らかにした。\n3. 一方で同社は、自社システムへの影響を示す証拠は現時点で確認されていないと主張している。\n\n【背景・ポイント】\nAnthropicはClaude等のAIを開発する主要AI企業であり、独自のサイバーセキュリティツール「Mythos」は限られた関係者のみがアクセスできる機密性の高いツールとされている。今回の不正アクセス疑惑は、AI企業を標的としたサイバーセキュリティリスクの高まりを示す事例として注目される。現時点では被害の有無が確認されておらず、調査の行方が注目される。",
+    "collected_at": "2026-04-22T11:19:30.766159"
   }
 ]
