@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pages: write
+      id-token: write
 
     steps:
       - name: コードを取得
@@ -28,6 +30,18 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python main.py
 
+      - name: index.htmlを作成
+        run: |
+          latest=$(ls dashboard_*.html | sort | tail -1)
+          cp $latest index.html
+
       - name: 結果をGitHubにコミット
         run: |
-          git config use
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add news_*.json dashboard_*.html index.html
+          git diff --staged --quiet || git commit -m "ニュース更新: $(date '+%Y-%m-%d')"
+          git push
+
+      - name: GitHub Pagesにデプロイ
+        uses: actions/deploy-pages@v4
