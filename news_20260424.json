@@ -1,0 +1,23 @@
+[
+  {
+    "title": "ComfyUI hits $500M valuation as creators seek more control over AI-generated media",
+    "url": "https://techcrunch.com/2026/04/24/comfyui-hits-500m-valuation-as-creators-seek-more-control-over-ai-generated-media/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. ComfyUIが3,000万ドル（約45億円）の資金調達を完了した。\n2. 同社の評価額は5億ドル（約750億円）に達した。\n3. ComfyUIはクリエイターがAI生成の画像・動画・音声をより細かく制御できるツールを提供している。\n\n【背景・ポイント】\nAIによるメディア生成ツールの需要が高まる中、クリエイターは単なる自動生成ではなく、出力結果に対してより高い制御性を求める傾向が強まっている。ComfyUIはそのニーズに応えるプラットフォームとして注目を集めており、今回の大型調達はその市場的価値を裏付けるものとなった。AI生成コンテンツ市場における「制御性」や「カスタマイズ性」が新たな競争軸として浮上していることを示している。",
+    "collected_at": "2026-04-24T19:54:11.769277"
+  },
+  {
+    "title": "X launches standalone XChat app on iOS",
+    "url": "https://techcrunch.com/2026/04/24/x-launches-xchat-app-ios-messaging-iphone/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. Xが「XChat」という新しいスタンドアロンアプリをiOS向けにリリースした。\n2. このアプリはプライベートチャット機能を中心に設計されている。\n3. メッセージの自動消去、音声・ビデオ通話など多彩な機能を搭載している。\n\n【背景・ポイント】\nXChatは、X（旧Twitter）のメッセージング機能を独立したアプリとして切り出したもので、プライバシーを重視したコミュニケーションツールを目指している。消えるメッセージや通話機能など、WhatsAppやSignalといった既存のメッセージングアプリに対抗する機能が揃っており、Xがソーシャルメディアを超えた総合プラットフォームへの拡大を図っていることが伺える。",
+    "collected_at": "2026-04-24T19:54:16.968295"
+  },
+  {
+    "title": "Google to invest up to $40B in Anthropic in cash and compute",
+    "url": "https://techcrunch.com/2026/04/24/google-to-invest-up-to-40b-in-anthropic-in-cash-and-compute/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. GoogleはAI企業Anthropicに最大400億ドル（約6兆円）を現金およびコンピューティングリソースで投資する計画を発表した。\n2. AI業界では各社が大規模な計算能力（コンピュートキャパシティ）の確保を巡って激しい競争を繰り広げている。\n3. Anthropicはサイバーセキュリティに特化した強力なAIモデル「Mythos」の限定公開を行ったばかりである。\n\n【背景・ポイント】\nGoogleによるAnthropicへの巨額投資は、OpenAIやMicrosoftなどとのAI覇権争いが激化する中、戦略的パートナーシップを強化する狙いがある。Anthropicは安全性を重視したAI開発で知られており、今回の投資によって研究開発やインフラ整備がさらに加速すると見られる。サイバーセキュリティ特化モデル「Mythos」の登場は、AIの企業・政府向け実用化が新たな段階に入ったことを示している。",
+    "collected_at": "2026-04-24T19:54:23.464390"
+  }
+]
