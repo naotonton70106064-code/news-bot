@@ -3,7 +3,7 @@ import feedparser
 # 収集するRSSフィードのリスト
 FEEDS = [
     "https://techcrunch.com/feed/",
-    "https://feeds.feedburner.com/wired/index",
+    "https://xtech.nikkei.com/rss/index.rdf",
 ]
 
 def collect_articles():

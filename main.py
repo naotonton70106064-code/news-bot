@@ -4,49 +4,97 @@ from datetime import datetime
 from collector import collect_articles
 from summarizer import summarize_article
 
+def parse_summary(summary_text):
+    sections = {
+        "japanese_title": "",
+        "summary_lines": [],
+        "background": "",
+        "points": [],
+        "prediction": "",
+        "ai_interpretation": ""
+    }
+
+    current_section = None
+    lines = summary_text.split("\n")
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+
+        if "【日本語タイトル】" in line:
+            current_section = "japanese_title"
+        elif "【3行要約】" in line:
+            current_section = "summary"
+        elif "【背景・経緯】" in line:
+            current_section = "background"
+        elif "【注目ポイント】" in line:
+            current_section = "points"
+        elif "【今後の予測】" in line:
+            current_section = "prediction"
+        elif "【AIの解釈】" in line:
+            current_section = "ai_interpretation"
+        elif current_section == "japanese_title" and line:
+            sections["japanese_title"] = line
+        elif current_section == "summary" and (line.startswith("1.") or line.startswith("2.") or line.startswith("3.")):
+            sections["summary_lines"].append(line)
+        elif current_section == "background":
+            sections["background"] += line + " "
+        elif current_section == "points" and line.startswith("・"):
+            sections["points"].append(line)
+        elif current_section == "prediction":
+            sections["prediction"] += line + " "
+        elif current_section == "ai_interpretation":
+            sections["ai_interpretation"] += line + " "
+
+    return sections
+
+def generate_dashboard(results):
+    with open("dashboard.html", "r", encoding="utf-8") as f:
+        html = f.read()
+
+    articles_json = json.dumps(results, ensure_ascii=False, indent=2)
+    html = html.replace("__ARTICLES__", articles_json)
+
+    output_filename = f"dashboard_{datetime.now().strftime('%Y%m%d')}.html"
+    with open(output_filename, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    print(f"ダッシュボード生成: {output_filename}")
+    return output_filename
+
 def main():
     print("ニュース収集を開始します...")
     articles = collect_articles()
     print(f"{len(articles)}件の記事を収集しました")
-    
+
     results = []
-    
+
     for i, article in enumerate(articles):
         print(f"要約中... ({i+1}/{len(articles)}) {article['title'][:40]}...")
-        summary = summarize_article(article)
-        
+        summary_text = summarize_article(article)
+        parsed = parse_summary(summary_text)
+
         results.append({
             "title": article["title"],
+            "japanese_title": parsed["japanese_title"],
             "url": article["url"],
             "source": article["source"],
-            "summary": summary,
+            "summary_lines": parsed["summary_lines"],
+            "background": parsed["background"].strip(),
+            "points": parsed["points"],
+            "prediction": parsed["prediction"].strip(),
+            "ai_interpretation": parsed["ai_interpretation"].strip(),
             "collected_at": datetime.now().isoformat(),
         })
-    
-    # JSONファイルに保存
+
     filename = f"news_{datetime.now().strftime('%Y%m%d')}.json"
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
-    
-    dashboard_file = generate_dashboard(results)
 
-    print(f"\n完了！{filename}に保存しました")
+    print(f"\nJSONに保存: {filename}")
+    generate_dashboard(results)
 
-def generate_dashboard(results):
-    import json as json_module
-    
-    with open("dashboard.html", "r", encoding="utf-8") as f:
-        html = f.read()
-    
-    articles_json = json_module.dumps(results, ensure_ascii=False, indent=2)
-    html = html.replace("__ARTICLES__", articles_json)
-    
-    output_filename = f"dashboard_{datetime.now().strftime('%Y%m%d')}.html"
-    with open(output_filename, "w", encoding="utf-8") as f:
-        f.write(html)
-    
-    print(f"ダッシュボード生成: {output_filename}")
-    return output_filename
 
 if __name__ == "__main__":
     main()
