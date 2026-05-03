@@ -1,23 +1,23 @@
 [
   {
-    "title": "Redwood Materials lays off 10% in restructuring to chase energy storage business",
-    "url": "https://techcrunch.com/2026/04/21/redwood-materials-lays-off-10-in-restructuring-to-chase-energy-storage-business/",
+    "title": "How SpaceX preempted a $2B fundraise with a $60B buyout offer",
+    "url": "https://techcrunch.com/2026/04/22/how-spacex-preempted-a-2b-fundraise-with-a-60b-buyout-offer/",
     "source": "TechCrunch",
-    "summary": "【3行要約】\n1. Redwood Materialsは、人員の10%を削減するリストラを実施した。\n2. この再編は、急成長しているエネルギー貯蔵事業に対応するためのものである。\n3. TechCrunchが入手したメールによると、同社はエネルギー貯蔵ビジネスに注力するためチームの再編成を行っている。\n\n【背景・ポイント】\nRedwood Materialsは電池リサイクルを手掛ける企業で、EV（電気自動車）市場向けの事業で知られている。今回のリストラは縮小ではなく、急拡大するエネルギー貯蔵分野へのリソース集中を目的とした戦略的な組織再編とみられる。エネルギー貯蔵市場の急成長を受け、同社はビジネスの重点を移行しつつある。",
-    "collected_at": "2026-04-22T11:26:03.323166"
+    "summary": "【3行要約】\n1. CursorはAI関連で今週20億ドルの資金調達ラウンドを締結する予定だった。\n2. しかしSpaceXが100億ドルの「協力費」と600億ドル規模の買収提案を行い、交渉が中断された。\n3. Cursorは既存の資金調達交渉を停止し、SpaceXのオファーの検討に転じた。\n\n【背景・ポイント】\nCursorはAIコーディングアシスタントとして急成長しているスタートアップであり、その高い評価額に対してSpaceXが大規模な買収提案を持ちかけた形となる。20億ドルの通常の資金調達に対し、600億ドルという桁違いのオファーは業界に大きな衝撃を与えており、AI技術をめぐる大企業間の争奪戦が激化していることを示している。",
+    "collected_at": "2026-04-22T20:07:02.971448"
   },
   {
-    "title": "Meta will record employees’ keystrokes and use it to train its AI models",
-    "url": "https://techcrunch.com/2026/04/21/meta-will-record-employees-keystrokes-and-use-it-to-train-its-ai-models/",
+    "title": "France confirms data breach at government agency that manages citizens’ IDs",
+    "url": "https://techcrunch.com/2026/04/22/france-confirms-data-breach-at-government-agency-that-manages-citizens-ids/",
     "source": "TechCrunch",
-    "summary": "【3行要約】\n1. Metaは従業員のキーストロークやマウスの動きを記録する新しい社内ツールを導入した。\n2. 収集されたマウスの動作やボタンクリックのデータは、AIモデルの学習に活用される。\n3. 従業員の操作行動そのものがAI開発のトレーニングデータとして転用される仕組みとなっている。\n\n【背景・ポイント】\nMetaはAI開発を加速させるためにあらゆるデータソースを模索しており、今回は自社従業員の操作データをその対象とした。このアプローチは、AIの学習データを外部に依存せず社内で確保できる一方で、従業員のプライバシーや監視に関する倫理的な懸念を生む可能性がある。企業によるAI開発競争が激化する中、データ収集の範囲や手法が改めて問われる事例となっている。",
-    "collected_at": "2026-04-22T11:26:09.730780"
+    "summary": "【3行要約】\n1. フランスの国民ID・パスポートなどの発行・管理を担う政府機関がサイバー攻撃を受けた。\n2. ハッカーによって、不特定多数の市民の個人情報が盗まれたことが確認された。\n3. フランス政府は今回のデータ漏洩を公式に認めた。\n\n【背景・ポイント】\n今回の攻撃を受けた機関はフランス市民の身分証明書やパスポートなど重要な公的書類を一元管理する機関であり、漏洩した情報の深刻度が懸念される。被害を受けた市民の具体的な人数は現時点では明らかにされておらず、今後の調査の行方が注目される。政府機関を標的としたサイバー攻撃は各国で増加しており、個人情報保護の観点から対策強化が急務となっている。",
+    "collected_at": "2026-04-22T20:07:09.376660"
   },
   {
-    "title": "Unauthorized group has gained access to Anthropic’s exclusive cyber tool Mythos, report claims",
-    "url": "https://techcrunch.com/2026/04/21/unauthorized-group-has-gained-access-to-anthropics-exclusive-cyber-tool-mythos-report-claims/",
+    "title": "Apple fixes bug that cops used to extract deleted chat messages from iPhones",
+    "url": "https://techcrunch.com/2026/04/22/apple-fixes-bug-that-cops-used-to-extract-deleted-chat-messages-from-iphones/",
     "source": "TechCrunch",
-    "summary": "【3行要約】\n1. Anthropicの機密サイバーツール「Mythos」に、不正なグループがアクセスしたとの報告が浮上した。\n2. AnthropicはTechCrunchに対し、この主張について調査中であることを認めた。\n3. ただし、同社は自社システムへの影響を示す証拠はないとしている。\n\n【背景・ポイント】\nAnthropicはClaude（クロード）などのAIを開発する注目企業であり、「Mythos」は同社が保有する非公開のサイバーセキュリティツールとされている。今回の報告は外部からの主張であり、Anthropic側は現時点で被害の確認はできていないと慎重な姿勢を示している。サイバーセキュリティをめぐるAI企業へのリスクが改めて注目される事案となっている。",
-    "collected_at": "2026-04-22T11:26:16.084649"
+    "summary": "【3行要約】\n1. Appleは、法執行機関が削除済みのSignalメッセージをiPhoneから復元できるバグを修正した。\n2. このバグは、iPhoneおよびiPadに存在し、捜査機関がフォレンジックツールを使って読み取りに利用していた。\n3. Signalアプリで削除されたはずのメッセージが、実際にはデバイス上に残存していたことが問題の核心だった。\n\n【背景・ポイント】\nSignalは高いプライバシー保護で知られる暗号化メッセージアプリだが、今回のバグはOS側の問題により、削除済みメッセージがデバイス内に残ってしまっていた。法執行機関はフォレンジック（デジタル鑑識）ツールを活用することで、このデータにアクセスできる状態にあった。Appleが修正パッチを適用したことで、こうしたプライバシー上のリスクは解消された。",
+    "collected_at": "2026-04-22T20:07:15.375119"
   }
 ]
