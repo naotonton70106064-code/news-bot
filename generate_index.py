@@ -3,22 +3,30 @@ import json
 from pathlib import Path
 from datetime import datetime, timedelta
 
+CATEGORIES = {
+    "it": "IT・テクノロジー",
+    "japan_economy": "日本経済",
+    "world_economy": "世界経済",
+}
+
 
 def get_week_start(dt):
     """日曜始まりの週の開始日（日曜日）を返す"""
-    # weekday(): 月=0, 日=6 → 日曜始まりにするため調整
     days_since_sunday = (dt.weekday() + 1) % 7
     return dt - timedelta(days=days_since_sunday)
 
 
-def generate_index():
-    articles_dir = Path("articles")
+def load_category_data(category):
+    """カテゴリのJSON記事を全て読み込む"""
+    articles_dir = Path("articles") / category
+    if not articles_dir.exists():
+        return [], []
+
     json_files = sorted(articles_dir.glob("*.json"), reverse=True)
 
-    # 各日付の記事情報を収集
     days = []
     for json_file in json_files:
-        date_str = json_file.stem  # e.g. "2026-05-03"
+        date_str = json_file.stem
         try:
             with open(json_file, "r", encoding="utf-8") as f:
                 articles = json.load(f)
@@ -30,25 +38,25 @@ def generate_index():
         except (json.JSONDecodeError, KeyError):
             continue
 
-    # 週次サマリーの一覧
     weekly_files = sorted(articles_dir.glob("weekly-*.html"), reverse=True)
     weeklies = []
     for wf in weekly_files:
         week_id = wf.stem.replace("weekly-", "")
-        weeklies.append({"id": week_id, "filename": wf.name})
+        weeklies.append({"id": week_id, "filename": f"{category}/{wf.name}"})
 
-    # 週ごとにグループ化（日曜始まり〜土曜終わり）
-    weeks = {}  # key: 週の日曜日の日付文字列
+    return days, weeklies
+
+
+def group_by_weeks(days):
+    """日付データを週ごとにグループ化"""
+    weeks = {}
     for day in days:
         dt = datetime.strptime(day["date"], "%Y-%m-%d")
         week_sunday = get_week_start(dt)
         week_key = week_sunday.strftime("%Y-%m-%d")
         weeks.setdefault(week_key, []).append(day)
 
-    # 週を新しい順にソート
     sorted_weeks = sorted(weeks.keys(), reverse=True)
-
-    # 各週のHTMLをJSONデータとして埋め込む
     weeks_data = []
     for week_key in sorted_weeks:
         week_days = sorted(weeks[week_key], key=lambda d: d["date"], reverse=True)
@@ -61,17 +69,61 @@ def generate_index():
             "days": week_days,
         })
 
-    # サイドメニューHTML
-    sidebar_html = ""
-    if weeklies:
-        sidebar_items = "".join(
-            f'<a href="articles/{w["filename"]}" class="sidebar-link">{w["id"]}</a>'
-            for w in weeklies
-        )
-        sidebar_html = sidebar_items
+    return weeks_data
 
-    # メインコンテンツ: 全週のカードをページとして生成（JSで切り替え）
-    weeks_json = json.dumps(weeks_data, ensure_ascii=False)
+
+def generate_index():
+    # 全カテゴリのデータ収集
+    all_data = {}
+    all_weeklies = {}
+    for cat_id, cat_name in CATEGORIES.items():
+        days, weeklies = load_category_data(cat_id)
+        all_data[cat_id] = group_by_weeks(days)
+        all_weeklies[cat_id] = weeklies
+
+    # 旧構造（articles/直下）のデータもIT扱いで読み込む
+    legacy_dir = Path("articles")
+    legacy_jsons = sorted(legacy_dir.glob("*.json"), reverse=True)
+    legacy_days = []
+    for json_file in legacy_jsons:
+        date_str = json_file.stem
+        try:
+            with open(json_file, "r", encoding="utf-8") as f:
+                articles = json.load(f)
+            legacy_days.append({
+                "date": date_str,
+                "count": len(articles),
+                "titles": [a.get("japanese_title") or a.get("title", "") for a in articles[:3]],
+            })
+        except (json.JSONDecodeError, KeyError):
+            continue
+
+    legacy_weeklies_files = sorted(legacy_dir.glob("weekly-*.html"), reverse=True)
+    legacy_weeklies = []
+    for wf in legacy_weeklies_files:
+        week_id = wf.stem.replace("weekly-", "")
+        legacy_weeklies.append({"id": week_id, "filename": wf.name})
+
+    if legacy_days:
+        legacy_weeks = group_by_weeks(legacy_days)
+        # 新構造のITデータと統合（重複除去）
+        existing_keys = {w["key"] for w in all_data.get("it", [])}
+        for w in legacy_weeks:
+            if w["key"] not in existing_keys:
+                all_data.setdefault("it", []).append(w)
+        all_data["it"] = sorted(all_data.get("it", []), key=lambda w: w["key"], reverse=True)
+
+        existing_weekly_ids = {w["id"] for w in all_weeklies.get("it", [])}
+        for w in legacy_weeklies:
+            if w["id"] not in existing_weekly_ids:
+                all_weeklies.setdefault("it", []).append(w)
+
+    # JSON化
+    categories_json = json.dumps(
+        {cat_id: {"name": cat_name, "weeks": all_data.get(cat_id, []), "weeklies": all_weeklies.get(cat_id, [])}
+         for cat_id, cat_name in CATEGORIES.items()},
+        ensure_ascii=False
+    )
 
     html = f'''<!DOCTYPE html>
 <html lang="ja">
@@ -79,18 +131,23 @@ def generate_index():
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIニュースまとめ - 毎日のIT・テクノロジーニュースをAIが要約</title>
-  <meta name="description" content="最新のIT・テクノロジーニュースをAIが毎日自動収集・要約。背景解説や今後の予測まで、忙しいあなたのためのニュースダイジェスト。">
+  <meta name="description" content="最新のIT・テクノロジー・経済ニュースをAIが毎日自動収集・要約。背景解説や今後の予測まで、忙しいあなたのためのニュースダイジェスト。">
   <style>
     * {{ margin: 0; padding: 0; box-sizing: border-box; }}
     body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f8f9fa; color: #111; }}
-    .site-header {{ padding: 2rem 1rem 1rem; text-align: center; border-bottom: 1px solid #e5e5e5; background: #fff; }}
+    .site-header {{ padding: 2rem 1rem 0; text-align: center; background: #fff; }}
     .site-header h1 {{ font-size: 24px; font-weight: 700; margin-bottom: 6px; }}
-    .site-header p {{ font-size: 14px; color: #666; }}
-    .layout {{ display: flex; max-width: 1100px; margin: 0 auto; min-height: calc(100vh - 200px); }}
+    .site-header p {{ font-size: 14px; color: #666; margin-bottom: 1rem; }}
+    .category-tabs {{ display: flex; justify-content: center; gap: 0; border-bottom: 1px solid #e5e5e5; background: #fff; padding: 0 1rem; }}
+    .tab-btn {{ padding: 12px 24px; font-size: 14px; font-weight: 500; color: #666; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; transition: all 0.2s; }}
+    .tab-btn:hover {{ color: #111; }}
+    .tab-btn.active {{ color: #111; border-bottom-color: #111; font-weight: 600; }}
+    .layout {{ display: flex; max-width: 1100px; margin: 0 auto; min-height: calc(100vh - 250px); }}
     .sidebar {{ width: 220px; padding: 1.5rem 1rem; border-right: 1px solid #e5e5e5; background: #fff; flex-shrink: 0; }}
     .sidebar h2 {{ font-size: 14px; font-weight: 600; color: #555; margin-bottom: 12px; }}
     .sidebar-link {{ display: block; padding: 8px 12px; font-size: 13px; color: #1a73e8; text-decoration: none; border-radius: 6px; margin-bottom: 4px; }}
     .sidebar-link:hover {{ background: #f0f4ff; }}
+    .sidebar-empty {{ font-size: 12px; color: #999; padding: 8px 12px; }}
     .main {{ flex: 1; padding: 1.5rem 2rem; }}
     .week-nav {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }}
     .week-label {{ font-size: 16px; font-weight: 600; }}
@@ -104,6 +161,7 @@ def generate_index():
     .day-count {{ font-size: 12px; color: #888; margin-bottom: 8px; }}
     .day-titles {{ list-style: none; font-size: 13px; color: #444; line-height: 1.8; }}
     .day-titles .more {{ color: #888; }}
+    .empty-message {{ text-align: center; padding: 3rem; color: #888; font-size: 14px; }}
     .footer {{ border-top: 1px solid #e5e5e5; padding: 2rem 1rem; text-align: center; background: #fff; }}
     .footer-links {{ margin-bottom: 8px; }}
     .footer-links a {{ font-size: 13px; color: #1a73e8; text-decoration: none; margin: 0 12px; }}
@@ -114,19 +172,26 @@ def generate_index():
       .sidebar {{ width: 100%; border-right: none; border-bottom: 1px solid #e5e5e5; padding: 1rem; }}
       .sidebar-link {{ display: inline-block; margin-right: 4px; }}
       .main {{ padding: 1rem; }}
+      .tab-btn {{ padding: 10px 14px; font-size: 13px; }}
     }}
   </style>
 </head>
 <body>
   <div class="site-header">
     <h1>AIニュースまとめ</h1>
-    <p>最新のIT・テクノロジーニュースをAIが毎日自動収集・要約</p>
+    <p>最新のIT・テクノロジー・経済ニュースをAIが毎日自動収集・要約</p>
+  </div>
+
+  <div class="category-tabs" id="category-tabs">
+    <button class="tab-btn active" data-cat="it">IT・テクノロジー</button>
+    <button class="tab-btn" data-cat="japan_economy">日本経済</button>
+    <button class="tab-btn" data-cat="world_economy">世界経済</button>
   </div>
 
   <div class="layout">
     <aside class="sidebar">
       <h2>週次サマリー</h2>
-      {sidebar_html}
+      <div id="sidebar-content"></div>
     </aside>
 
     <main class="main">
@@ -149,18 +214,62 @@ def generate_index():
   </footer>
 
   <script>
-    const weeks = {weeks_json};
+    const categories = {categories_json};
+    let currentCategory = "it";
     let currentPage = 0;
 
-    const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+    const weekdays = ["\\u65E5", "\\u6708", "\\u706B", "\\u6C34", "\\u6728", "\\u91D1", "\\u571F"];
+
+    function getArticlePath(category, date) {{
+      if (category === "it") {{
+        // 旧構造チェック: articles/直下にあるかカテゴリフォルダか
+        const catData = categories[category];
+        const weeks = catData.weeks;
+        for (const w of weeks) {{
+          for (const d of w.days) {{
+            if (d.date === date) {{
+              // 新構造のファイルがあればカテゴリパス、なければ旧パス
+              return "articles/it/" + date + ".html";
+            }}
+          }}
+        }}
+      }}
+      return "articles/" + category + "/" + date + ".html";
+    }}
+
+    function renderSidebar() {{
+      const container = document.getElementById("sidebar-content");
+      const weeklies = categories[currentCategory].weeklies || [];
+      if (weeklies.length === 0) {{
+        container.innerHTML = '<div class="sidebar-empty">まだありません</div>';
+        return;
+      }}
+      container.innerHTML = weeklies.map(w =>
+        '<a href="articles/' + w.filename + '" class="sidebar-link">' + w.id + '</a>'
+      ).join("");
+    }}
 
     function renderWeek() {{
+      const catData = categories[currentCategory];
+      const weeks = catData.weeks;
+      const container = document.getElementById("articles-container");
+
+      if (!weeks || weeks.length === 0) {{
+        document.getElementById("week-label").textContent = catData.name;
+        document.getElementById("btn-prev").disabled = true;
+        document.getElementById("btn-next").disabled = true;
+        container.innerHTML = '<div class="empty-message">\\u307E\\u3060\\u8A18\\u4E8B\\u304C\\u3042\\u308A\\u307E\\u305B\\u3093</div>';
+        return;
+      }}
+
+      if (currentPage >= weeks.length) currentPage = weeks.length - 1;
+      if (currentPage < 0) currentPage = 0;
+
       const week = weeks[currentPage];
       document.getElementById("week-label").textContent = week.label;
       document.getElementById("btn-prev").disabled = (currentPage >= weeks.length - 1);
       document.getElementById("btn-next").disabled = (currentPage <= 0);
 
-      const container = document.getElementById("articles-container");
       container.innerHTML = "";
 
       week.days.forEach(day => {{
@@ -174,7 +283,7 @@ def generate_index():
         }}
 
         const card = document.createElement("a");
-        card.href = "articles/" + day.date + ".html";
+        card.href = getArticlePath(currentCategory, day.date);
         card.className = "day-card";
         card.innerHTML = '<div class="day-date">' + display + '\\uFF08' + wd + '\\uFF09</div>'
           + '<div class="day-count">' + day.count + '\\u4EF6\\u306E\\u8A18\\u4E8B</div>'
@@ -183,7 +292,18 @@ def generate_index():
       }});
     }}
 
+    function switchCategory(cat) {{
+      currentCategory = cat;
+      currentPage = 0;
+      document.querySelectorAll(".tab-btn").forEach(btn => {{
+        btn.classList.toggle("active", btn.dataset.cat === cat);
+      }});
+      renderSidebar();
+      renderWeek();
+    }}
+
     function prevWeek() {{
+      const weeks = categories[currentCategory].weeks;
       if (currentPage < weeks.length - 1) {{
         currentPage++;
         renderWeek();
@@ -197,6 +317,13 @@ def generate_index():
       }}
     }}
 
+    // タブクリックイベント
+    document.querySelectorAll(".tab-btn").forEach(btn => {{
+      btn.addEventListener("click", () => switchCategory(btn.dataset.cat));
+    }});
+
+    // 初期表示
+    renderSidebar();
     renderWeek();
   </script>
 </body>
@@ -205,7 +332,11 @@ def generate_index():
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
 
-    print(f"index.html を生成しました（{len(days)}日分、{len(sorted_weeks)}週）")
+    total_days = sum(
+        sum(len(w["days"]) for w in all_data.get(cat, []))
+        for cat in CATEGORIES
+    )
+    print(f"index.html を生成しました（{total_days}日分、{len(CATEGORIES)}カテゴリ）")
 
 
 if __name__ == "__main__":

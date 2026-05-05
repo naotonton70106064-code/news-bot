@@ -4,18 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIニュースまとめ - 毎日のIT・テクノロジーニュースをAIが要約</title>
-  <meta name="description" content="最新のIT・テクノロジーニュースをAIが毎日自動収集・要約。背景解説や今後の予測まで、忙しいあなたのためのニュースダイジェスト。">
+  <meta name="description" content="最新のIT・テクノロジー・経済ニュースをAIが毎日自動収集・要約。背景解説や今後の予測まで、忙しいあなたのためのニュースダイジェスト。">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f8f9fa; color: #111; }
-    .site-header { padding: 2rem 1rem 1rem; text-align: center; border-bottom: 1px solid #e5e5e5; background: #fff; }
+    .site-header { padding: 2rem 1rem 0; text-align: center; background: #fff; }
     .site-header h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
-    .site-header p { font-size: 14px; color: #666; }
-    .layout { display: flex; max-width: 1100px; margin: 0 auto; min-height: calc(100vh - 200px); }
+    .site-header p { font-size: 14px; color: #666; margin-bottom: 1rem; }
+    .category-tabs { display: flex; justify-content: center; gap: 0; border-bottom: 1px solid #e5e5e5; background: #fff; padding: 0 1rem; }
+    .tab-btn { padding: 12px 24px; font-size: 14px; font-weight: 500; color: #666; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; transition: all 0.2s; }
+    .tab-btn:hover { color: #111; }
+    .tab-btn.active { color: #111; border-bottom-color: #111; font-weight: 600; }
+    .layout { display: flex; max-width: 1100px; margin: 0 auto; min-height: calc(100vh - 250px); }
     .sidebar { width: 220px; padding: 1.5rem 1rem; border-right: 1px solid #e5e5e5; background: #fff; flex-shrink: 0; }
     .sidebar h2 { font-size: 14px; font-weight: 600; color: #555; margin-bottom: 12px; }
     .sidebar-link { display: block; padding: 8px 12px; font-size: 13px; color: #1a73e8; text-decoration: none; border-radius: 6px; margin-bottom: 4px; }
     .sidebar-link:hover { background: #f0f4ff; }
+    .sidebar-empty { font-size: 12px; color: #999; padding: 8px 12px; }
     .main { flex: 1; padding: 1.5rem 2rem; }
     .week-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     .week-label { font-size: 16px; font-weight: 600; }
@@ -29,6 +34,7 @@
     .day-count { font-size: 12px; color: #888; margin-bottom: 8px; }
     .day-titles { list-style: none; font-size: 13px; color: #444; line-height: 1.8; }
     .day-titles .more { color: #888; }
+    .empty-message { text-align: center; padding: 3rem; color: #888; font-size: 14px; }
     .footer { border-top: 1px solid #e5e5e5; padding: 2rem 1rem; text-align: center; background: #fff; }
     .footer-links { margin-bottom: 8px; }
     .footer-links a { font-size: 13px; color: #1a73e8; text-decoration: none; margin: 0 12px; }
@@ -39,19 +45,26 @@
       .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e5e5e5; padding: 1rem; }
       .sidebar-link { display: inline-block; margin-right: 4px; }
       .main { padding: 1rem; }
+      .tab-btn { padding: 10px 14px; font-size: 13px; }
     }
   </style>
 </head>
 <body>
   <div class="site-header">
     <h1>AIニュースまとめ</h1>
-    <p>最新のIT・テクノロジーニュースをAIが毎日自動収集・要約</p>
+    <p>最新のIT・テクノロジー・経済ニュースをAIが毎日自動収集・要約</p>
+  </div>
+
+  <div class="category-tabs" id="category-tabs">
+    <button class="tab-btn active" data-cat="it">IT・テクノロジー</button>
+    <button class="tab-btn" data-cat="japan_economy">日本経済</button>
+    <button class="tab-btn" data-cat="world_economy">世界経済</button>
   </div>
 
   <div class="layout">
     <aside class="sidebar">
       <h2>週次サマリー</h2>
-      <a href="articles/weekly-2026-W18.html" class="sidebar-link">2026-W18</a>
+      <div id="sidebar-content"></div>
     </aside>
 
     <main class="main">
@@ -74,18 +87,62 @@
   </footer>
 
   <script>
-    const weeks = [{"key": "2026-05-03", "label": "2026年05/03〜05/09", "days": [{"date": "2026-05-05", "count": 6, "titles": ["NvidiaのジェンスンCEO「AIは雇用を奪うのではなく、膨大な数の仕事を生み出している」と主張", "地熱エネルギー新興企業フェルボ・エナジー、IPOで最大13億ドル調達へ―企業価値65億ドルに", "米政府が警告：主要Linuxバージョンに影響する深刻な脆弱性「CopyFail」が実際の攻撃に悪用中"]}, {"date": "2026-05-04", "count": 6, "titles": ["画像AI機能がアプリ成長を牽引——チャットボット更新の6.5倍のダウンロード数を記録も収益化が課題", "ケイティ・ホーン、暗号資産・ブロックチェーン特化の新ベンチャーファンドで総額10億ドルの資金調達に成功", "cPanelの重大脆弱性を悪用したハッキング攻撃が継続中―数千のWebサイトに深刻な被害"]}, {"date": "2026-05-03", "count": 6, "titles": ["アカデミー賞がAI生成の俳優・脚本を対象外に｜映画業界に新たな規制", "Ask.com（旧Jeeves）がサービス終了——IAC、検索事業からの撤退を正式発表", "Netflixがグレタ・ガーウィグ監督『ナルニア国物語』を2027年に延期——大規模劇場公開へ戦略転換"]}]}, {"key": "2026-04-26", "label": "2026年04/26〜05/02", "days": [{"date": "2026-05-02", "count": 3, "titles": ["Netflix delays Greta Gerwig’s ‘Narnia’ movie for big theatrical push in 2027", "The best AI dictation apps, tested and ranked", "Beyond Lovable and Mistral: 21 European startups to watch"]}, {"date": "2026-05-01", "count": 3, "titles": ["Coatue has a plan to buy up land for data centers, possibly for Anthropic", "Pentagon inks deals with Nvidia, Microsoft, and AWS to deploy AI on classified networks", "Ubuntu services hit by outages after DDoS attack"]}, {"date": "2026-04-30", "count": 3, "titles": ["Rivian downsizes DOE loan to $4.5B, while boosting capacity of Georgia factory", "Hackers are actively exploiting a bug in cPanel, used by millions of websites", "After dissing Anthropic for limiting Mythos, OpenAI restricts access to Cyber, too"]}, {"date": "2026-04-29", "count": 3, "titles": ["Parallel Web Systems hits $2B valuation five months after its last big raise", "Google Photos uses AI to make the iconic closet from ‘Clueless’ a reality", "More Gemini features are coming to Google TV"]}, {"date": "2026-04-28", "count": 3, "titles": ["Amazon is already offering new OpenAI products on AWS", "Amazon launches an AI-powered audio Q&A experience on product pages", "Match Group invests $100M in Sniffies, a cruising app for gay men"]}, {"date": "2026-04-27", "count": 3, "titles": ["Consumers lost $2.1 billion to social media scams in 2025, FTC reports", "OpenAI ends Microsoft legal peril over its $50B Amazon deal", "DeepMind’s David Silver just raised $1.1B to build an AI that learns without human data"]}, {"date": "2026-04-26", "count": 3, "titles": ["TechCrunch Mobility: Elon’s admission", "To buy this Bay Area home, you’ll need Anthropic equity", "SpeakOn’s dictation device is a good idea marred by platform limitations"]}]}, {"key": "2026-04-19", "label": "2026年04/19〜04/25", "days": [{"date": "2026-04-25", "count": 3, "titles": ["OpenAI CEO apologizes to Tumbler Ridge community", "The climate tech IPO window could finally be cracking open", "Why Cohere is merging with Aleph Alpha"]}, {"date": "2026-04-24", "count": 3, "titles": ["ComfyUI hits $500M valuation as creators seek more control over AI-generated media", "X launches standalone XChat app on iOS", "Google to invest up to $40B in Anthropic in cash and compute"]}, {"date": "2026-04-23", "count": 3, "titles": ["Instagram tests a new ‘Instants’ app for sharing disappearing photos", "Meet Noscroll, an AI bot that does your doomscrolling for you", "Trump’s pick to run US cyber agency CISA asks to drop out"]}, {"date": "2026-04-22", "count": 3, "titles": ["How SpaceX preempted a $2B fundraise with a $60B buyout offer", "France confirms data breach at government agency that manages citizens’ IDs", "Apple fixes bug that cops used to extract deleted chat messages from iPhones"]}]}];
+    const categories = {"it": {"name": "IT・テクノロジー", "weeks": [{"key": "2026-05-03", "label": "2026年05/03〜05/09", "days": [{"date": "2026-05-05", "count": 6, "titles": ["NvidiaのジェンスンCEO「AIは雇用を奪うのではなく、膨大な数の仕事を生み出している」と主張", "地熱エネルギー新興企業フェルボ・エナジー、IPOで最大13億ドル調達へ―企業価値65億ドルに", "米政府が警告：主要Linuxバージョンに影響する深刻な脆弱性「CopyFail」が実際の攻撃に悪用中"]}, {"date": "2026-05-04", "count": 6, "titles": ["画像AI機能がアプリ成長を牽引——チャットボット更新の6.5倍のダウンロード数を記録も収益化が課題", "ケイティ・ホーン、暗号資産・ブロックチェーン特化の新ベンチャーファンドで総額10億ドルの資金調達に成功", "cPanelの重大脆弱性を悪用したハッキング攻撃が継続中―数千のWebサイトに深刻な被害"]}, {"date": "2026-05-03", "count": 6, "titles": ["アカデミー賞がAI生成の俳優・脚本を対象外に｜映画業界に新たな規制", "Ask.com（旧Jeeves）がサービス終了——IAC、検索事業からの撤退を正式発表", "Netflixがグレタ・ガーウィグ監督『ナルニア国物語』を2027年に延期——大規模劇場公開へ戦略転換"]}]}, {"key": "2026-04-26", "label": "2026年04/26〜05/02", "days": [{"date": "2026-05-02", "count": 3, "titles": ["Netflix delays Greta Gerwig’s ‘Narnia’ movie for big theatrical push in 2027", "The best AI dictation apps, tested and ranked", "Beyond Lovable and Mistral: 21 European startups to watch"]}, {"date": "2026-05-01", "count": 3, "titles": ["Coatue has a plan to buy up land for data centers, possibly for Anthropic", "Pentagon inks deals with Nvidia, Microsoft, and AWS to deploy AI on classified networks", "Ubuntu services hit by outages after DDoS attack"]}, {"date": "2026-04-30", "count": 3, "titles": ["Rivian downsizes DOE loan to $4.5B, while boosting capacity of Georgia factory", "Hackers are actively exploiting a bug in cPanel, used by millions of websites", "After dissing Anthropic for limiting Mythos, OpenAI restricts access to Cyber, too"]}, {"date": "2026-04-29", "count": 3, "titles": ["Parallel Web Systems hits $2B valuation five months after its last big raise", "Google Photos uses AI to make the iconic closet from ‘Clueless’ a reality", "More Gemini features are coming to Google TV"]}, {"date": "2026-04-28", "count": 3, "titles": ["Amazon is already offering new OpenAI products on AWS", "Amazon launches an AI-powered audio Q&A experience on product pages", "Match Group invests $100M in Sniffies, a cruising app for gay men"]}, {"date": "2026-04-27", "count": 3, "titles": ["Consumers lost $2.1 billion to social media scams in 2025, FTC reports", "OpenAI ends Microsoft legal peril over its $50B Amazon deal", "DeepMind’s David Silver just raised $1.1B to build an AI that learns without human data"]}, {"date": "2026-04-26", "count": 3, "titles": ["TechCrunch Mobility: Elon’s admission", "To buy this Bay Area home, you’ll need Anthropic equity", "SpeakOn’s dictation device is a good idea marred by platform limitations"]}]}, {"key": "2026-04-19", "label": "2026年04/19〜04/25", "days": [{"date": "2026-04-25", "count": 3, "titles": ["OpenAI CEO apologizes to Tumbler Ridge community", "The climate tech IPO window could finally be cracking open", "Why Cohere is merging with Aleph Alpha"]}, {"date": "2026-04-24", "count": 3, "titles": ["ComfyUI hits $500M valuation as creators seek more control over AI-generated media", "X launches standalone XChat app on iOS", "Google to invest up to $40B in Anthropic in cash and compute"]}, {"date": "2026-04-23", "count": 3, "titles": ["Instagram tests a new ‘Instants’ app for sharing disappearing photos", "Meet Noscroll, an AI bot that does your doomscrolling for you", "Trump’s pick to run US cyber agency CISA asks to drop out"]}, {"date": "2026-04-22", "count": 3, "titles": ["How SpaceX preempted a $2B fundraise with a $60B buyout offer", "France confirms data breach at government agency that manages citizens’ IDs", "Apple fixes bug that cops used to extract deleted chat messages from iPhones"]}]}], "weeklies": [{"id": "2026-W18", "filename": "it/weekly-2026-W18.html"}]}, "japan_economy": {"name": "日本経済", "weeks": [], "weeklies": []}, "world_economy": {"name": "世界経済", "weeks": [], "weeklies": []}};
+    let currentCategory = "it";
     let currentPage = 0;
 
-    const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+    const weekdays = ["\u65E5", "\u6708", "\u706B", "\u6C34", "\u6728", "\u91D1", "\u571F"];
+
+    function getArticlePath(category, date) {
+      if (category === "it") {
+        // 旧構造チェック: articles/直下にあるかカテゴリフォルダか
+        const catData = categories[category];
+        const weeks = catData.weeks;
+        for (const w of weeks) {
+          for (const d of w.days) {
+            if (d.date === date) {
+              // 新構造のファイルがあればカテゴリパス、なければ旧パス
+              return "articles/it/" + date + ".html";
+            }
+          }
+        }
+      }
+      return "articles/" + category + "/" + date + ".html";
+    }
+
+    function renderSidebar() {
+      const container = document.getElementById("sidebar-content");
+      const weeklies = categories[currentCategory].weeklies || [];
+      if (weeklies.length === 0) {
+        container.innerHTML = '<div class="sidebar-empty">まだありません</div>';
+        return;
+      }
+      container.innerHTML = weeklies.map(w =>
+        '<a href="articles/' + w.filename + '" class="sidebar-link">' + w.id + '</a>'
+      ).join("");
+    }
 
     function renderWeek() {
+      const catData = categories[currentCategory];
+      const weeks = catData.weeks;
+      const container = document.getElementById("articles-container");
+
+      if (!weeks || weeks.length === 0) {
+        document.getElementById("week-label").textContent = catData.name;
+        document.getElementById("btn-prev").disabled = true;
+        document.getElementById("btn-next").disabled = true;
+        container.innerHTML = '<div class="empty-message">\u307E\u3060\u8A18\u4E8B\u304C\u3042\u308A\u307E\u305B\u3093</div>';
+        return;
+      }
+
+      if (currentPage >= weeks.length) currentPage = weeks.length - 1;
+      if (currentPage < 0) currentPage = 0;
+
       const week = weeks[currentPage];
       document.getElementById("week-label").textContent = week.label;
       document.getElementById("btn-prev").disabled = (currentPage >= weeks.length - 1);
       document.getElementById("btn-next").disabled = (currentPage <= 0);
 
-      const container = document.getElementById("articles-container");
       container.innerHTML = "";
 
       week.days.forEach(day => {
@@ -99,7 +156,7 @@
         }
 
         const card = document.createElement("a");
-        card.href = "articles/" + day.date + ".html";
+        card.href = getArticlePath(currentCategory, day.date);
         card.className = "day-card";
         card.innerHTML = '<div class="day-date">' + display + '\uFF08' + wd + '\uFF09</div>'
           + '<div class="day-count">' + day.count + '\u4EF6\u306E\u8A18\u4E8B</div>'
@@ -108,7 +165,18 @@
       });
     }
 
+    function switchCategory(cat) {
+      currentCategory = cat;
+      currentPage = 0;
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.cat === cat);
+      });
+      renderSidebar();
+      renderWeek();
+    }
+
     function prevWeek() {
+      const weeks = categories[currentCategory].weeks;
       if (currentPage < weeks.length - 1) {
         currentPage++;
         renderWeek();
@@ -122,6 +190,13 @@
       }
     }
 
+    // タブクリックイベント
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchCategory(btn.dataset.cat));
+    });
+
+    // 初期表示
+    renderSidebar();
     renderWeek();
   </script>
 </body>

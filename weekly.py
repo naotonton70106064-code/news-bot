@@ -1,22 +1,28 @@
-"""週次サマリーを自動生成するスクリプト"""
+"""週次サマリーを自動生成するスクリプト（カテゴリ対応）"""
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
+
+CATEGORIES = ["it", "japan_economy", "world_economy"]
+CATEGORY_NAMES = {
+    "it": "IT・テクノロジー",
+    "japan_economy": "日本経済",
+    "world_economy": "世界経済",
+}
 
 
 def get_week_range(target_date=None):
     """対象週の月曜〜日曜の日付範囲を返す（前週）"""
     if target_date is None:
         target_date = datetime.now()
-    # 前週の月曜日
     monday = target_date - timedelta(days=target_date.weekday() + 7)
     sunday = monday + timedelta(days=6)
     return monday, sunday
 
 
-def load_week_articles(monday, sunday):
-    """指定週のJSON記事を全て読み込む"""
-    articles_dir = Path("articles")
+def load_week_articles(monday, sunday, category):
+    """指定週・カテゴリのJSON記事を全て読み込む"""
+    articles_dir = Path("articles") / category
     all_articles = []
 
     current = monday
@@ -31,25 +37,39 @@ def load_week_articles(monday, sunday):
                 all_articles.extend(day_articles)
         current += timedelta(days=1)
 
+    # 旧構造（articles/直下）もITとして読み込む
+    if category == "it":
+        legacy_dir = Path("articles")
+        current = monday
+        while current <= sunday:
+            date_str = current.strftime("%Y-%m-%d")
+            json_file = legacy_dir / f"{date_str}.json"
+            if json_file.exists():
+                with open(json_file, "r", encoding="utf-8") as f:
+                    day_articles = json.load(f)
+                    for a in day_articles:
+                        a["date"] = date_str
+                    all_articles.extend(day_articles)
+            current += timedelta(days=1)
+
     return all_articles
 
 
-def generate_weekly_summary(articles, monday, sunday):
+def generate_weekly_summary(articles, monday, sunday, category):
     """週次サマリーHTMLを生成"""
     week_num = monday.isocalendar()[1]
     year = monday.year
     week_id = f"{year}-W{week_num:02d}"
+    cat_name = CATEGORY_NAMES[category]
 
     monday_str = monday.strftime("%Y年%m月%d日")
     sunday_str = sunday.strftime("%Y年%m月%d日")
 
-    # ソース別に記事を分類
     by_source = {}
     for a in articles:
         source = a.get("source", "不明")
         by_source.setdefault(source, []).append(a)
 
-    # 記事リストHTML
     articles_html = ""
     for date_key in sorted(set(a["date"] for a in articles)):
         day_articles = [a for a in articles if a["date"] == date_key]
@@ -63,8 +83,8 @@ def generate_weekly_summary(articles, monday, sunday):
             articles_html += f'<li><span class="source-tag">{a.get("source", "")}</span> {title}</li>'
         articles_html += "</ul></div>"
 
-    # トピックハイライト（背景情報が長い記事＝重要な記事を上位5件抽出）
-    ranked = sorted(articles, key=lambda a: len(a.get("background", "")), reverse=True)
+    # 重要記事の抽出
+    ranked = sorted(articles, key=lambda a: len(a.get("background", "") + a.get("market_impact", "")), reverse=True)
     highlights = ranked[:5]
     highlights_html = ""
     for a in highlights:
@@ -82,8 +102,8 @@ def generate_weekly_summary(articles, monday, sunday):
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>週次サマリー {week_id}（{monday_str}〜{sunday_str}）- AIニュースまとめ</title>
-  <meta name="description" content="{week_id}のIT・テクノロジーニュース週次まとめ。{len(articles)}件の記事をAIが分析・要約。">
+  <title>{cat_name} 週次サマリー {week_id}（{monday_str}〜{sunday_str}）- AIニュースまとめ</title>
+  <meta name="description" content="{week_id}の{cat_name}ニュース週次まとめ。{len(articles)}件の記事をAIが分析・要約。">
   <style>
     * {{ margin: 0; padding: 0; box-sizing: border-box; }}
     body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f8f9fa; color: #111; padding: 2rem 1rem; }}
@@ -110,9 +130,9 @@ def generate_weekly_summary(articles, monday, sunday):
 </head>
 <body>
   <div class="container">
-    <a href="../index.html" class="back-link">&larr; トップに戻る</a>
+    <a href="../../index.html" class="back-link">&larr; トップに戻る</a>
     <div class="header">
-      <h1>週次サマリー {week_id}</h1>
+      <h1>{cat_name} 週次サマリー {week_id}</h1>
       <div class="period">{monday_str} 〜 {sunday_str}</div>
       <div class="stats">記事数: {len(articles)}件 / ソース: {len(by_source)}サイト</div>
     </div>
@@ -133,13 +153,13 @@ def generate_weekly_summary(articles, monday, sunday):
 </body>
 </html>'''
 
-    # 保存
-    articles_dir = Path("articles")
+    articles_dir = Path("articles") / category
+    articles_dir.mkdir(parents=True, exist_ok=True)
     output_file = articles_dir / f"weekly-{week_id}.html"
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(html)
 
-    print(f"週次サマリー生成: {output_file}（{len(articles)}件）")
+    print(f"  [{cat_name}] 週次サマリー生成: {output_file}（{len(articles)}件）")
     return str(output_file)
 
 
@@ -147,12 +167,12 @@ def main():
     monday, sunday = get_week_range()
     print(f"対象期間: {monday.strftime('%Y-%m-%d')} 〜 {sunday.strftime('%Y-%m-%d')}")
 
-    articles = load_week_articles(monday, sunday)
-    if not articles:
-        print("対象週の記事が見つかりませんでした。")
-        return
-
-    generate_weekly_summary(articles, monday, sunday)
+    for category in CATEGORIES:
+        articles = load_week_articles(monday, sunday, category)
+        if not articles:
+            print(f"  [{CATEGORY_NAMES[category]}] 記事なし - スキップ")
+            continue
+        generate_weekly_summary(articles, monday, sunday, category)
 
 
 if __name__ == "__main__":
