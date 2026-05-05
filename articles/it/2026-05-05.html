@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: flex; gap: 8px; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "As workers worry about AI, Nvidia’s Jensen Huang says AI is ‘creating an enormous number of jobs’",
+    "japanese_title": "NvidiaのジェンスンCEOが断言「AIは膨大な数の雇用を創出している」―労働者の不安に反論",
+    "url": "https://techcrunch.com/2026/05/04/as-workers-worry-about-ai-nvidias-jensen-huang-says-ai-is-creating-an-enormous-number-of-jobs/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. NvidiaのCEOジェンスン・フアン氏は、AIが雇用を奪うという懸念に対し、むしろ大量の雇用を生み出していると主張した。",
+      "2. AIによる雇用喪失への不安が世界中の労働者の間で高まる中、Nvidia CEOはその見方を「誇張されている」と否定した。",
+      "3. AI半導体市場のトップ企業を率いるフアン氏の発言は、AI産業推進派の立場を代弁するものとして注目を集めている。"
+    ],
+    "points": [
+      "・ AI業界で最大の恩恵を受けるNvidiaのCEOによる発言であり、利害関係者としての立場を考慮する必要がある",
+      "・「AIは雇用を創出する」という主張は、過去の技術革新（インターネット、スマートフォン等）の歴史的パターンを根拠にしている可能性が高い",
+      "・ 労働者側の体感的不安と、経営・投資側の楽観論という「認識のギャップ」が鮮明になっている"
+    ],
+    "prediction": "AI関連の新職種（プロンプトエンジニアやAIトレーナーなど）は確かに増加する一方、従来型の事務・定型業務における雇用削減も並行して進むとみられる。雇用の「総数」よりも「質・分布・移行コスト」が今後の議論の焦点となり、再教育・リスキリング政策の整備が各国政府に求められるだろう。フアン氏の楽観論が現実となるかは、技術の恩恵が社会全体に公平に分配されるかにかかっている。",
+    "ai_interpretation": "このニュースの本質は、AI技術の「勝者」が語る楽観論と、現場で不安を抱える「一般労働者」の現実認識との深い乖離を象徴している。雇用の総量が増えるとしても、恩恵を受ける層とリスクにさらされる層が異なる以上、「AIは雇用を創る」という主張は問題の本質をすり替える可能性がある。テクノロジーリーダーの発言には、社会的責任と政策的裏付けが伴うべきという問いを、このニュースは暗に投げかけている。",
+    "collected_at": "2026-05-05T08:58:58.985376",
+    "background": "生成AIの急速な普及により、ホワイトカラーを中心に「AIに仕事を奪われる」という不安が世界的に拡大している。IMFやOECDなど国際機関も、AIが数億人規模の雇用に影響を与える可能性を指摘するレポートを相次いで発表してきた。こうした社会的緊張が高まる中、AI半導体の最大手Nvidiaのトップが楽観的な見解を示した形だ。"
+  },
+  {
+    "title": "Geothermal startup Fervo Energy to raise up to $1.3B in IPO",
+    "japanese_title": "地熱スタートアップFervo Energy、IPOで最大1,300億円調達へ－企業価値6,500億円超の見通し",
+    "url": "https://techcrunch.com/2026/05/04/geothermal-startup-fervo-energy-to-raise-up-to-1-3b-in-ipo/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 米国の高度地熱システム（EGS）スタートアップ「Fervo Energy」が、新規株式公開（IPO）で最大13億ドル（約1,300億円）の資金調達を計画している。",
+      "2. このIPOにより、同社の企業価値は最大65億ドル（約6,500億円）に達する可能性がある。",
+      "3. クリーンエネルギー分野における地熱技術への投資家の高い関心を反映した大型上場案件となる。"
+    ],
+    "points": [
+      "・ 企業価値65億ドルという評価額は、地熱エネルギー分野のスタートアップとして異例の高水準",
+      "・ IPOによる最大13億ドルの資金調達は、大規模な地熱発電所の建設・拡張に充当される見込み",
+      "・ 再生可能エネルギーの中でも「ベースロード電源（安定供給）」として地熱が再評価されている点が重要"
+    ],
+    "prediction": "IPO成功後、Fervoはネバダ州やユタ州などでの大規模プロジェクトをさらに加速させ、米国内の地熱発電容量を大幅に拡大する可能性が高い。また、同社の上場はEGS分野全体への投資呼び水となり、競合他社の資金調達や技術開発競争が活発化することも予想される。一方、地熱開発特有の地質リスクや長期的な採算性についての市場の評価が、株価の行方を左右する重要な鍵となるだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる一企業のIPOを超えて「地熱エネルギーがクリーンエネルギーの主流に躍り出るターニングポイント」を示している点にある。太陽光・風力が天候依存という弱点を抱える中、24時間安定発電できるEGS技術は、AIデータセンターなど膨大な恒常的電力需要に応える解として戦略的価値が急上昇している。Fervoの大型IPOは、エネルギー転換における「見えにくかった地熱」というピースが、いよいよ投資市場でも不可欠な存在として認識され始めたことを象徴していると言える。",
+    "collected_at": "2026-05-05T08:59:17.413386",
+    "background": "Fervo Energyは、石油・ガス採掘技術（水平掘削・水圧破砕）を地熱発電に応用する「拡張型地熱システム（EGS）」の開発で注目を集めるスタートアップである。従来の地熱発電が地理的条件に制約されていたのに対し、EGS技術はほぼあらゆる場所での地熱発電を可能にする革新的なアプローチとして期待されている。米国のクリーンエネルギー推進政策や電力需要の急増（AIデータセンター需要など）を背景に、安定した24時間発電が可能な地熱エネルギーへの関心が急速に高まっている。"
+  },
+  {
+    "title": "US government warns of severe CopyFail bug affecting major versions of Linux",
+    "japanese_title": "米政府が警告：Linuxの主要バージョンに影響する深刻な脆弱性「CopyFail」が実際の攻撃に悪用中",
+    "url": "https://techcrunch.com/2026/05/04/u-s-government-warns-of-severe-copyfail-bug-affecting-major-versions-of-linux/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 米国サイバーセキュリティ機関CISAが、Linuxに影響する重大な脆弱性「CopyFail」について緊急警告を発した。",
+      "2. この脆弱性は既にハッキングキャンペーンで積極的に悪用されており、実害が確認されている。",
+      "3. サーバーやデータセンターなどLinuxに依存するインフラへのリスクが特に高いとされている。"
+    ],
+    "points": [
+      "・ CISAが「積極的に悪用中（actively exploited）」と明記しており、理論上の脅威ではなく現実の攻撃が進行中である点",
+      "・ 影響範囲が「主要バージョン」と複数に及ぶため、パッチ適用対象が広く、対応の複雑さが増す点",
+      "・ サーバー・データセンターという企業・政府の重要インフラが主なターゲットになっている点"
+    ],
+    "prediction": "Linuxディストリビューションの各ベンダー（Red Hat、Ubuntu、Debianなど）から緊急セキュリティパッチが順次リリースされ、システム管理者には速やかな適用が強く求められるだろう。一方、パッチ適用が遅れた組織を狙ったランサムウェアや情報窃取攻撃が増加する可能性が高い。政府機関や重要インフラ事業者は、CISAのKEV（Known Exploited Vulnerabilities）カタログへの登録に基づき、期限付きの対応を義務付けられる可能性もある。",
+    "ai_interpretation": "このニュースが示す本質は、「オープンソースの普及がセキュリティリスクの社会的規模を拡大させている」という構造的問題である。Linuxは無償・高信頼として世界中に普及しているがゆえに、一つの脆弱性が数百万台規模のシステムに同時影響を与え得る。政府機関が積極的に介入・警告を出す事態は、サイバーセキュリティがもはや個々の企業の自己責任ではなく、国家安全保障と直結したインフラ問題であることを改めて浮き彫りにしている。",
+    "collected_at": "2026-05-05T08:59:33.739957",
+    "background": "Linuxは世界のサーバーやデータセンターの大部分を支える基盤OSであり、その脆弱性は極めて広範な影響を持つ。「CopyFail」はLinuxの主要バージョン複数に存在するとされ、パッチ適用前に攻撃者が悪用を開始したとみられる。CISAによる公式警告は、脅威の深刻度と拡大速度が政府機関の介入を必要とするレベルに達したことを示している。"
+  },
+  {
+    "title": "Androidを狙うマルウエア",
+    "japanese_title": "Android狙うマルウェア急増——2025年上半期に攻撃件数が前年比30%増、世界70億台に迫る脅威",
+    "url": "https://xtech.nikkei.com/atcl/nxt/mag/nnw/18/111900071/041700078/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. 世界のスマートフォン市場の約7割を占めるAndroidは、その圧倒的なシェアゆえにサイバー攻撃者にとって最大の標的となっている。",
+      "2. カスペルスキーの調査によると、2025年上半期におけるAndroidユーザーへの攻撃件数は前年同期比で約30%増加した。",
+      "3. 普及率の高さと攻撃増加の相関関係が明確となり、ユーザーのセキュリティ意識向上が急務となっている。"
+    ],
+    "points": [
+      "・ 攻撃件数が前年比**約30%増**という急激な伸びは、サイバー犯罪のAndroidへの集中を裏付ける",
+      "・ 情報収集元がロシア系企業カスペルスキーである点は、データの信頼性・中立性の観点から留意が必要",
+      "・ 世界の約7割というシェアは、攻撃者にとって「費用対効果の高いターゲット」であり続けることを意味する"
+    ],
+    "prediction": "AIを活用したフィッシング攻撃やマルウェアの自動生成技術が普及する中、Android向け攻撃は今後さらに高度化・増加する可能性が高い。Googleはセキュリティパッチの迅速な配布やPlay Protectの強化を進めているが、古い端末へのサポート打ち切り問題は依然として解決が難しい。各国規制当局によるアプリストアのセキュリティ基準強化や、メーカーへのアップデート義務付けといった法的対応も加速するとみられる。",
+    "ai_interpretation": "このニュースの本質は、「普及率」と「脆弱性」が表裏一体であるというデジタル社会の構造的リスクを改めて浮き彫りにした点にある。Android一強とも言えるシェアは利便性と経済的恩恵をもたらす一方で、攻撃者にとっては「一か所を攻略すれば最大多数に影響を与えられる」という非対称な優位性を与えている。ユーザー個人のリテラシー向上だけでは限界があり、プラットフォーム側・規制側・端末メーカー側が三位一体で取り組む構造的なセキュリティ強化こそが求められている。",
+    "collected_at": "2026-05-05T08:59:52.381284",
+    "background": "Androidはオープンソースプラットフォームという性質上、多様なメーカーや地域で採用されており、その結果として世界的な普及率が極めて高い。一方で、OSの断片化（フラグメンテーション）によりアップデートが行き届かない端末が多数存在し、脆弱性が放置されやすい環境にある。さらに、公式ストア外からのアプリインストールが可能な仕様も、マルウェア配布の温床となってきた。"
+  },
+  {
+    "title": "DGX Sparkの70万円は高い…のだろうか",
+    "japanese_title": "NVIDIA DGX Sparkは70万円の価値あり？個人・中小企業向けAI専用PCの価格を徹底考察",
+    "url": "https://xtech.nikkei.com/atcl/nxt/mag/nnw/18/091900173/041700032/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. NVIDIAのAI専用小型PC「DGX Spark」が日本市場で70万〜80万円程度で販売されており、その価格妥当性が注目されている。",
+      "2. 筆者は実機を借りて試用中であり、使用感レポートとは別に「価格」という切り口で考察を行っている。",
+      "3. 高額に見える一方で、AI処理専用機としての性能・用途次第では「高くない」という議論が展開されている。"
+    ],
+    "points": [
+      "・ 70万〜80万円という価格が「高い」かどうかは、比較対象（クラウドAI利用コスト・ワークステーション等）によって大きく変わる",
+      "・ 販売店によって価格差があり、購入先の選定が実質的なコストに影響する",
+      "・ 個人ユーザーだけでなく、中小企業や研究者にとっての「手が届くAIインフラ」としての位置づけが問われる"
+    ],
+    "prediction": "競合製品の登場やNVIDIA自身の価格改定により、今後数年で同等性能の機器が低価格化する可能性がある。一方、AI活用が業務必須となる分野では「初期投資としての70万円」は十分正当化されうるため、法人需要を中心に販売は堅調に推移すると見られる。クラウドAIのコスト上昇が続けば、ローカルAI機器の相対的な優位性はさらに高まるだろう。",
+    "ai_interpretation": "このニュースの本質は、AIの「民主化」が価格という現実的な壁にぶつかっている局面を映し出している点にある。70万円という数字は一般消費者には高額でも、クラウド利用料の積み上がりと比較すれば投資対効果が逆転しうるという視点は、AIインフラの所有コストに対する新しいリテラシーを社会に求めていると言える。DGX Sparkの価格論争は、単なる製品評価を超えて「AIをどこで・誰が・どう動かすべきか」という時代の問いを体現している。",
+    "collected_at": "2026-05-05T09:00:10.702239",
+    "background": "生成AIの普及により、クラウドだけでなくローカル環境でAIを動かしたいというニーズが個人・企業を問わず急速に高まっている。NVIDIAはそうした需要に応える形で、エンタープライズ向けDGXシリーズの技術を小型・個人向けに落とし込んだDGX Sparkを投入した。日本市場でも2026年初頭から流通が始まり、その価格設定が話題を集めている。"
+  },
+  {
+    "title": "IPアドレスを理解する（前編）",
+    "japanese_title": "IPアドレスの仕組みを徹底解説！ネットワークの基礎「インターネット層」とは",
+    "url": "https://xtech.nikkei.com/atcl/nxt/mag/nnw/18/071500225/041700010/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. TCP/IPモデルのインターネット層における主要プロトコル「IP（インターネットプロトコル）」の解説記事（前編）が公開された。",
+      "2. 前回のデータリンク層・イーサネットの解説に続く連載形式で、ネットワークの階層構造を体系的に学べる内容となっている。",
+      "3. IPはインターネット通信の根幹をなす技術であり、その理解はネットワーク知識の習得において不可欠な要素である。"
+    ],
+    "points": [
+      "・TCP/IPモデルの階層構造を順番に解説する連載形式で、学習者が段階的に理解を深められる構成",
+      "・データリンク層（イーサネット）からインターネット層（IP）へと、プロトコルの役割の違いを比較しながら学べる点",
+      "・「前編」とあることから、IPアドレスの詳細（サブネット、IPv4/IPv6など）が後編でさらに掘り下げられる予定である点"
+    ],
+    "prediction": "後編ではIPアドレスの具体的な仕組み（サブネットマスク、ルーティング、IPv4とIPv6の違いなど）がより詳しく解説されると予想される。連載がさらに続く場合は、トランスポート層（TCP/UDP）やアプリケーション層へと解説が発展していく可能性が高い。ネットワーク基礎学習コンテンツとして、エンジニア志望者や資格取得者に広く活用されることが期待される。",
+    "ai_interpretation": "このニュースは技術的な情報発信というだけでなく、ネットワークの基礎知識を「階層モデル」という整理されたフレームワークで伝えることの重要性を示している。IPというプロトコルはインターネットそのものを支える技術であり、その本質を理解することはクラウドやセキュリティなど現代IT技術の理解にも直結する。連載形式での段階的な解説は、難解になりがちな技術知識を一般エンジニアに浸透させるための効果的なアプローチといえる。",
+    "collected_at": "2026-05-05T09:00:25.003256",
+    "background": "ネットワーク技術の重要性が増す中、エンジニアや技術者がTCP/IPの基礎を体系的に学ぶニーズが高まっている。本記事はデータリンク層の解説から続く連載の一部であり、下位層から上位層へと順を追って学べる構成が取られている。インフラ知識の底上げを目的とした教育・学習コンテンツとして位置づけられている。"
+  }
+];
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  return text ? text.replace(/\*\*/g, "") : "";
+}
+
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = article.japanese_title || article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const pointsHTML = (article.points || [])
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>
