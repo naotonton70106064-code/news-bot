@@ -19,8 +19,8 @@ FEEDS = {
     "world_economy": {
         "name": "世界経済",
         "sources": [
-            "https://www.reuters.com/rssFeed/worldNews",
-            "https://www.bloomberg.co.jp/feeds/sitemap_news.xml",
+            "https://feeds.bbci.co.uk/news/business/rss.xml",
+            "https://feeds.a.dj.com/rss/RSSWorldNews.xml",
         ],
     },
 }

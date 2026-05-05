@@ -1,5 +1,6 @@
 """記事一覧ページ（index.html）を自動生成するスクリプト"""
 import json
+import re
 from pathlib import Path
 from datetime import datetime, timedelta
 
@@ -8,6 +9,25 @@ CATEGORIES = {
     "japan_economy": "日本経済",
     "world_economy": "世界経済",
 }
+
+
+def get_display_title(article):
+    """日本語タイトルを返す。japanese_titleがなければレガシーsummaryから抽出する"""
+    jt = article.get("japanese_title")
+    if jt:
+        return jt
+    summary = article.get("summary", "")
+    if summary:
+        for line in summary.split("\n"):
+            line = line.strip()
+            m = re.match(r"^[1１][\.\．、]\s*(.+)$", line)
+            if m:
+                return m.group(1).strip()
+    summary_lines = article.get("summary_lines", [])
+    if summary_lines:
+        first = summary_lines[0]
+        return re.sub(r"^[1-3１-３][\.\．、]\s*", "", first).strip()
+    return article.get("title", "")
 
 
 def get_week_start(dt):
@@ -33,7 +53,7 @@ def load_category_data(category):
             days.append({
                 "date": date_str,
                 "count": len(articles),
-                "titles": [a.get("japanese_title") or a.get("title", "") for a in articles[:3]],
+                "titles": [get_display_title(a) for a in articles[:3]],
             })
         except (json.JSONDecodeError, KeyError):
             continue
@@ -93,7 +113,7 @@ def generate_index():
             legacy_days.append({
                 "date": date_str,
                 "count": len(articles),
-                "titles": [a.get("japanese_title") or a.get("title", "") for a in articles[:3]],
+                "titles": [get_display_title(a) for a in articles[:3]],
             })
         except (json.JSONDecodeError, KeyError):
             continue
