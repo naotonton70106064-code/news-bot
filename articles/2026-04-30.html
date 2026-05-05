@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 2rem; }
+    .header { max-width: 800px; margin: 0 auto 2rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; cursor: pointer; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-short { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 10px; }
+    .card-footer { display: flex; justify-content: space-between; align-items: center; }
+    .expand-hint { font-size: 11px; color: #888; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.8; white-space: pre-wrap; margin-bottom: 1rem; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: flex; gap: 8px; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+
+  <script>
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    // JSONデータを直接埋め込む（後でPythonが自動生成）
+    const articles = [
+  {
+    "title": "Rivian downsizes DOE loan to $4.5B, while boosting capacity of Georgia factory",
+    "url": "https://techcrunch.com/2026/04/30/rivian-downsizes-doe-loan-to-4-5b-while-boosting-capacity-of-georgia-factory/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. リビアンは米エネルギー省（DOE）との融資契約を見直し、借入額を66億ドルから45億ドルに縮小した。\n2. この融資はジョージア州に建設予定の新工場に充てられる予定である。\n3. 融資額は減少したものの、工場の生産能力は引き上げられる見通しとなっている。\n\n【背景・ポイント】\nリビアンはEVメーカーとして工場拡張による生産拡大を目指しており、DOEの融資はその重要な資金源となっている。融資額の削減は財務面での効率化や計画の修正を反映しているとみられるが、生産能力の向上という目標は維持されており、事業拡大への意欲は変わっていない。",
+    "collected_at": "2026-04-30T20:10:39.168230"
+  },
+  {
+    "title": "Hackers are actively exploiting a bug in cPanel, used by millions of websites",
+    "url": "https://techcrunch.com/2026/04/30/hackers-are-actively-exploiting-a-bug-in-cpanel-used-by-millions-of-websites/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. 数百万のウェブサイトで使用されているcPanelに深刻なセキュリティバグが発見された。\n2. ハッカーたちはこの脆弱性を積極的に悪用しており、数ヶ月にわたって攻撃が続いていたとされる。\n3. ウェブホスティング会社各社は、現在進行中の攻撃に対応するため、緊急のバグ修正に追われている。\n\n【背景・ポイント】\ncPanelは世界中の多くのウェブホスティングサービスで利用されている管理ツールであり、その脆弱性は非常に広範囲に影響を及ぼす可能性がある。一部の企業によると、ハッカーはこの脆弱性をすでに数ヶ月間悪用しており、被害が拡大している恐れがある。ウェブサイト管理者は早急にシステムのアップデートやセキュリティ対策を講じることが強く推奨される。",
+    "collected_at": "2026-04-30T20:10:44.560287"
+  },
+  {
+    "title": "After dissing Anthropic for limiting Mythos, OpenAI restricts access to Cyber, too",
+    "url": "https://techcrunch.com/2026/04/30/after-dissing-anthropic-for-limiting-mythos-openai-restricts-access-to-cyber-too/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. OpenAIはサイバーセキュリティテストツール「GPT-5.5 Cyber」の公開を限定的に開始する。\n2. 当初は「重要なサイバー防衛担当者」のみにアクセスが制限される。\n3. 以前AnthropicがMythosの利用を制限したことを批判していたOpenAIが、自社でも同様の制限を実施することになった。\n\n【背景・ポイント】\nOpenAIはかつてAnthropicが自社AIツール「Mythos」のアクセスを制限したことを批判していたが、今回自社のサイバーセキュリティツールにおいても同様のアクセス制限を設けるという矛盾した行動が注目されている。サイバーセキュリティ分野での悪用リスクを考慮した慎重なアプローチとも言えるが、過去の批判との整合性が問われる形となっている。",
+    "collected_at": "2026-04-30T20:10:50.476675"
+  }
+];
+
+    const container = document.getElementById("container");
+
+    articles.forEach((article, i) => {
+      const lines = article.summary.split("\n").filter(l => l.trim());
+      const shortSummary = lines.slice(0, 3).join("\n");
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="card-main" onclick="toggle(${i})">
+          <div class="card-top">
+            <div class="title">${article.title}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-short">${shortSummary}</div>
+          <div class="card-footer">
+            <span class="expand-hint" id="hint-${i}">詳細を見る ▾</span>
+          </div>
+        </div>
+        <div class="detail" id="detail-${i}">
+          <div class="detail-text">${article.summary}</div>
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const hint = document.getElementById(`hint-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      hint.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      e.target.closest(".actions").innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      e.target.closest(".actions").innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>

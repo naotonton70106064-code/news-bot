@@ -1,0 +1,23 @@
+[
+  {
+    "title": "Rivian downsizes DOE loan to $4.5B, while boosting capacity of Georgia factory",
+    "url": "https://techcrunch.com/2026/04/30/rivian-downsizes-doe-loan-to-4-5b-while-boosting-capacity-of-georgia-factory/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. リビアンは米エネルギー省（DOE）との融資契約を見直し、借入額を66億ドルから45億ドルに縮小した。\n2. この融資はジョージア州に建設予定の新工場に充てられる予定である。\n3. 融資額は減少したものの、工場の生産能力は引き上げられる見通しとなっている。\n\n【背景・ポイント】\nリビアンはEVメーカーとして工場拡張による生産拡大を目指しており、DOEの融資はその重要な資金源となっている。融資額の削減は財務面での効率化や計画の修正を反映しているとみられるが、生産能力の向上という目標は維持されており、事業拡大への意欲は変わっていない。",
+    "collected_at": "2026-04-30T20:10:39.168230"
+  },
+  {
+    "title": "Hackers are actively exploiting a bug in cPanel, used by millions of websites",
+    "url": "https://techcrunch.com/2026/04/30/hackers-are-actively-exploiting-a-bug-in-cpanel-used-by-millions-of-websites/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. 数百万のウェブサイトで使用されているcPanelに深刻なセキュリティバグが発見された。\n2. ハッカーたちはこの脆弱性を積極的に悪用しており、数ヶ月にわたって攻撃が続いていたとされる。\n3. ウェブホスティング会社各社は、現在進行中の攻撃に対応するため、緊急のバグ修正に追われている。\n\n【背景・ポイント】\ncPanelは世界中の多くのウェブホスティングサービスで利用されている管理ツールであり、その脆弱性は非常に広範囲に影響を及ぼす可能性がある。一部の企業によると、ハッカーはこの脆弱性をすでに数ヶ月間悪用しており、被害が拡大している恐れがある。ウェブサイト管理者は早急にシステムのアップデートやセキュリティ対策を講じることが強く推奨される。",
+    "collected_at": "2026-04-30T20:10:44.560287"
+  },
+  {
+    "title": "After dissing Anthropic for limiting Mythos, OpenAI restricts access to Cyber, too",
+    "url": "https://techcrunch.com/2026/04/30/after-dissing-anthropic-for-limiting-mythos-openai-restricts-access-to-cyber-too/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. OpenAIはサイバーセキュリティテストツール「GPT-5.5 Cyber」の公開を限定的に開始する。\n2. 当初は「重要なサイバー防衛担当者」のみにアクセスが制限される。\n3. 以前AnthropicがMythosの利用を制限したことを批判していたOpenAIが、自社でも同様の制限を実施することになった。\n\n【背景・ポイント】\nOpenAIはかつてAnthropicが自社AIツール「Mythos」のアクセスを制限したことを批判していたが、今回自社のサイバーセキュリティツールにおいても同様のアクセス制限を設けるという矛盾した行動が注目されている。サイバーセキュリティ分野での悪用リスクを考慮した慎重なアプローチとも言えるが、過去の批判との整合性が問われる形となっている。",
+    "collected_at": "2026-04-30T20:10:50.476675"
+  }
+]

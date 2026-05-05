@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 2rem; }
+    .header { max-width: 800px; margin: 0 auto 2rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; cursor: pointer; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-short { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 10px; }
+    .card-footer { display: flex; justify-content: space-between; align-items: center; }
+    .expand-hint { font-size: 11px; color: #888; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.8; white-space: pre-wrap; margin-bottom: 1rem; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: flex; gap: 8px; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+
+  <script>
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    // JSONデータを直接埋め込む（後でPythonが自動生成）
+    const articles = [
+  {
+    "title": "Consumers lost $2.1 billion to social media scams in 2025, FTC reports",
+    "url": "https://techcrunch.com/2026/04/27/consumers-lost-2-1-billion-to-social-media-scams-in-2025-ftc-reports/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. 2025年、消費者がソーシャルメディア詐欺によって失った金額は21億ドルに上ることがFTC（米国連邦取引委員会）の報告で明らかになった。\n2. ソーシャルメディア詐欺による被害額は以前と比べて8倍に増加している。\n3. ソーシャルメディアは、詐欺師が消費者に接触する手段の中で最も大きな被害をもたらす経路となっている。\n\n【背景・ポイント】\nFTCの報告は、ソーシャルメディアが詐欺師にとって最も効果的な接触手段になりつつある深刻な実態を示している。被害額が8倍に急増していることは、詐欺の手口が年々巧妙化・拡大していることを示唆しており、利用者のリテラシー向上やプラットフォーム側の対策強化が急務となっている。",
+    "collected_at": "2026-04-27T20:10:25.077638"
+  },
+  {
+    "title": "OpenAI ends Microsoft legal peril over its $50B Amazon deal",
+    "url": "https://techcrunch.com/2026/04/27/openai-ends-microsoft-legal-peril-over-its-50b-amazon-deal/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. OpenAIはAmazon Web Services（AWS）での製品販売を可能にするため、最大株主のMicrosoftから重要な譲歩を獲得した。\n2. MicrosoftはAWSとの500億ドル規模の契約に関する法的リスクを回避する代わりに、収益分配協定でより多くの収益を得ることになった。\n3. 両社はこの再交渉により、それぞれの利益を確保しつつ関係を継続する合意に至った。\n\n【背景・ポイント】\nOpenAIはMicrosoftとの既存契約により、他クラウドプロバイダーへの製品展開に制約があったとみられるが、今回の合意でAWSとのビジネスが正式に可能となった。Microsoftは法的リスクを避けつつも収益分配の拡充という実利を得ており、AmazonとMicrosoftという競合クラウド企業の狭間でOpenAIが事業拡大を図る構図が鮮明になっている。",
+    "collected_at": "2026-04-27T20:10:31.663027"
+  },
+  {
+    "title": "DeepMind’s David Silver just raised $1.1B to build an AI that learns without human data",
+    "url": "https://techcrunch.com/2026/04/27/deepminds-david-silver-just-raised-1-1b-to-build-an-ai-that-learns-without-human-data/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. 元DeepMind研究者のデビッド・シルバー氏が設立した英国のAIスタートアップ「Ineffable Intelligence」が、11億ドル（約1,650億円）の資金調達に成功した。\n2. 同社の企業評価額は51億ドル（約7,650億円）に達した。\n3. 設立からわずか数ヶ月という超短期間での大型調達として注目を集めている。\n\n【背景・ポイント】\nデビッド・シルバー氏はDeepMindで囲碁AIの「AlphaGo」開発などを主導した著名な研究者で、そのネームバリューが今回の大型調達を後押しした可能性が高い。同社は「人間のデータを使わずに学習するAI」の開発を目指しており、従来のAI開発とは異なるアプローチに大きな期待と投資家の関心が集まっている。",
+    "collected_at": "2026-04-27T20:10:37.422364"
+  }
+];
+
+    const container = document.getElementById("container");
+
+    articles.forEach((article, i) => {
+      const lines = article.summary.split("\n").filter(l => l.trim());
+      const shortSummary = lines.slice(0, 3).join("\n");
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="card-main" onclick="toggle(${i})">
+          <div class="card-top">
+            <div class="title">${article.title}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-short">${shortSummary}</div>
+          <div class="card-footer">
+            <span class="expand-hint" id="hint-${i}">詳細を見る ▾</span>
+          </div>
+        </div>
+        <div class="detail" id="detail-${i}">
+          <div class="detail-text">${article.summary}</div>
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const hint = document.getElementById(`hint-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      hint.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      e.target.closest(".actions").innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      e.target.closest(".actions").innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>

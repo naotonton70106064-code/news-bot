@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 2rem; }
+    .header { max-width: 800px; margin: 0 auto 2rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; cursor: pointer; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-short { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 10px; }
+    .card-footer { display: flex; justify-content: space-between; align-items: center; }
+    .expand-hint { font-size: 11px; color: #888; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.8; white-space: pre-wrap; margin-bottom: 1rem; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: flex; gap: 8px; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+
+  <script>
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    // JSONデータを直接埋め込む（後でPythonが自動生成）
+    const articles = [
+  {
+    "title": "OpenAI CEO apologizes to Tumbler Ridge community",
+    "url": "https://techcrunch.com/2026/04/25/openai-ceo-apologizes-to-tumbler-ridge-community/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. OpenAIのCEOサム・アルトマンが、カナダのタンブラー・リッジの住民に謝罪の手紙を送った。\n2. 謝罪の内容は、最近起きた銃乱射事件の容疑者について、同社が法執行機関に通報しなかったことへのものである。\n3. アルトマンCEOは「深く申し訳なく思っている」と述べた。\n\n【背景・ポイント】\nカナダのタンブラー・リッジで銃乱射事件が発生し、OpenAIは事前に容疑者に関する情報を把握していたにもかかわらず、当局への通報を怠ったとされている。このことは、AI企業が危険な兆候を察知した際の通報義務や安全管理体制のあり方について、改めて問題を提起している。CEOによる公開謝罪は、企業の社会的責任と情報共有の重要性を示す事例として注目される。",
+    "collected_at": "2026-04-25T19:46:44.513493"
+  },
+  {
+    "title": "The climate tech IPO window could finally be cracking open",
+    "url": "https://techcrunch.com/2026/04/25/the-climate-tech-ipo-window-could-finally-be-cracking-open/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. 原子力スタートアップのX-energyが株式公開（IPO）を果たした。\n2. 地熱エネルギースタートアップのFervoもIPOを間近に控えている。\n3. 気候テック分野において、投資家が待ち望んでいたIPOの窓が開き始めている可能性がある。\n\n【背景・ポイント】\n気候テック（クライメートテック）分野はこれまでIPO市場での動きが低調だったが、原子力や地熱といったクリーンエネルギー企業の上場が相次ぐことで、その状況が変わりつつある。これらの動きは、気候テック投資家にとって資金回収や市場拡大の好機となる可能性を示しており、業界全体の資金調達環境の改善につながるか注目される。",
+    "collected_at": "2026-04-25T19:46:50.246512"
+  },
+  {
+    "title": "Why Cohere is merging with Aleph Alpha",
+    "url": "https://techcrunch.com/2026/04/25/why-cohere-is-merging-with-aleph-alpha/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. カナダのAIスタートアップ「Cohere」が、ドイツの「Aleph Alpha」を買収・合併する。\n2. この合併はドイツの大手スーパーマーケットチェーン「リドル」の親会社シュヴァルツ・グループが支援している。\n3. 両社は米国企業が支配するAI市場において、企業向けの「主権あるAI（ソブリンAI）」の選択肢を提供することを目指す。\n\n【背景・ポイント】\n現在のAI業界はOpenAIやGoogleなどアメリカ企業が圧倒的な優位を占めており、欧州や他国の企業・政府はデータ主権やセキュリティの観点から独自のAI基盤を求めている。今回の合併は両国政府の支持も得ており、米国依存からの脱却を図る動きとして注目される。CohereとAleph Alphaが連携することで、企業・公共機関向けにより安全で自律性の高いAIソリューションの提供を強化する狙いがある。",
+    "collected_at": "2026-04-25T19:46:56.915263"
+  }
+];
+
+    const container = document.getElementById("container");
+
+    articles.forEach((article, i) => {
+      const lines = article.summary.split("\n").filter(l => l.trim());
+      const shortSummary = lines.slice(0, 3).join("\n");
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="card-main" onclick="toggle(${i})">
+          <div class="card-top">
+            <div class="title">${article.title}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-short">${shortSummary}</div>
+          <div class="card-footer">
+            <span class="expand-hint" id="hint-${i}">詳細を見る ▾</span>
+          </div>
+        </div>
+        <div class="detail" id="detail-${i}">
+          <div class="detail-text">${article.summary}</div>
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const hint = document.getElementById(`hint-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      hint.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      e.target.closest(".actions").innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      e.target.closest(".actions").innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>

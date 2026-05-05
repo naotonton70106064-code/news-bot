@@ -3,255 +3,123 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>今日のニュース</title>
+  <title>AIニュースまとめ - 毎日のIT・テクノロジーニュースをAIが要約</title>
+  <meta name="description" content="最新のIT・テクノロジーニュースをAIが毎日自動収集・要約。背景解説や今後の予測まで、忙しいあなたのためのニュースダイジェスト。">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
-    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
-    h1 { font-size: 20px; font-weight: 600; }
-    .date { font-size: 13px; color: #888; }
-    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
-    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
-    .card-main { padding: 1.25rem; }
-    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
-    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
-    .source { font-size: 11px; color: #888; white-space: nowrap; }
-    .summary-lines { margin-bottom: 12px; }
-    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
-    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
-    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
-    .detail.open { display: block; }
-    .detail-section { margin-bottom: 1rem; }
-    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
-    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
-    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
-    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
-    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
-    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
-    .actions { display: flex; gap: 8px; }
-    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
-    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
-    .posted { opacity: 0.4; pointer-events: none; }
-    .badge-posted { font-size: 11px; color: #22c55e; }
-    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f8f9fa; color: #111; padding: 2rem 1rem; }
+    .site-header { max-width: 800px; margin: 0 auto 2rem; text-align: center; }
+    .site-header h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .site-header p { font-size: 14px; color: #666; }
+    .nav { max-width: 800px; margin: 0 auto 2rem; display: flex; gap: 12px; justify-content: center; font-size: 13px; }
+    .nav a { color: #1a73e8; text-decoration: none; }
+    .nav a:hover { text-decoration: underline; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .day-card { display: block; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; margin-bottom: 12px; text-decoration: none; color: inherit; transition: box-shadow 0.2s; }
+    .day-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .day-date { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .day-count { font-size: 12px; color: #888; margin-bottom: 8px; }
+    .day-titles { list-style: none; font-size: 13px; color: #444; line-height: 1.8; }
+    .day-titles .more { color: #888; }
+    .weekly-section { margin-bottom: 2rem; }
+    .weekly-section h2 { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
+    .weekly-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .weekly-link { display: inline-block; padding: 8px 16px; background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; font-size: 13px; color: #1a73e8; text-decoration: none; }
+    .weekly-link:hover { background: #f0f4ff; }
+    .footer { max-width: 800px; margin: 3rem auto 0; text-align: center; font-size: 11px; color: #aaa; line-height: 1.8; }
+    .footer a { color: #888; text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>今日のニュース</h1>
-    <span class="date" id="date"></span>
+  <div class="site-header">
+    <h1>AIニュースまとめ</h1>
+    <p>最新のIT・テクノロジーニュースをAIが毎日自動収集・要約</p>
   </div>
-  <div class="container" id="container"></div>
-  <div class="footer-note">
-    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  <nav class="nav">
+    <a href="privacy.html">プライバシーポリシー</a>
+    <a href="about.html">運営者情報</a>
+    <a href="contact.html">お問い合わせ</a>
+  </nav>
+  <div class="container">
+    
+    <section class="weekly-section">
+      <h2>週次サマリー</h2>
+      <div class="weekly-list"><a href="articles/weekly-2026-W18.html" class="weekly-link">2026-W18</a></div>
+    </section>
+    <section>
+      <h2 style="font-size:18px;font-weight:600;margin-bottom:12px;">記事一覧</h2>
+      
+    <a href="articles/2026-05-04.html" class="day-card">
+      <div class="day-date">2026年05月04日（月）</div>
+      <div class="day-count">6件の記事</div>
+      <ul class="day-titles"><li>画像AI機能がアプリ成長を牽引——チャットボット更新の6.5倍のダウンロード数を記録も収益化が課題</li><li>ケイティ・ホーン、暗号資産・ブロックチェーン特化の新ベンチャーファンドで総額10億ドルの資金調達に成功</li><li>cPanelの重大脆弱性を悪用したハッキング攻撃が継続中―数千のWebサイトに深刻な被害</li><li class="more">...他3件</li></ul>
+    </a>
+    <a href="articles/2026-05-03.html" class="day-card">
+      <div class="day-date">2026年05月03日（日）</div>
+      <div class="day-count">6件の記事</div>
+      <ul class="day-titles"><li>アカデミー賞がAI生成の俳優・脚本を対象外に｜映画業界に新たな規制</li><li>Ask.com（旧Jeeves）がサービス終了——IAC、検索事業からの撤退を正式発表</li><li>Netflixがグレタ・ガーウィグ監督『ナルニア国物語』を2027年に延期——大規模劇場公開へ戦略転換</li><li class="more">...他3件</li></ul>
+    </a>
+    <a href="articles/2026-05-02.html" class="day-card">
+      <div class="day-date">2026年05月02日（土）</div>
+      <div class="day-count">3件の記事</div>
+      <ul class="day-titles"><li>Netflix delays Greta Gerwig’s ‘Narnia’ movie for big theatrical push in 2027</li><li>The best AI dictation apps, tested and ranked</li><li>Beyond Lovable and Mistral: 21 European startups to watch</li></ul>
+    </a>
+    <a href="articles/2026-05-01.html" class="day-card">
+      <div class="day-date">2026年05月01日（金）</div>
+      <div class="day-count">3件の記事</div>
+      <ul class="day-titles"><li>Coatue has a plan to buy up land for data centers, possibly for Anthropic</li><li>Pentagon inks deals with Nvidia, Microsoft, and AWS to deploy AI on classified networks</li><li>Ubuntu services hit by outages after DDoS attack</li></ul>
+    </a>
+    <a href="articles/2026-04-30.html" class="day-card">
+      <div class="day-date">2026年04月30日（木）</div>
+      <div class="day-count">3件の記事</div>
+      <ul class="day-titles"><li>Rivian downsizes DOE loan to $4.5B, while boosting capacity of Georgia factory</li><li>Hackers are actively exploiting a bug in cPanel, used by millions of websites</li><li>After dissing Anthropic for limiting Mythos, OpenAI restricts access to Cyber, too</li></ul>
+    </a>
+    <a href="articles/2026-04-29.html" class="day-card">
+      <div class="day-date">2026年04月29日（水）</div>
+      <div class="day-count">3件の記事</div>
+      <ul class="day-titles"><li>Parallel Web Systems hits $2B valuation five months after its last big raise</li><li>Google Photos uses AI to make the iconic closet from ‘Clueless’ a reality</li><li>More Gemini features are coming to Google TV</li></ul>
+    </a>
+    <a href="articles/2026-04-28.html" class="day-card">
+      <div class="day-date">2026年04月28日（火）</div>
+      <div class="day-count">3件の記事</div>
+      <ul class="day-titles"><li>Amazon is already offering new OpenAI products on AWS</li><li>Amazon launches an AI-powered audio Q&A experience on product pages</li><li>Match Group invests $100M in Sniffies, a cruising app for gay men</li></ul>
+    </a>
+    <a href="articles/2026-04-27.html" class="day-card">
+      <div class="day-date">2026年04月27日（月）</div>
+      <div class="day-count">3件の記事</div>
+      <ul class="day-titles"><li>Consumers lost $2.1 billion to social media scams in 2025, FTC reports</li><li>OpenAI ends Microsoft legal peril over its $50B Amazon deal</li><li>DeepMind’s David Silver just raised $1.1B to build an AI that learns without human data</li></ul>
+    </a>
+    <a href="articles/2026-04-26.html" class="day-card">
+      <div class="day-date">2026年04月26日（日）</div>
+      <div class="day-count">3件の記事</div>
+      <ul class="day-titles"><li>TechCrunch Mobility: Elon’s admission</li><li>To buy this Bay Area home, you’ll need Anthropic equity</li><li>SpeakOn’s dictation device is a good idea marred by platform limitations</li></ul>
+    </a>
+    <a href="articles/2026-04-25.html" class="day-card">
+      <div class="day-date">2026年04月25日（土）</div>
+      <div class="day-count">3件の記事</div>
+      <ul class="day-titles"><li>OpenAI CEO apologizes to Tumbler Ridge community</li><li>The climate tech IPO window could finally be cracking open</li><li>Why Cohere is merging with Aleph Alpha</li></ul>
+    </a>
+    <a href="articles/2026-04-24.html" class="day-card">
+      <div class="day-date">2026年04月24日（金）</div>
+      <div class="day-count">3件の記事</div>
+      <ul class="day-titles"><li>ComfyUI hits $500M valuation as creators seek more control over AI-generated media</li><li>X launches standalone XChat app on iOS</li><li>Google to invest up to $40B in Anthropic in cash and compute</li></ul>
+    </a>
+    <a href="articles/2026-04-23.html" class="day-card">
+      <div class="day-date">2026年04月23日（木）</div>
+      <div class="day-count">3件の記事</div>
+      <ul class="day-titles"><li>Instagram tests a new ‘Instants’ app for sharing disappearing photos</li><li>Meet Noscroll, an AI bot that does your doomscrolling for you</li><li>Trump’s pick to run US cyber agency CISA asks to drop out</li></ul>
+    </a>
+    <a href="articles/2026-04-22.html" class="day-card">
+      <div class="day-date">2026年04月22日（水）</div>
+      <div class="day-count">3件の記事</div>
+      <ul class="day-titles"><li>How SpaceX preempted a $2B fundraise with a $60B buyout offer</li><li>France confirms data breach at government agency that manages citizens’ IDs</li><li>Apple fixes bug that cops used to extract deleted chat messages from iPhones</li></ul>
+    </a>
+    </section>
   </div>
-
-  <script>
-    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
-
-    const articles = [
-  {
-    "title": "Image AI models now drive app growth, beating chatbot upgrades",
-    "japanese_title": "画像AI機能がアプリ成長を牽引——チャットボット更新の6.5倍のダウンロード数を記録も収益化が課題",
-    "url": "https://techcrunch.com/2026/05/04/image-ai-models-now-drive-app-growth-beating-chatbot-upgrades/",
-    "source": "TechCrunch",
-    "summary_lines": [
-      "1. Appfiguresの調査によると、画像生成AIモデルの新規リリースはチャットボット系のアップグレードと比べて6.5倍ものダウンロード増加をもたらすことが判明した。",
-      "2. 視覚系AIモデルはユーザーの注目を集める強力なドライバーとなっており、アプリ市場における成長エンジンとして台頭している。",
-      "3. しかし、ダウンロード急増の多くは一時的なスパイクに留まり、実際の収益（マネタイズ）への転換には多くのアプリが苦戦している。"
-    ],
-    "background": "ChatGPTをはじめとするテキスト系チャットボットが市場を席巻した後、MidjourneyやStable Diffusionなどの画像生成AIの普及により、ユーザーの関心は視覚的なAI体験へとシフトしている。アプリストア市場全体でAI関連アプリの競争が激化する中、各社は差別化のために新たなビジュアルAI機能を競うように実装してきた。こうした流れを受け、Appfiguresがアプリのダウンロード動向とAI機能の種類の相関関係を分析・比較した。",
-    "points": [
-      "・ 画像AIモデルの導入はダウンロード数においてチャットボット系更新を6.5倍上回るという具体的かつ大きな差が生じている",
-      "・ ダウンロードの急増（スパイク）は認知・話題性の高さを示す一方、サブスクリプションや課金への転換率が低く、ビジネスモデルとしての持続性に疑問符がつく",
-      "・ 「ユーザーを集めること」と「収益を生むこと」のギャップが、AI特化アプリ業界の構造的課題として浮き彫りになっている"
-    ],
-    "prediction": "画像AIを軸にしたアプリは引き続きダウンロード数では優位に立つ一方、収益化戦略の巧拙がアプリ事業者の生死を分ける重要な競争軸になっていくと予想される。特にフリーミアムモデルの最適化や、AI生成画像を活用したサブスクリプション設計の工夫が鍵となるだろう。長期的には、単なる「物珍しさ」を超えた実用的価値を提供できるアプリのみが市場に残っていく淘汰が進むと見られる。",
-    "ai_interpretation": "このニュースが示す本質は、「注目を集める技術」と「価値を持続的に提供する技術」は必ずしも一致しないという、テクノロジービジネスの普遍的なジレンマである。画像AIの視覚的インパクトはユーザーの初期行動（ダウンロード）を強く動機づけるが、習慣的使用や課金行動に結びつけるためには体験設計やユースケースの深化が必要だ。AIブームの中で真に持続可能なビジネスを構築するには、技術の派手さではなくユーザーの「生活への組み込み」を設計できるかどうかが問われている。",
-    "collected_at": "2026-05-04T20:18:37.302929"
-  },
-  {
-    "title": "Katie Haun raises $1B for new venture funds",
-    "japanese_title": "ケイティ・ホーン、暗号資産・ブロックチェーン特化の新ベンチャーファンドで総額10億ドルの資金調達に成功",
-    "url": "https://techcrunch.com/2026/05/04/katie-haun-raises-1-billion-for-new-venture-funds/",
-    "source": "TechCrunch",
-    "summary_lines": [
-      "1. ケイティ・ホーン氏が月曜日に、新ファンドで総額10億ドル（約1,500億円）の資金調達完了を発表した。",
-      "2. 調達資金はHaun Venturesのファンド群を通じて運用される予定である。",
-      "3. 同ファンドは引き続き暗号資産・ブロックチェーン関連スタートアップへの投資を主軸とする。"
-    ],
-    "background": "ケイティ・ホーン氏は元連邦検察官でありa16z（アンドリーセン・ホロウィッツ）の元パートナーという異色の経歴を持ち、2022年に独立してHaun Venturesを設立した。暗号資産市場は「クリプト冬」と呼ばれる低迷期を経験したが、ビットコインETFの承認などを背景に市場が回復局面を迎えつつある。このような環境下で、大型ファンドの組成は機関投資家のクリプトセクターへの信頼回復を示すものといえる。",
-    "points": [
-      "・ 10億ドルという大規模な調達額は、クリプト冬後の市場回復への強い投資家信任を示す",
-      "・ 暗号資産・ブロックチェーンに特化した「テーゼ（投資仮説）」を一貫して維持している点が際立つ",
-      "・ ケイティ・ホーン氏の法執行・規制分野の知見が、規制不透明な暗号資産業界での差別化要因となっている"
-    ],
-    "prediction": "Haun Venturesは調達した資金をもとに、Web3インフラ・DeFi・ブロックチェーンゲームなど複数の分野のスタートアップへ積極的に投資を展開していくと見られる。米国における暗号資産規制の明確化が進む中、同ファンドの規制対応力が投資先企業にとって大きなアドバンテージになるだろう。また、大型ファンドの成立が呼び水となり、他の機関投資家のクリプト分野への参入も加速する可能性がある。",
-    "ai_interpretation": "このニュースの本質は、単なる大型資金調達の発表にとどまらず、「クリプト冬」を経てもブロックチェーン技術への長期的な投資価値を信じる機関投資家が依然として存在するという市場センチメントの象徴である。ケイティ・ホーン氏のような規制・法律の専門知識を持つ人物がクリプト投資の最前線に立つことは、業界が投機的フェーズから成熟・制度化フェーズへ移行しつつあることを示唆している。今後のWeb3産業の発展において、資金力と規制対応力を兼ね備えたプレイヤーが主導権を握る構図が一層鮮明になるだろう。",
-    "collected_at": "2026-05-04T20:18:55.243661"
-  },
-  {
-    "title": "Hackers are still exploiting the cPanel bug to gain control of thousands of websites",
-    "japanese_title": "cPanelの重大脆弱性を悪用したハッキング攻撃が継続中―数千のWebサイトに深刻な被害",
-    "url": "https://techcrunch.com/2026/05/04/hackers-are-still-exploiting-the-cpanel-bug-to-gain-control-of-thousands-of-websites/",
-    "source": "TechCrunch",
-    "summary_lines": [
-      "1. 人気Webホスティングソフトウェア「cPanel・WHM」に重大な脆弱性が発見・公開された。",
-      "2. 脆弱性の開示から数日が経過した現在も、ハッカーによる悪用攻撃が継続している。",
-      "3. 数千規模のWebサイトが不正アクセス・制御奪取のリスクにさらされている。"
-    ],
-    "background": "cPanelおよびWHMは世界中のレンタルサーバーや共有ホスティング環境で広く使用されている管理ソフトウェアであり、その普及度の高さから攻撃者にとって格好の標的となっている。今回発見された脆弱性は「重大（クリティカル）」レベルに分類されており、悪用に成功した攻撃者はWebサイトの完全な制御権を奪取できる危険性がある。脆弱性情報が公開されると同時に、それを悪用する攻撃が急増するという典型的なパターンが今回も繰り返されている。",
-    "points": [
-      "・ 脆弱性公開後も攻撃が止まらない「開示後リスク」の深刻さ",
-      "・ cPanel/WHMの広範な普及により、被害が単一サイトにとどまらず大規模に波及する可能性",
-      "・ パッチ適用やアップデート対応が遅れているサーバー管理者が多数存在していること"
-    ],
-    "prediction": "脆弱性情報がサイバー犯罪者コミュニティに広く共有されるにつれ、攻撃の規模はさらに拡大する可能性が高い。cPanel開発元はセキュリティパッチを提供しているとみられるが、世界中の膨大な数のサーバー管理者がタイムリーに更新を適用するかどうかが被害拡大の鍵を握る。放置されたサーバーはマルウェア配布やフィッシング詐欺の踏み台として二次被害にも利用されるリスクがある。",
-    "ai_interpretation": "このニュースが示す本質的な問題は、「脆弱性の公開」が必ずしも即座な安全をもたらさず、むしろ攻撃者への「攻撃マニュアルの提供」になり得るというセキュリティのジレンマである。広く普及したインフラソフトウェアほど攻撃の費用対効果が高く、組織的なサイバー犯罪集団にとって最優先ターゲットになりやすい構造的問題を浮き彫りにしている。企業や個人サイト運営者にとって、セキュリティパッチを迅速に適用する運用体制の整備が、もはや選択肢ではなく必須要件であることを改めて示す事例といえる。",
-    "collected_at": "2026-05-04T20:19:12.800972"
-  },
-  {
-    "title": "IPアドレスを理解する（前編）",
-    "japanese_title": "IPアドレスの基礎を徹底解説！TCP/IPモデルのインターネット層における主要プロトコルIPとは",
-    "url": "https://xtech.nikkei.com/atcl/nxt/mag/nnw/18/071500225/041700010/",
-    "source": "全記事新着 - 日経クロステック",
-    "summary_lines": [
-      "1. 本記事はTCP/IPモデルのインターネット層における主要プロトコル「IP（Internet Protocol）」を解説する技術教育シリーズの一環である。",
-      "2. 前回のデータリンク層（イーサネット）の解説に続き、一段上の層であるインターネット層の仕組みに焦点を当てた構成となっている。",
-      "3. 「前編」という表記から、IPアドレスに関する内容は複数回にわたって段階的に説明される予定であることが示されている。"
-    ],
-    "background": "クラウドやネットワークエンジニアリングへの需要が高まる中、TCP/IPの基礎知識はIT業界における必須スキルとして改めて注目されている。本シリーズはTCP/IPモデルを下位層から順番に積み上げ式で解説しており、読者が体系的に理解できるよう設計されている。特にIPアドレスはネットワーク通信の根幹をなす概念であり、初学者から中級者まで幅広い層に学習ニーズが存在する。",
-    "points": [
-      "・TCP/IPモデルの各層を順序立てて解説する連載形式であり、体系的な学習に適した構成である",
-      "・データリンク層（イーサネット）からインターネット層（IP）へと階層を上りながら理解を深める教育的アプローチが取られている",
-      "・「前編」として分割されていることで、IPアドレスという複雑なテーマを消化しやすい単位に分けて提供している"
-    ],
-    "prediction": "後編ではIPアドレスの具体的な構造（IPv4/IPv6の違いやサブネットマスクなど）についてより詳細な解説が行われると予想される。さらに連載が続けばトランスポート層（TCP/UDP）やアプリケーション層へと解説が進み、TCP/IP全体像の理解へとつながる流れになるだろう。こうした基礎技術の解説コンテンツは、IT人材育成の観点からも継続的な需要が見込まれる。",
-    "ai_interpretation": "このニュース（記事）の本質は、難解になりがちなネットワーク技術を「階層モデル」という整理された枠組みで段階的に教えるという教育的設計にある。IPアドレスはインターネットの根幹をなす技術でありながら、その仕組みを正確に理解しているエンジニアは意外と少なく、こうした基礎回帰型コンテンツには普遍的な価値がある。デジタル化が加速する社会においてネットワーク知識の民主化を促す取り組みとして、技術者育成における重要な役割を担っていると言える。",
-    "collected_at": "2026-05-04T20:19:30.751682"
-  },
-  {
-    "title": "EDR",
-    "japanese_title": "EDR（エンドポイント検知・対応）とは？パソコン・サーバーをマルウェアから守る最新セキュリティ製品を解説",
-    "url": "https://xtech.nikkei.com/atcl/nxt/mag/nnw/18/091900172/041600032/",
-    "source": "全記事新着 - 日経クロステック",
-    "summary_lines": [
-      "1. EDR（Endpoint Detection and Response）は、パソコンやサーバーなどのエンドポイントをマルウェアなどの脅威から保護するセキュリティ製品である。",
-      "2. 従来のウイルス対策ソフトと異なり、脅威の「検知」だけでなく「対応・対処」までを一体的に担う点が特徴である。",
-      "3. サイバー攻撃の高度化・複雑化を背景に、企業や組織におけるEDR導入の重要性が急速に高まっている。"
-    ],
-    "background": "従来型のアンチウイルスソフトは既知のマルウェアのパターン照合を主体としており、巧妙化する標的型攻撃やゼロデイ攻撃への対応に限界が生じていた。リモートワークの普及によりエンドポイントが社外に分散し、ネットワーク境界での防御だけでは不十分な状況が加速した。こうした環境変化を受け、端末レベルでリアルタイムに脅威を検知・分析・対応できるEDRへの注目が世界的に高まっている。",
-    "points": [
-      "・ 単なる「防御」にとどまらず、侵入後の脅威検知・調査・封じ込め・復旧までを包括的にカバーする点",
-      "・ ログや挙動データをリアルタイムで収集・分析し、未知の脅威にも対応できる高い検知精度",
-      "・ ランサムウェアや標的型攻撃が急増する中、企業の情報セキュリティ対策における必須ツールとしての位置づけが強まっている点"
-    ],
-    "prediction": "AIや機械学習との統合が進み、EDRの脅威検知精度はさらに向上していくと予測される。また、EDRをクラウドやネットワーク監視と統合した「XDR（Extended Detection and Response）」への進化も加速するとみられる。中小企業を含む幅広い組織への導入拡大が進む一方、運用人材の不足が課題となり、マネージドサービス（MDR）の需要も増加するだろう。",
-    "ai_interpretation": "EDRの普及は、サイバーセキュリティの考え方が「侵入を防ぐ」という予防中心から「侵入を前提とした迅速な検知・対応」へとパラダイムシフトしていることを象徴している。これは「完全な防御は不可能」という現実を業界が受け入れ、被害を最小化するレジリエンス（回復力）重視の戦略への転換を示すものだ。エンドポイントの保護強化は、デジタル社会における企業活動の継続性を守る上で、今や経営レベルの優先課題となりつつある。",
-    "collected_at": "2026-05-04T20:19:48.708525"
-  },
-  {
-    "title": "DMZって何？",
-    "japanese_title": "DMZ（非武装地帯）とは？社内ネットワークを守るセキュリティの要衝を徹底解説",
-    "url": "https://xtech.nikkei.com/atcl/nxt/mag/nnw/18/041800014/041600107/",
-    "source": "全記事新着 - 日経クロステック",
-    "summary_lines": [
-      "1. DMZ（DeMilitarized Zone）とは、Webサーバーやメールサーバーなどインターネットに公開するサーバーを設置するための専用ネットワーク領域である。",
-      "2. 外部からの攻撃が公開サーバーに及んだ場合でも、社内LAN（内部ネットワーク）への被害拡大を食い止める役割を担う。",
-      "3. インターネットと社内LANの「緩衝地帯」として機能し、企業のネットワークセキュリティ設計における基本的かつ重要な概念である。"
-    ],
-    "background": "インターネットの普及に伴い、企業が外部向けにWebサーバーやメールサーバーを公開することが一般化し、サイバー攻撃のリスクも飛躍的に増大した。公開サーバーは性質上、不特定多数からアクセスされるため、攻撃の入口になりやすく、内部ネットワークとの直接接続は非常に危険であった。こうした背景からDMZという概念が生まれ、ネットワークセキュリティの標準的な設計手法として広く採用されるようになった。",
-    "points": [
-      "・ DMZはファイアウォールによってインターネット・DMZ・社内LANの3層構造に分離されており、通信経路を厳密に制御できる点が特徴である。",
-      "・ 万が一DMZ内のサーバーが侵害されても、社内LANへのアクセスは別途遮断されるため、被害の局所化（封じ込め）が可能になる。",
-      "・ クラウド化が進む現代においても、オンプレミス環境やハイブリッド環境でDMZの概念は依然として有効であり、ゼロトラストセキュリティとの組み合わせも議論されている。"
-    ],
-    "prediction": "クラウドサービスやSaaS活用の拡大により、従来型の物理的DMZ構成は変化しつつあるが、論理的なネットワーク分離という概念自体はクラウド環境にも引き継がれていくと予測される。また、ランサムウェアや標的型攻撃の高度化を背景に、DMZの設計はより精緻化され、ゼロトラストアーキテクチャと融合した新しい形へ進化していくと考えられる。企業のセキュリティ担当者にとって、DMZの正しい理解と適切な運用はますます重要性を増すだろう。",
-    "ai_interpretation": "DMZの本質は「信頼レベルの異なるネットワークを明確に分離し、リスクを局所化する」という思想にあり、これはサイバーセキュリティの根本原則である「最小権限」や「多層防御」の具体的な実装例といえる。技術的な仕組みだけでなく、「攻撃されることを前提に設計する」というセキュリティマインドセットを象徴しており、現代のセキュリティ戦略全体に通じる重要な示唆を含んでいる。DMZを正しく理解することは、単なる技術知識の習得にとどまらず、組織全体のリスク管理思考を高める第一歩となる。",
-    "collected_at": "2026-05-04T20:20:06.124177"
-  }
-];
-    const container = document.getElementById("container");
-
-    function cleanText(text) {
-  return text ? text.replace(/\*\*/g, "") : "";
-}
-
-
-    articles.forEach((article, i) => {
-      const card = document.createElement("div");
-      card.className = "card";
-
-      const displayTitle = article.japanese_title || article.title;
-
-      const summaryHTML = (article.summary_lines || [])
-        .map(l => `<div class="summary-line">${l}</div>`)
-        .join("");
-
-      const pointsHTML = (article.points || [])
-        .map(l => `<div class="detail-point">${l}</div>`)
-        .join("");
-
-      card.innerHTML = `
-        <div class="card-main">
-          <div class="card-top">
-            <div class="title">${displayTitle}</div>
-            <div class="source">${article.source}</div>
-          </div>
-          <div class="summary-lines">${summaryHTML}</div>
-          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
-        </div>
-        <div class="detail" id="detail-${i}">
-          <div class="detail-section">
-            <div class="detail-label">背景・経緯</div>
-            <div class="detail-text">${cleanText(article.background)}</div>
-          </div>
-          <div class="detail-section">
-            <div class="detail-label">注目ポイント</div>
-            ${pointsHTML}
-          </div>
-          <div class="detail-section">
-            <div class="detail-label">今後の予測</div>
-            <div class="detail-text">${cleanText(article.prediction)}</div>
-          </div>
-          <div class="detail-section">
-            <div class="ai-badge">AIの解釈</div>
-            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
-          </div>
-          <div class="detail-footer">
-            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
-            <div class="actions" id="actions-${i}">
-              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
-              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
-            </div>
-          </div>
-        </div>
-      `;
-      container.appendChild(card);
-    });
-
-    function toggle(i) {
-      const detail = document.getElementById(`detail-${i}`);
-      const btn = document.getElementById(`btn-${i}`);
-      const isOpen = detail.classList.contains("open");
-      detail.classList.toggle("open", !isOpen);
-      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
-    }
-
-    function post(e, i) {
-      e.stopPropagation();
-      const card = e.target.closest(".card");
-      card.classList.add("posted");
-      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
-      alert("投稿しました！（X連携は次のステップで実装します）");
-    }
-
-    function skip(e, i) {
-      e.stopPropagation();
-      const card = e.target.closest(".card");
-      card.classList.add("posted");
-      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
-    }
-  </script>
+  <div class="footer">
+    <p>本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。</p>
+    <p><a href="privacy.html">プライバシーポリシー</a> | <a href="about.html">運営者情報</a> | <a href="contact.html">お問い合わせ</a></p>
+  </div>
 </body>
 </html>

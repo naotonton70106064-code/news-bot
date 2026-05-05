@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+from pathlib import Path
 from collector import collect_articles
 from summarizer import summarize_article
 
@@ -49,19 +50,24 @@ def parse_summary(summary_text):
 
     return sections
 
-def generate_dashboard(results):
+def generate_article_page(results):
     with open("dashboard.html", "r", encoding="utf-8") as f:
         html = f.read()
 
     articles_json = json.dumps(results, ensure_ascii=False, indent=2)
     html = html.replace("__ARTICLES__", articles_json)
 
-    output_filename = f"dashboard_{datetime.now().strftime('%Y%m%d')}.html"
+    # articles/ ディレクトリに保存
+    articles_dir = Path("articles")
+    articles_dir.mkdir(exist_ok=True)
+
+    date_str = datetime.now().strftime('%Y-%m-%d')
+    output_filename = articles_dir / f"{date_str}.html"
     with open(output_filename, "w", encoding="utf-8") as f:
         f.write(html)
 
-    print(f"ダッシュボード生成: {output_filename}")
-    return output_filename
+    print(f"記事ページ生成: {output_filename}")
+    return str(output_filename)
 
 def main():
     print("ニュース収集を開始します...")
@@ -88,12 +94,17 @@ def main():
             "collected_at": datetime.now().isoformat(),
         })
 
-    filename = f"news_{datetime.now().strftime('%Y%m%d')}.json"
+    # articles/ ディレクトリにJSONも保存
+    articles_dir = Path("articles")
+    articles_dir.mkdir(exist_ok=True)
+
+    date_str = datetime.now().strftime('%Y-%m-%d')
+    filename = articles_dir / f"{date_str}.json"
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
     print(f"\nJSONに保存: {filename}")
-    generate_dashboard(results)
+    generate_article_page(results)
 
 
 if __name__ == "__main__":

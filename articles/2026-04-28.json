@@ -1,0 +1,23 @@
+[
+  {
+    "title": "Amazon is already offering new OpenAI products on AWS",
+    "url": "https://techcrunch.com/2026/04/28/amazon-is-already-offering-new-openai-products-on-aws/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. OpenAIがマイクロソフトとの独占契約を終了させた翌日、AWSがOpenAIの各種モデルの提供を発表した。\n2. AWSでは新たなエージェントサービスを含む複数のOpenAI製品が利用可能になる。\n3. OpenAIのクラウドパートナーシップが、マイクロソフト独占から複数クラウドへと拡大する動きを示している。\n\n【背景・ポイント】\nこれまでOpenAIはマイクロソフト（Azure）との独占的なクラウド提携関係にあったが、その制約が解消されたことでAWS（Amazon Web Services）への展開が即座に実現した。OpenAIにとっては販売チャネルの多様化・拡大を意味し、クラウド業界における競争が激化することが予想される。AWSユーザーはOpenAIの最新モデルやエージェント機能をAzureを介さずに直接活用できるようになる。",
+    "collected_at": "2026-04-28T20:19:34.604681"
+  },
+  {
+    "title": "Amazon launches an AI-powered audio Q&A experience on product pages",
+    "url": "https://techcrunch.com/2026/04/28/amazon-launches-an-ai-powered-audio-qa-experience-on-product-pages/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. Amazonが商品ページに「Join the chat」という新機能を導入した。\n2. ユーザーは商品に関する質問を投稿できる。\n3. AIが音声形式で回答を生成・提供する仕組みとなっている。\n\n【背景・ポイント】\nAmazonは生成AIを活用したショッピング体験の強化を積極的に進めており、今回の音声Q&A機能はその一環と見られる。テキストではなく音声で回答を提供することで、より直感的でユーザーフレンドリーな商品情報の取得が可能になる。Eコマース分野におけるAI活用競争が激化する中、Amazonが差別化を図る新たな取り組みと言える。",
+    "collected_at": "2026-04-28T20:19:39.226646"
+  },
+  {
+    "title": "Match Group invests $100M in Sniffies, a cruising app for gay men",
+    "url": "https://techcrunch.com/2026/04/28/match-group-invests-100-million-in-sniffies-a-cruising-app-for-gay-men/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. マッチグループが、ゲイ男性向けの出会い系アプリ「Sniffies」に1億ドル（約150億円）を投資した。\n2. Sniffiesは「クルージング（出会い探し）」に特化したゲイ向けのモバイルアプリである。\n3. この投資はマッチグループがモバイルユーザーをオンラインロマンスに再び引き付けようとする最新の試みである。\n\n【背景・ポイント】\nマッチグループはTinder、Hingeなど多数の出会い系アプリを運営する大手企業だが、近年ユーザーの関心低下に直面している。Sniffiesへの大型投資は、LGBTQコミュニティという特定のニッチ市場を取り込み、成長を図る戦略の一環とみられる。ゲイ男性向けの出会いアプリ市場は既存のGrindrなどが強いシェアを持つ競争分野であり、今後の展開が注目される。",
+    "collected_at": "2026-04-28T20:19:47.025662"
+  }
+]

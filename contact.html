@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>お問い合わせ - AIニュースまとめ</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f8f9fa; color: #111; padding: 2rem 1rem; line-height: 1.8; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .back-link { display: inline-block; margin-bottom: 1rem; font-size: 13px; color: #1a73e8; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 1.5rem; }
+    p { font-size: 14px; color: #333; margin-bottom: 1rem; }
+    form { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.5rem; margin-top: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 4px; }
+    input, textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; }
+    input:focus, textarea:focus { outline: none; border-color: #1a73e8; }
+    textarea { resize: vertical; min-height: 120px; }
+    .submit-btn { display: inline-block; padding: 10px 24px; background: #111; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .submit-btn:hover { background: #333; }
+    .note { font-size: 12px; color: #888; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="index.html" class="back-link">&larr; トップに戻る</a>
+    <h1>お問い合わせ</h1>
+    <p>当サイトに関するご質問・ご意見・ご要望がございましたら、以下のフォームよりお問い合わせください。</p>
+
+    <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+      <div class="form-group">
+        <label for="name">お名前</label>
+        <input type="text" id="name" name="name" required>
+      </div>
+      <div class="form-group">
+        <label for="email">メールアドレス</label>
+        <input type="email" id="email" name="_replyto" required>
+      </div>
+      <div class="form-group">
+        <label for="subject">件名</label>
+        <input type="text" id="subject" name="subject" required>
+      </div>
+      <div class="form-group">
+        <label for="message">お問い合わせ内容</label>
+        <textarea id="message" name="message" required></textarea>
+      </div>
+      <button type="submit" class="submit-btn">送信する</button>
+    </form>
+
+    <p class="note">※ お問い合わせフォームを利用するには、Formspreeの設定が必要です。設定完了までは、GitHubリポジトリのIssuesからもお問い合わせいただけます。</p>
+  </div>
+</body>
+</html>

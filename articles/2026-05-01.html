@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 2rem; }
+    .header { max-width: 800px; margin: 0 auto 2rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; cursor: pointer; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-short { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 10px; }
+    .card-footer { display: flex; justify-content: space-between; align-items: center; }
+    .expand-hint { font-size: 11px; color: #888; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.8; white-space: pre-wrap; margin-bottom: 1rem; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: flex; gap: 8px; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+
+  <script>
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    // JSONデータを直接埋め込む（後でPythonが自動生成）
+    const articles = [
+  {
+    "title": "Coatue has a plan to buy up land for data centers, possibly for Anthropic",
+    "url": "https://techcrunch.com/2026/05/01/coatue-has-a-plan-to-buy-up-land-for-data-centers-possibly-for-anthropic/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. 大手ベンチャーキャピタルのCoatueが、データセンター用の土地を購入する新事業を立ち上げた。\n2. 同社は大規模な電力源の近くに位置する土地を買収していると報じられている。\n3. この動きはAI企業Anthropicのためである可能性も示唆されている。\n\n【背景・ポイント】\nデータセンターの運営には膨大な電力が必要なため、発電所や送電網に近い土地の確保が戦略的に重要となっている。CoatueはAnthropicをはじめとするAI企業への投資でも知られており、今回の土地取得はAIインフラ需要の急拡大に対応した動きとみられる。AI産業の成長に伴い、データセンター用地の争奪戦が加速している状況を反映している。",
+    "collected_at": "2026-05-01T20:06:05.348794"
+  },
+  {
+    "title": "Pentagon inks deals with Nvidia, Microsoft, and AWS to deploy AI on classified networks",
+    "url": "https://techcrunch.com/2026/05/01/pentagon-inks-deals-with-nvidia-microsoft-and-aws-to-deploy-ai-on-classified-networks/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. 米国防総省（ペンタゴン）は、Nvidia・Microsoft・AWSと機密ネットワーク上へのAI導入に関する契約を締結した。\n2. この動きは、国防総省がAIベンダーの多様化を推進する方針を強化する中で行われた。\n3. 背景には、AI企業Anthropicとの利用規約をめぐる論争的な対立があった。\n\n【背景・ポイント】\n国防総省はAnthropic社とAIモデルの利用条件について対立したことを受け、特定のベンダーへの依存リスクを軽減するため、複数の大手テクノロジー企業との契約分散化を加速させている。今回のNvidia・Microsoft・AWSとの契約は、機密性の高い軍事ネットワーク環境へのAI技術導入を目的としており、国防分野におけるAI活用の本格化を示している。",
+    "collected_at": "2026-05-01T20:06:12.161766"
+  },
+  {
+    "title": "Ubuntu services hit by outages after DDoS attack",
+    "url": "https://techcrunch.com/2026/05/01/ubuntu-services-hit-by-outages-after-ddos-attack/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. ハクティビストグループがUbuntuおよびCanonicalの複数のウェブサイトに対してDDoS攻撃を実施した。\n2. この攻撃により、複数のUbuntu・Canonicalのウェブサービスが停止・障害状態に陥った。\n3. ユーザーはLinuxベースのOS（Ubuntu）のアップデートが行えない状態となった。\n\n【背景・ポイント】\nDDoS（分散型サービス妨害）攻撃とは、大量のトラフィックをターゲットのサーバーに送り込みサービスを停止させるサイバー攻撃手法です。今回の攻撃はハクティビスト（政治的・社会的主張を持つハッカー集団）によるものとされており、単なる金銭目的ではなく何らかの思想的動機が背景にある可能性があります。Ubuntuは世界中で広く利用されているLinuxディストリビューションであるため、この障害は多数のユーザーや企業に影響を与えたとみられます。",
+    "collected_at": "2026-05-01T20:06:18.638987"
+  }
+];
+
+    const container = document.getElementById("container");
+
+    articles.forEach((article, i) => {
+      const lines = article.summary.split("\n").filter(l => l.trim());
+      const shortSummary = lines.slice(0, 3).join("\n");
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="card-main" onclick="toggle(${i})">
+          <div class="card-top">
+            <div class="title">${article.title}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-short">${shortSummary}</div>
+          <div class="card-footer">
+            <span class="expand-hint" id="hint-${i}">詳細を見る ▾</span>
+          </div>
+        </div>
+        <div class="detail" id="detail-${i}">
+          <div class="detail-text">${article.summary}</div>
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const hint = document.getElementById(`hint-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      hint.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      e.target.closest(".actions").innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      e.target.closest(".actions").innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>
