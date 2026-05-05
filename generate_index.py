@@ -54,7 +54,7 @@ def generate_index():
         week_days = sorted(weeks[week_key], key=lambda d: d["date"], reverse=True)
         sunday = datetime.strptime(week_key, "%Y-%m-%d")
         saturday = sunday + timedelta(days=6)
-        label = f"{sunday.strftime('%m/%d')}〜{saturday.strftime('%m/%d')}"
+        label = f"{sunday.strftime('%Y年%m/%d')}〜{saturday.strftime('%m/%d')}"
         weeks_data.append({
             "key": week_key,
             "label": label,
@@ -168,7 +168,7 @@ def generate_index():
         const wd = weekdays[dt.getDay()];
         const display = dt.getFullYear() + "\\u5E74" + (dt.getMonth()+1) + "\\u6708" + dt.getDate() + "\\u65E5";
 
-        let titlesHtml = day.titles.map(t => "<li>" + t + "</li>").join("");
+        let titlesHtml = day.titles.map(t => "<li>\\u30FB" + t + "</li>").join("");
         if (day.count > 3) {{
           titlesHtml += '<li class="more">...\\u4ED6' + (day.count - 3) + '\\u4EF6</li>';
         }}
