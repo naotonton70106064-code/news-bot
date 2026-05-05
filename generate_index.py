@@ -11,10 +11,21 @@ CATEGORIES = {
 }
 
 
+def _is_valid_title(t):
+    """タイトルとして有効か（空・記号のみは無効）"""
+    if not t:
+        return False
+    s = t.strip()
+    if not s:
+        return False
+    return not re.fullmatch(r"[-—ー―ｰ_=・\s]+", s)
+
+
 def get_display_title(article):
-    """日本語タイトルを返す。japanese_titleがなければレガシーsummaryから抽出する"""
+    """日本語タイトルを返す。空・無効な場合はoriginal titleにフォールバック。
+    レガシー構造（summaryフィールド）があれば3行要約1行目を優先抽出する。"""
     jt = article.get("japanese_title")
-    if jt:
+    if _is_valid_title(jt):
         return jt
     summary = article.get("summary", "")
     if summary:
@@ -23,10 +34,6 @@ def get_display_title(article):
             m = re.match(r"^[1１][\.\．、]\s*(.+)$", line)
             if m:
                 return m.group(1).strip()
-    summary_lines = article.get("summary_lines", [])
-    if summary_lines:
-        first = summary_lines[0]
-        return re.sub(r"^[1-3１-３][\.\．、]\s*", "", first).strip()
     return article.get("title", "")
 
 
@@ -126,10 +133,17 @@ def generate_index():
 
     if legacy_days:
         legacy_weeks = group_by_weeks(legacy_days)
-        # 新構造のITデータと統合（重複除去）
-        existing_keys = {w["key"] for w in all_data.get("it", [])}
+        # 新構造のITデータと統合（同一週は日単位でマージし、同日付は新構造を優先）
+        existing_weeks_map = {w["key"]: w for w in all_data.get("it", [])}
         for w in legacy_weeks:
-            if w["key"] not in existing_keys:
+            if w["key"] in existing_weeks_map:
+                existing = existing_weeks_map[w["key"]]
+                existing_dates = {d["date"] for d in existing["days"]}
+                for d in w["days"]:
+                    if d["date"] not in existing_dates:
+                        existing["days"].append(d)
+                existing["days"] = sorted(existing["days"], key=lambda d: d["date"], reverse=True)
+            else:
                 all_data.setdefault("it", []).append(w)
         all_data["it"] = sorted(all_data.get("it", []), key=lambda w: w["key"], reverse=True)
 

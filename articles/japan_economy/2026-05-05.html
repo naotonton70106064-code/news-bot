@@ -185,20 +185,68 @@
   return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 }
 
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
 
     articles.forEach((article, i) => {
       const card = document.createElement("div");
       card.className = "card";
 
-      const displayTitle = article.japanese_title || article.title;
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
 
       const summaryHTML = (article.summary_lines || [])
         .map(l => `<div class="summary-line">${l}</div>`)
         .join("");
 
-      const pointsHTML = (article.points || [])
+      const points = article.points || [];
+      const pointsHTML = points
         .map(l => `<div class="detail-point">${l}</div>`)
         .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
 
       card.innerHTML = `
         <div class="card-main">
@@ -210,22 +258,7 @@
           <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
         </div>
         <div class="detail" id="detail-${i}">
-          <div class="detail-section">
-            <div class="detail-label">背景・経緯</div>
-            <div class="detail-text">${cleanText(article.background)}</div>
-          </div>
-          <div class="detail-section">
-            <div class="detail-label">注目ポイント</div>
-            ${pointsHTML}
-          </div>
-          <div class="detail-section">
-            <div class="detail-label">今後の予測</div>
-            <div class="detail-text">${cleanText(article.prediction)}</div>
-          </div>
-          <div class="detail-section">
-            <div class="ai-badge">AIの解釈</div>
-            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
-          </div>
+          ${sections.join("")}
           <div class="detail-footer">
             <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
             <div class="actions" id="actions-${i}">

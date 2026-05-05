@@ -6,29 +6,34 @@
   <title>今日のニュース</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: sans-serif; background: #f5f5f5; padding: 2rem; }
-    .header { max-width: 800px; margin: 0 auto 2rem; display: flex; justify-content: space-between; align-items: center; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
     h1 { font-size: 20px; font-weight: 600; }
     .date { font-size: 13px; color: #888; }
     .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
     .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
-    .card-main { padding: 1.25rem; cursor: pointer; }
-    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
     .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
     .source { font-size: 11px; color: #888; white-space: nowrap; }
-    .summary-short { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 10px; }
-    .card-footer { display: flex; justify-content: space-between; align-items: center; }
-    .expand-hint { font-size: 11px; color: #888; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
     .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
     .detail.open { display: block; }
-    .detail-text { font-size: 13px; color: #333; line-height: 1.8; white-space: pre-wrap; margin-bottom: 1rem; }
-    .detail-footer { display: flex; justify-content: space-between; align-items: center; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
     .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
     .actions { display: flex; gap: 8px; }
     .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
     .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
     .posted { opacity: 0.4; pointer-events: none; }
     .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -37,11 +42,13 @@
     <span class="date" id="date"></span>
   </div>
   <div class="container" id="container"></div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
 
   <script>
     document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
 
-    // JSONデータを直接埋め込む（後でPythonが自動生成）
     const articles = [
   {
     "title": "Parallel Web Systems hits $2B valuation five months after its last big raise",
@@ -65,31 +72,90 @@
     "collected_at": "2026-04-29T20:12:42.794803"
   }
 ];
-
     const container = document.getElementById("container");
 
-    articles.forEach((article, i) => {
-      const lines = article.summary.split("\n").filter(l => l.trim());
-      const shortSummary = lines.slice(0, 3).join("\n");
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
 
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
       const card = document.createElement("div");
       card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
       card.innerHTML = `
-        <div class="card-main" onclick="toggle(${i})">
+        <div class="card-main">
           <div class="card-top">
-            <div class="title">${article.title}</div>
+            <div class="title">${displayTitle}</div>
             <div class="source">${article.source}</div>
           </div>
-          <div class="summary-short">${shortSummary}</div>
-          <div class="card-footer">
-            <span class="expand-hint" id="hint-${i}">詳細を見る ▾</span>
-          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
         </div>
         <div class="detail" id="detail-${i}">
-          <div class="detail-text">${article.summary}</div>
+          ${sections.join("")}
           <div class="detail-footer">
             <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
-            <div class="actions">
+            <div class="actions" id="actions-${i}">
               <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
               <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
             </div>
@@ -101,17 +167,17 @@
 
     function toggle(i) {
       const detail = document.getElementById(`detail-${i}`);
-      const hint = document.getElementById(`hint-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
       const isOpen = detail.classList.contains("open");
       detail.classList.toggle("open", !isOpen);
-      hint.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
     }
 
     function post(e, i) {
       e.stopPropagation();
       const card = e.target.closest(".card");
       card.classList.add("posted");
-      e.target.closest(".actions").innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
       alert("投稿しました！（X連携は次のステップで実装します）");
     }
 
@@ -119,7 +185,7 @@
       e.stopPropagation();
       const card = e.target.closest(".card");
       card.classList.add("posted");
-      e.target.closest(".actions").innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
     }
   </script>
 </body>
