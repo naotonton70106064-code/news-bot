@@ -1,7 +1,14 @@
 """記事一覧ページ（index.html）を自動生成するスクリプト"""
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
+
+
+def get_week_start(dt):
+    """日曜始まりの週の開始日（日曜日）を返す"""
+    # weekday(): 月=0, 日=6 → 日曜始まりにするため調整
+    days_since_sunday = (dt.weekday() + 1) % 7
+    return dt - timedelta(days=days_since_sunday)
 
 
 def generate_index():
@@ -27,41 +34,44 @@ def generate_index():
     weekly_files = sorted(articles_dir.glob("weekly-*.html"), reverse=True)
     weeklies = []
     for wf in weekly_files:
-        # weekly-2026-W18.html -> 2026-W18
         week_id = wf.stem.replace("weekly-", "")
         weeklies.append({"id": week_id, "filename": wf.name})
 
-    # HTML生成
-    days_html = ""
+    # 週ごとにグループ化（日曜始まり〜土曜終わり）
+    weeks = {}  # key: 週の日曜日の日付文字列
     for day in days:
-        titles_html = "".join(
-            f'<li>{t}</li>' for t in day["titles"]
-        )
-        if day["count"] > 3:
-            titles_html += f'<li class="more">...他{day["count"] - 3}件</li>'
-
         dt = datetime.strptime(day["date"], "%Y-%m-%d")
-        display_date = dt.strftime("%Y年%m月%d日")
-        weekday = ["月", "火", "水", "木", "金", "土", "日"][dt.weekday()]
+        week_sunday = get_week_start(dt)
+        week_key = week_sunday.strftime("%Y-%m-%d")
+        weeks.setdefault(week_key, []).append(day)
 
-        days_html += f'''
-    <a href="articles/{day["date"]}.html" class="day-card">
-      <div class="day-date">{display_date}（{weekday}）</div>
-      <div class="day-count">{day["count"]}件の記事</div>
-      <ul class="day-titles">{titles_html}</ul>
-    </a>'''
+    # 週を新しい順にソート
+    sorted_weeks = sorted(weeks.keys(), reverse=True)
 
-    weekly_html = ""
+    # 各週のHTMLをJSONデータとして埋め込む
+    weeks_data = []
+    for week_key in sorted_weeks:
+        week_days = sorted(weeks[week_key], key=lambda d: d["date"], reverse=True)
+        sunday = datetime.strptime(week_key, "%Y-%m-%d")
+        saturday = sunday + timedelta(days=6)
+        label = f"{sunday.strftime('%m/%d')}〜{saturday.strftime('%m/%d')}"
+        weeks_data.append({
+            "key": week_key,
+            "label": label,
+            "days": week_days,
+        })
+
+    # サイドメニューHTML
+    sidebar_html = ""
     if weeklies:
-        weekly_items = "".join(
-            f'<a href="articles/{w["filename"]}" class="weekly-link">{w["id"]}</a>'
+        sidebar_items = "".join(
+            f'<a href="articles/{w["filename"]}" class="sidebar-link">{w["id"]}</a>'
             for w in weeklies
         )
-        weekly_html = f'''
-    <section class="weekly-section">
-      <h2>週次サマリー</h2>
-      <div class="weekly-list">{weekly_items}</div>
-    </section>'''
+        sidebar_html = sidebar_items
+
+    # メインコンテンツ: 全週のカードをページとして生成（JSで切り替え）
+    weeks_json = json.dumps(weeks_data, ensure_ascii=False)
 
     html = f'''<!DOCTYPE html>
 <html lang="ja">
@@ -72,28 +82,39 @@ def generate_index():
   <meta name="description" content="最新のIT・テクノロジーニュースをAIが毎日自動収集・要約。背景解説や今後の予測まで、忙しいあなたのためのニュースダイジェスト。">
   <style>
     * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f8f9fa; color: #111; padding: 2rem 1rem; }}
-    .site-header {{ max-width: 800px; margin: 0 auto 2rem; text-align: center; }}
-    .site-header h1 {{ font-size: 24px; font-weight: 700; margin-bottom: 8px; }}
+    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f8f9fa; color: #111; }}
+    .site-header {{ padding: 2rem 1rem 1rem; text-align: center; border-bottom: 1px solid #e5e5e5; background: #fff; }}
+    .site-header h1 {{ font-size: 24px; font-weight: 700; margin-bottom: 6px; }}
     .site-header p {{ font-size: 14px; color: #666; }}
-    .nav {{ max-width: 800px; margin: 0 auto 2rem; display: flex; gap: 12px; justify-content: center; font-size: 13px; }}
-    .nav a {{ color: #1a73e8; text-decoration: none; }}
-    .nav a:hover {{ text-decoration: underline; }}
-    .container {{ max-width: 800px; margin: 0 auto; }}
+    .layout {{ display: flex; max-width: 1100px; margin: 0 auto; min-height: calc(100vh - 200px); }}
+    .sidebar {{ width: 220px; padding: 1.5rem 1rem; border-right: 1px solid #e5e5e5; background: #fff; flex-shrink: 0; }}
+    .sidebar h2 {{ font-size: 14px; font-weight: 600; color: #555; margin-bottom: 12px; }}
+    .sidebar-link {{ display: block; padding: 8px 12px; font-size: 13px; color: #1a73e8; text-decoration: none; border-radius: 6px; margin-bottom: 4px; }}
+    .sidebar-link:hover {{ background: #f0f4ff; }}
+    .main {{ flex: 1; padding: 1.5rem 2rem; }}
+    .week-nav {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }}
+    .week-label {{ font-size: 16px; font-weight: 600; }}
+    .week-btn {{ padding: 8px 16px; font-size: 13px; background: #fff; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; color: #333; }}
+    .week-btn:hover {{ background: #f0f0f0; }}
+    .week-btn:disabled {{ opacity: 0.3; cursor: default; }}
+    .week-btn:disabled:hover {{ background: #fff; }}
     .day-card {{ display: block; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; margin-bottom: 12px; text-decoration: none; color: inherit; transition: box-shadow 0.2s; }}
     .day-card:hover {{ box-shadow: 0 2px 8px rgba(0,0,0,0.08); }}
     .day-date {{ font-size: 15px; font-weight: 600; margin-bottom: 4px; }}
     .day-count {{ font-size: 12px; color: #888; margin-bottom: 8px; }}
     .day-titles {{ list-style: none; font-size: 13px; color: #444; line-height: 1.8; }}
     .day-titles .more {{ color: #888; }}
-    .weekly-section {{ margin-bottom: 2rem; }}
-    .weekly-section h2 {{ font-size: 18px; font-weight: 600; margin-bottom: 12px; }}
-    .weekly-list {{ display: flex; flex-wrap: wrap; gap: 8px; }}
-    .weekly-link {{ display: inline-block; padding: 8px 16px; background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; font-size: 13px; color: #1a73e8; text-decoration: none; }}
-    .weekly-link:hover {{ background: #f0f4ff; }}
-    .footer {{ max-width: 800px; margin: 3rem auto 0; text-align: center; font-size: 11px; color: #aaa; line-height: 1.8; }}
-    .footer a {{ color: #888; text-decoration: none; }}
-    .footer a:hover {{ text-decoration: underline; }}
+    .footer {{ border-top: 1px solid #e5e5e5; padding: 2rem 1rem; text-align: center; background: #fff; }}
+    .footer-links {{ margin-bottom: 8px; }}
+    .footer-links a {{ font-size: 13px; color: #1a73e8; text-decoration: none; margin: 0 12px; }}
+    .footer-links a:hover {{ text-decoration: underline; }}
+    .footer-note {{ font-size: 11px; color: #aaa; }}
+    @media (max-width: 768px) {{
+      .layout {{ flex-direction: column; }}
+      .sidebar {{ width: 100%; border-right: none; border-bottom: 1px solid #e5e5e5; padding: 1rem; }}
+      .sidebar-link {{ display: inline-block; margin-right: 4px; }}
+      .main {{ padding: 1rem; }}
+    }}
   </style>
 </head>
 <body>
@@ -101,29 +122,90 @@ def generate_index():
     <h1>AIニュースまとめ</h1>
     <p>最新のIT・テクノロジーニュースをAIが毎日自動収集・要約</p>
   </div>
-  <nav class="nav">
-    <a href="privacy.html">プライバシーポリシー</a>
-    <a href="about.html">運営者情報</a>
-    <a href="contact.html">お問い合わせ</a>
-  </nav>
-  <div class="container">
-    {weekly_html}
-    <section>
-      <h2 style="font-size:18px;font-weight:600;margin-bottom:12px;">記事一覧</h2>
-      {days_html}
-    </section>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <h2>週次サマリー</h2>
+      {sidebar_html}
+    </aside>
+
+    <main class="main">
+      <div class="week-nav">
+        <button class="week-btn" id="btn-prev" onclick="prevWeek()">&#9664; 前の週へ</button>
+        <span class="week-label" id="week-label"></span>
+        <button class="week-btn" id="btn-next" onclick="nextWeek()">次の週へ &#9654;</button>
+      </div>
+      <div id="articles-container"></div>
+    </main>
   </div>
-  <div class="footer">
-    <p>本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。</p>
-    <p><a href="privacy.html">プライバシーポリシー</a> | <a href="about.html">運営者情報</a> | <a href="contact.html">お問い合わせ</a></p>
-  </div>
+
+  <footer class="footer">
+    <div class="footer-links">
+      <a href="privacy.html">プライバシーポリシー</a>
+      <a href="about.html">運営者情報</a>
+      <a href="contact.html">お問い合わせ</a>
+    </div>
+    <div class="footer-note">本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。</div>
+  </footer>
+
+  <script>
+    const weeks = {weeks_json};
+    let currentPage = 0;
+
+    const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+
+    function renderWeek() {{
+      const week = weeks[currentPage];
+      document.getElementById("week-label").textContent = week.label;
+      document.getElementById("btn-prev").disabled = (currentPage >= weeks.length - 1);
+      document.getElementById("btn-next").disabled = (currentPage <= 0);
+
+      const container = document.getElementById("articles-container");
+      container.innerHTML = "";
+
+      week.days.forEach(day => {{
+        const dt = new Date(day.date + "T00:00:00");
+        const wd = weekdays[dt.getDay()];
+        const display = dt.getFullYear() + "\\u5E74" + (dt.getMonth()+1) + "\\u6708" + dt.getDate() + "\\u65E5";
+
+        let titlesHtml = day.titles.map(t => "<li>" + t + "</li>").join("");
+        if (day.count > 3) {{
+          titlesHtml += '<li class="more">...\\u4ED6' + (day.count - 3) + '\\u4EF6</li>';
+        }}
+
+        const card = document.createElement("a");
+        card.href = "articles/" + day.date + ".html";
+        card.className = "day-card";
+        card.innerHTML = '<div class="day-date">' + display + '\\uFF08' + wd + '\\uFF09</div>'
+          + '<div class="day-count">' + day.count + '\\u4EF6\\u306E\\u8A18\\u4E8B</div>'
+          + '<ul class="day-titles">' + titlesHtml + '</ul>';
+        container.appendChild(card);
+      }});
+    }}
+
+    function prevWeek() {{
+      if (currentPage < weeks.length - 1) {{
+        currentPage++;
+        renderWeek();
+      }}
+    }}
+
+    function nextWeek() {{
+      if (currentPage > 0) {{
+        currentPage--;
+        renderWeek();
+      }}
+    }}
+
+    renderWeek();
+  </script>
 </body>
 </html>'''
 
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
 
-    print(f"index.html を生成しました（{len(days)}日分の記事一覧）")
+    print(f"index.html を生成しました（{len(days)}日分、{len(sorted_weeks)}週）")
 
 
 if __name__ == "__main__":
