@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: flex; gap: 8px; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "US jet fuel could be used in Europe to ease possible shortages",
+    "japanese_title": "米国規格のジェット燃料をヨーロッパで活用——国際航空機関が供給不足対策を提言",
+    "url": "https://www.bbc.com/news/articles/cp8pk2m4nlxo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 国際航空機関が、米国規格のジェット燃料をヨーロッパでも広く受け入れることで、潜在的な供給不足の解消につながる可能性を示唆した。",
+      "2. 欧州における航空燃料の供給リスクに対する懸念が高まっており、規格の相互運用性拡大が現実的な対策として浮上している。",
+      "3. 現行の規格の違いが燃料融通の障壁となっており、基準の統一・拡大が業界全体の課題となっている。"
+    ],
+    "points": [
+      "・ 欧米間の燃料規格の違いが、これまでいかに供給の柔軟性を制限してきたかが改めて問われている",
+      "・ 地政学的リスク（中東情勢・ロシア・ウクライナ情勢）による欧州エネルギー供給の脆弱性が背景にある",
+      "・ 国際標準化の議論が加速すれば、航空燃料サプライチェーン全体の再編につながる可能性がある"
+    ],
+    "prediction": "欧州がエネルギー供給の多様化を進める中、米国からのジェット燃料輸入拡大は米欧間のエネルギー貿易を強化し、大西洋横断のエネルギー同盟をさらに深化させる可能性がある。一方で、規格変更には安全性検証や既存インフラの対応が必要なため、実現までには一定の時間と投資が求められるだろう。中長期的には、グローバルな燃料規格の標準化が航空業界全体のレジリエンス向上に貢献すると見られる。",
+    "ai_interpretation": "このニュースの本質は、単なる燃料規格の技術的調整にとどまらず、欧州のエネルギー安全保障戦略の転換点を象徴するものである。ロシア依存からの脱却を急ぐ欧州が、今度は航空燃料においても米国との連携を深めることで、地政学的リスクへの耐性を高めようとしている構図が読み取れる。グローバル経済への示唆として、エネルギー分野における「規格の地政学」がますます重要性を増しており、標準化の主導権争いが今後の国際競争力を左右する鍵となるだろう。",
+    "collected_at": "2026-05-08T20:11:24.772245",
+    "market_impact": "航空燃料の供給安定化は、欧州の航空会社の運航コスト抑制につながり、航空株や旅行・観光関連銘柄にとってポジティブな材料となり得る。エネルギー市場では、米国産ジェット燃料の輸出需要増加が見込まれ、米国の精製業者や石油メジャーへの恩恵が期待される。また、ユーロ圏のエネルギー安全保障強化はユーロの安定にも間接的に寄与する可能性がある。"
+  },
+  {
+    "title": "Major train operator to be renationalised in months",
+    "japanese_title": "英国大手鉄道会社GWRが数ヶ月以内に国有化へ――英政府の鉄道再国有化政策が加速",
+    "url": "https://www.bbc.com/news/articles/cy02yyl1e7xo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 英国の大手鉄道運営会社GWR（グレート・ウェスタン鉄道）が、ロンドンと南ウェールズを結ぶ路線を含め、数ヶ月以内に政府管理下に置かれる。",
+      "2. これは英労働党政権が推進する鉄道の段階的再国有化政策の一環であり、民営化路線からの大きな政策転換を意味する。",
+      "3. 英国では1990年代に鉄道が民営化されて以来、約30年ぶりに公共交通インフラの国家管理回帰が本格化している。"
+    ],
+    "points": [
+      "・ 英労働党政権によるインフラ再国有化路線の実行スピードが予想以上に速い可能性",
+      "・ GWR国有化後の運営コスト・サービス品質がどう変化するかが政策評価の試金石になる",
+      "・ 他の民間鉄道オペレーター（Avanti、Southern等）への「連鎖的国有化」波及リスク",
+      "・ 欧州全体での公共交通インフラ再公営化トレンドとの連動性"
+    ],
+    "prediction": "英国では今後数年間で複数の鉄道会社が順次国有化される見通しであり、公共交通分野での「民営化の終焉」が欧州の先例となる可能性がある。財政支出の拡大が避けられないため、英国の財政規律への懸念が中長期的にポンドや英国債（ギルト）に影響を与えるリスクも存在する。一方、インフラの国家管理強化は安全保障・経済安全保障の観点から他の先進国でも類似の政策論議を刺激する可能性がある。",
+    "ai_interpretation": "このニュースの本質は、単なる一企業の国有化にとどまらず、1980〜90年代の「新自由主義的民営化路線」への本格的な反動・修正が英国で政策として実装された歴史的転換点である。グローバル経済への示唆として、コスト効率優先の民営化モデルが気候変動・格差・インフラ老朽化といった現代的課題に対応しきれないという認識が、先進国政府の間で広がりつつあることを象徴している。投資家・多国籍企業はインフラ分野における「政治的・規制的リスク」を従来以上に織り込んだ戦略設計が求められる時代に入ったと言える。",
+    "collected_at": "2026-05-08T20:11:45.732969",
+    "market_impact": "英国の鉄道関連株や交通インフラ関連企業への投資家心理に慎重ムードが広がる可能性があり、民間運営会社の株価や債券市場に下押し圧力がかかる懸念がある。ポンド相場への直接的な影響は限定的とみられるが、英国の「規制・国有化リスク」が再評価されることで、外国直接投資（FDI）の見通しに影響を与える可能性がある。また、公共交通インフラ運営を手掛けるグローバル企業（仏SNCF系列など）の英国事業戦略にも再考を迫る局面となる。"
+  },
+  {
+    "title": "The companies making billions from the Iran war",
+    "japanese_title": "イラン戦争で数十億ドルを稼ぐ企業たち――株価急騰・利益急増の受益者を徹底分析",
+    "url": "https://www.bbc.com/news/articles/ce8pyyz5e0ro?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. イランを巡る軍事的緊張・紛争の拡大により、防衛関連企業やエネルギー企業を中心に利益急増・株価急騰という恩恵を受けている企業が存在する。",
+      "2. 戦争という地政学的リスクが、一部の民間企業にとっては収益機会へと転換されており、軍需産業・石油産業・サイバーセキュリティ分野などが特に注目される。",
+      "3. 紛争の長期化・拡大懸念が市場の不確実性を高める一方、特定セクターへの資本集中という二極化した経済構造が浮き彫りになっている。"
+    ],
+    "points": [
+      "・ **軍需企業（ロッキード・マーティン、レイセオン等）**：ミサイル・防空システムへの需要急増で受注残が拡大",
+      "・ **石油メジャー・エネルギー企業**：ホルムズ海峡リスクを背景に原油価格が高止まりし、収益を押し上げ",
+      "・ **サイバーセキュリティ・民間軍事企業**：情報戦・サイバー攻撃対策需要の増加で新たな成長市場として台頭",
+      "・ **倫理的投資（ESG）との矛盾**：紛争受益企業への投資拡大はESG原則と相反し、投資家・機関投資家に判断を迫る"
+    ],
+    "prediction": "中東情勢が長期化・多極化すれば、防衛予算の増額が欧米・アジア各国で加速し、軍需産業への資本流入はさらに拡大すると予想される。エネルギー安全保障の観点から再生可能エネルギーへの移行議論が加速する可能性がある一方、短期的には化石燃料依存が継続し、インフレ圧力を高めるリスクがある。また、制裁強化・貿易分断がサプライチェーンの再編を促し、グローバル経済の「ブロック化」傾向が一層深まる可能性がある。",
+    "ai_interpretation": "このニュースの本質は、**「戦争の経済化」**――すなわち地政学的破壊が一方では人道危機をもたらしながら、他方では特定の民間企業に巨大な経済的インセンティブを生み出す構造的矛盾を鋭く示している点にある。紛争が長引くほど受益企業の利益が増大するという構図は、平和解決への政治的インセンティブを複雑にする要因ともなりうる。グローバル経済にとっての示唆は、安全保障と資本主義の利害が交錯する現代において、「誰が戦争コストを負担し、誰が利益を得るのか」という問いが、今後の国際政治経済の核心的テーマになるという点である。",
+    "collected_at": "2026-05-08T20:12:09.140642",
+    "market_impact": "中東における地政学的緊張の高まりは原油供給リスクを増大させ、エネルギー価格の上昇圧力を世界市場に与えている。防衛・軍需セクターの株価は上昇トレンドを維持しており、NATOや同盟国の軍備拡張需要がその追い風となっている。一方、リスク回避姿勢の強まりにより安全資産（金・米ドル・日本円）への資金流入が続き、新興国通貨や株式市場には下押し圧力がかかりやすい状況だ。"
+  },
+  {
+    "title": "Palestinians Stream Back to Northern Gaza on Foot",
+    "japanese_title": "パレスチナ人がガザ北部へ徒歩で帰還開始―人質解放合意を受けイスラエルが軍事境界線の通過を許可",
+    "url": "https://www.wsj.com/articles/palestinians-flock-back-to-northern-gaza-on-foot-after-hostage-release-breakthrough-3f60e2db",
+    "source": "WSJ.com: World News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. イスラエルは、ガザ地区を二分する軍事ゾーンを越えて避難民が北部へ戻ることを許可した。",
+      "2. 人質解放をめぐる交渉の膠着状態が打開されたことが、今回の帰還容認の直接的な契機となった。",
+      "3. 多数のパレスチナ避難民が徒歩で北ガザへ向かい、長期にわたる強制退避からの帰還が始まった。"
+    ],
+    "points": [
+      "・人質解放交渉の進展が軍事的行動の緩和と直結しており、外交プロセスが実質的に機能し始めた点",
+      "・民間人の移動を可能にする「人道的回廊」の設定が、国際社会からの圧力の成果である可能性",
+      "・北ガザの生活インフラ（住居・水・電力・医療）がほぼ壊滅状態であり、帰還後の人道危機継続リスク"
+    ],
+    "prediction": "今回の帰還許可が恒久的停戦や包括的和平へのステップとなるか否かが、中東全体の安定に直結するため、国際社会は交渉の行方を注視し続けるだろう。エジプトやカタールを仲介とした停戦協議が継続される中、次の人質解放フェーズ次第では軍事行動が再開するリスクも残っており、エネルギー価格や防衛関連株への影響は継続的に監視が必要となる。また、ガザ復興をめぐる国際援助や資金拠出の動向が、中東地域の経済的安定性に中長期的な影響を与える。",
+    "ai_interpretation": "このニュースの本質は、「軍事的局面」から「人道的・外交的局面」への部分的シフトを示している点にあり、紛争の性質が変化しつつあるシグナルと読み取れる。グローバル経済の観点では、中東の地政学的安定は原油供給・海運ルート・新興国投資マインドに直結しており、たとえ限定的な緊張緩和であっても市場心理へのポジティブな波及効果は無視できない。一方で、インフラが壊滅したガザの復興には膨大な国際資本が必要となり、中東復興ビジネスや人道支援産業が新たな経済的焦点として浮上する可能性がある。",
+    "collected_at": "2026-05-08T20:12:28.865005",
+    "market_impact": "中東情勢の一時的な緊張緩和を受け、原油価格には若干の下押し圧力がかかる可能性がある。ただし、恒久的な停戦合意には至っていないため、エネルギー市場のボラティリティは依然として高く、地政学的リスクプレミアムは完全には消えない。イスラエルシェケルや周辺国通貨（エジプトポンドなど）には短期的に安定方向の動きが期待されるが、楽観論は限定的だろう。"
+  },
+  {
+    "title": "Leading China Property Developer Reports Huge loss, in Sign of Widening Real-Estate Woes",
+    "japanese_title": "中国大手不動産デベロッパー「万科」が巨額損失を計上――不動産危機の深刻化と国家介入の行方",
+    "url": "https://www.wsj.com/articles/even-chinas-property-stalwart-isnt-immune-from-the-crisis-19799863",
+    "source": "WSJ.com: World News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 中国の大手不動産デベロッパー「万科（Vanke）」が巨額損失を報告し、中国不動産危機がさらなる広がりを見せていることが明らかになった。",
+      "2. 万科の経営悪化は、恒大（Evergrande）に続く大手企業の財務崩壊として、業界全体の信用不安を再燃させている。",
+      "3. 中国政府（国家）が救済に介入するかどうかが、今後の市場安定の鍵を握る最大の焦点となっている。"
+    ],
+    "points": [
+      "・万科は国有資本が株主に含まれる「半官半民」企業であり、政府が見捨てるかどうかの判断が重大な政治的シグナルとなる",
+      "・中国不動産業界の負債総額は依然として天文学的規模であり、「第二の恒大」連鎖崩壊の懸念が払拭できない",
+      "・中国の内需・消費回復シナリオが根本から揺らぎ、2025年の経済成長目標（約5%）達成にも暗雲が立ち込める"
+    ],
+    "prediction": "中国政府が公的資金投入や債務再編支援などの救済策を講じる場合、短期的な市場安定は見込めるものの、モラルハザードと財政負担の増大という長期的問題が残る。一方、介入しない場合は不動産セクター全体の信用収縮が加速し、中国経済の「日本化（長期デフレ停滞）」シナリオへの懸念がさらに高まる。地政学的観点からも、中国経済の減速は新興国向け輸出や資源需要の低下を通じてグローバル経済全体に波及する可能性が高い。",
+    "ai_interpretation": "このニュースの本質は、中国の不動産危機が「一部の過剰債務企業の問題」から「業界構造的・経済システム的な問題」へと質的に変化しつつあることを示している点にある。万科のような比較的健全とみられていた大手企業まで揺らぐことは、問題の根深さを象徴しており、中国の家計資産の約70%を占める不動産市場の崩壊が消費・投資・雇用の三重苦につながるリスクを内包している。グローバル経済へのインプリケーションとして、「中国特需」を前提としたビジネスモデルの再考を迫られる企業・国家が増加するという、構造的な転換点に差し掛かっていると言えるだろう。",
+    "collected_at": "2026-05-08T20:12:48.576444",
+    "market_impact": "中国不動産セクターへの信頼感がさらに低下し、中国株・香港株（ハンセン指数）への売り圧力が強まる可能性がある。人民元の下落圧力も高まり、アジア通貨全体に波及するリスクがある。また、鉄鋼・セメント・建設関連産業などサプライチェーン全体への需要減退が世界の資源市場にも影響を与えうる。"
+  },
+  {
+    "title": "Freed Israeli Hostages Still Had Shrapnel in Their Bodies From Oct. 7 Attack",
+    "japanese_title": "解放されたイスラエル人質、10月7日攻撃の弾片が体内に残存――8ヶ月間トンネルに監禁された実態が明らかに",
+    "url": "https://www.wsj.com/articles/freed-israeli-hostages-still-had-shrapnel-in-their-bodies-from-oct-7-attack-3de8cd1e",
+    "source": "WSJ.com: World News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 解放されたイスラエル人質の体内には、2023年10月7日のハマスによる攻撃で負った弾片が今もなお残っていることが、イスラエルの医療当局者により明らかにされた。",
+      "2. 一部の女性人質は長期間にわたり単独で拘束され、約8ヶ月間をガザ地下トンネル内で過ごしていたことが報告されている。",
+      "3. この事実は、人質が置かれていた劣悪な環境と、十分な医療処置を受けられなかった深刻な人道的状況を浮き彫りにしている。"
+    ],
+    "points": [
+      "・人質が適切な医療を受けられないまま長期間拘束されており、解放後の身体的・精神的リハビリが長期課題となる",
+      "・地下トンネルでの8ヶ月間という監禁実態は、ガザにおける人道危機の深刻さを国際社会に改めて訴える材料となる",
+      "・この報告が停戦交渉や国際的な外交圧力に与える影響が今後の焦点となる"
+    ],
+    "prediction": "人質の劣悪な拘束状況が国際社会に広く伝わることで、停戦・人質解放交渉に対する外交的圧力が一層高まると予想される。中東の不安定な情勢が長期化すれば、エネルギー供給リスクや地域サプライチェーンへの影響を通じて、グローバルなインフレ圧力を再燃させる要因になりかねない。また、欧米諸国における対中東政策・軍事支援をめぐる国内政治議論がさらに激化し、各国の財政・外交戦略に影響を及ぼす可能性がある。",
+    "ai_interpretation": "このニュースの本質は、単なる人道危機の報告にとどまらず、中東における地政学的膠着状態がいかに長期化・深刻化しているかを示す象徴的な事例である。長期拘束・医療放置という事実は国際世論を動かす力を持ち、停戦交渉や国際人道支援のあり方に対して政治的なモメンタムを生む可能性がある。グローバル経済の観点からは、中東リスクの「慢性化」が投資家心理の恒常的な不安要素となりつつあり、エネルギー安全保障や地域安定化への長期投資の必要性を改めて示唆している。",
+    "collected_at": "2026-05-08T20:13:09.413719",
+    "market_impact": "中東情勢の緊張が継続していることを示すこのニュースは、原油価格の不安定要因として引き続き市場に影響を与える可能性がある。イスラエルとハマスの停戦交渉の行方が不透明なままであることから、地政学的リスクを嫌気した安全資産（金・米国債・円）への資金流入が続く可能性がある。また、中東地域への投資・観光・貿易に対する不確実性が、関連する新興国市場の通貨や株式にも下押し圧力をかけうる。"
+  }
+];
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>

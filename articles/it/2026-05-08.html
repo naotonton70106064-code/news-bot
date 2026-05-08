@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: flex; gap: 8px; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Intel’s comeback story is even wilder than it seems",
+    "japanese_title": "インテル株490%急騰の真実：ウォール街の期待は実態を大きく上回っているのか？",
+    "url": "https://techcrunch.com/2026/05/08/intels-comeback-story-is-even-wilder-than-it-seems/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. インテルの株価は過去1年間で驚異的な490%の上昇を記録した。",
+      "2. この株価上昇はウォール街による同社の復活への強い期待を反映している。",
+      "3. しかし、実際の業績回復は株価の上昇ペースに追いついていない可能性がある。"
+    ],
+    "points": [
+      "・株価490%上昇という数字は市場の「期待先行」の典型的なパターンを示している",
+      "・実際の業績回復が株価の評価に見合っているかどうかの乖離リスクが存在する",
+      "・半導体産業全体のAIブームや米国の半導体国産化政策（CHIPS法）が追い風となっている"
+    ],
+    "prediction": "インテルが製造技術の革新や新製品投入で実際の業績を伴う回復を示せれば、株価上昇は正当化される可能性がある。一方、期待と現実の乖離が続けば、投資家の失望売りによる株価の大幅な調整局面が訪れるリスクも高い。今後1〜2年の決算発表が同社の真の実力を測る重要な試金石となるだろう。",
+    "ai_interpretation": "このニュースが示す本質は、「物語（ナラティブ）の力」が株式市場においていかに強力かという点である。インテルの復活ストーリーは投資家の想像力を刺激し、実態以上の価値評価を生み出している。これはテクノロジー企業の再建において、実績だけでなく「信じられるストーリー」を市場に提示できるかどうかが、企業価値を左右するという現代金融市場の本質的な特性を浮き彫りにしている。",
+    "collected_at": "2026-05-08T20:07:33.145054",
+    "background": "インテルはここ数年、TSMCやAMDなどの競合他社に対して技術的・市場的な遅れを取り、業績が低迷していた。同社はCEO交代や製造プロセスの刷新、米国内での半導体工場建設計画などの大規模な構造改革を進めている。こうした再建への取り組みが投資家の楽観的な期待を呼び込み、株価の急騰につながったとみられる。"
+  },
+  {
+    "title": "Cloudflare says AI made 1,100 jobs obsolete, even as revenue hit a record high",
+    "japanese_title": "Cloudflareがシリコンバレー初の大規模リストラ断行、AIが1,100人分の仕事を代替し過去最高収益も雇用守れず",
+    "url": "https://techcrunch.com/2026/05/08/cloudflare-says-ai-made-1100-jobs-obsolete-even-as-revenue-hit-a-record-high/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Cloudflareが同社初の大規模レイオフを発表し、AIの効率化によりサポート系を中心に1,100人分の職が不要になったと説明した。",
+      "2. 皮肉にも同社の売上は過去最高を記録しており、業績不振ではなくAI導入による生産性向上が直接の原因となっている。",
+      "3. CEO マシュー・プリンス氏は、AIによる業務効率化がサポート職種の必要性を根本的に変えたと明言した。"
+    ],
+    "points": [
+      "・ 業績悪化ではなく「AIによる効率化」が解雇理由という前例となる新しいリストラの形",
+      "・ 影響を受けたのは主にサポート・オペレーション系職種であり、ホワイトカラー職へのAI侵食が鮮明化",
+      "・ 過去最高収益と大規模解雇が同時進行するという資本主義とAIの矛盾が表面化"
+    ],
+    "prediction": "今後、Cloudflareと同様に「好業績＋AI主導のリストラ」という事例が他のテック企業にも広がる可能性が高く、業界全体でサポート系・バックオフィス系職種の縮小が加速すると予想される。また、この動きは投資家には歓迎される一方で、労働市場や政府による規制議論を呼び起こすきっかけになりうる。長期的には、AIに代替されない高度スキルへの需要が一層高まり、労働市場の二極化がさらに進むと考えられる。",
+    "ai_interpretation": "このニュースが示す本質は、**AIの進化が「コスト削減のための手段」から「人間の代替手段」へと質的に変化した**という転換点にある。従来のリストラは不況や戦略ミスによるものだったが、今回は成長中の企業が意図的に人間をAIへ置き換えるという新しいパラダイムを象徴している。これは単なる一企業の人事判断にとどまらず、「AIが経済成長の果実を人間の雇用ではなく企業利益に集中させる」構造的問題を社会に突きつけた警鐘と言えるだろう。",
+    "collected_at": "2026-05-08T20:07:51.338608",
+    "background": "Cloudflareは世界的なネットワーク・セキュリティ企業であり、近年AI技術の急速な発展により社内業務の自動化が加速していた。特にカスタマーサポートやオペレーション系の業務においてAIツールが人的リソースを代替できるレベルに達し、企業としての合理化判断が下された。これはIT業界全体で進む「業績好調だが人員削減」という新たなトレンドの象徴的な事例となっている。"
+  },
+  {
+    "title": "Porsche shutters e-bike, battery, software subsidiaries as part of company overhaul",
+    "japanese_title": "ポルシェ、e-bike・バッテリー・ソフトウェア子会社を閉鎖――500人超に影響する大規模事業再編",
+    "url": "https://techcrunch.com/2026/05/08/porsche-shutters-e-bike-battery-software-subsidiaries-as-part-of-company-overhaul/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. ポルシェはe-bike、バッテリー、ソフトウェア関連の子会社を閉鎖する事業再編を実施すると発表した。",
+      "2. 今回の閉鎖により、500人以上の従業員が影響を受ける見込みである。",
+      "3. この動きはポルシェ全体の経営構造を見直す「会社の抜本的な改革」の一環として位置づけられている。"
+    ],
+    "points": [
+      "・ e-bike・バッテリー・ソフトウェアという「未来投資領域」からの撤退は、ポルシェの戦略転換を象徴する重大な決断である",
+      "・ 500人超という規模のリストラは、同社としては異例であり、社内外に与えるインパクトが大きい",
+      "・ 親会社フォルクスワーゲングループ全体のコスト削減圧力が、この意思決定に影響を与えた可能性が高い"
+    ],
+    "prediction": "ポルシェは今後、スポーツカーやラグジュアリーEVといったコアブランド価値の強化に経営資源を集中させていくとみられる。一方で、切り離された事業領域（特にソフトウェアやバッテリー）は、他社への売却や第三者との提携という形で継続される可能性も残る。業界全体としても、自動車メーカーによる「選択と集中」の動きが今後さらに加速するだろう。",
+    "ai_interpretation": "このニュースが示す本質は、「EV・デジタル化への過剰な多角化」に対する修正局面が、プレミアムブランドにも到来したという事実である。ポルシェのような高収益・高ブランド力を持つメーカーでさえ、不採算の先行投資事業を維持できなくなっている点は、自動車産業全体が構造的な転換期にあることを強く示唆している。「何でも内製・自社展開する」モデルから「強みに特化する」モデルへのシフトは、今後の業界標準となっていく可能性が高い。",
+    "collected_at": "2026-05-08T20:08:08.299902",
+    "background": "ポルシェは近年、電動化・デジタル化の波に乗り、e-bikeやバッテリー技術、ソフトウェア開発など多角的な事業領域へ積極的に投資・拡大を進めてきた。しかし、EV市場の成長鈍化や競争激化、コスト増大などを背景に、グローバルの自動車メーカー全体で収益性の見直しが求められている。ポルシェもその例外ではなく、中核事業への経営資源の集中を迫られる状況となった。"
+  },
+  {
+    "title": "ソニーGとTSMC、イメージセンサーで合弁設立へ　十時社長「規模を確保」",
+    "japanese_title": "ソニーGとTSMCがイメージセンサーで合弁設立へ——熊本新工場で共同開発・生産ラインを構築",
+    "url": "https://xtech.nikkei.com/atcl/nxt/column/18/00001/11725/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. ソニーグループの子会社・ソニーセミコンダクタソリューションズが、世界最大の半導体受託製造企業TSMCとイメージセンサー分野で提携することを2026年5月8日に発表した。",
+      "2. ソニーセミコンが過半数株式を保有する合弁会社の設立を検討しており、熊本県合志市の新工場に共同で開発・生産ラインを構築する計画である。",
+      "3. 十時社長は「規模を確保する」と述べており、競争力強化と生産能力の拡大が主な狙いとみられる。"
+    ],
+    "points": [
+      "・ソニーセミコンが「過半数株式」を保有する点で、ソニー主導の合弁となり、技術・経営上の主導権を握る構図になる",
+      "・熊本県合志市という具体的な地名が挙がっており、日本国内の半導体サプライチェーン強化という政策的文脈とも合致する",
+      "・TSMCの先端プロセス技術とソニーのセンサー設計技術の融合により、次世代イメージセンサーの性能向上が期待される"
+    ],
+    "prediction": "合弁会社の正式設立に向けた詳細な条件交渉や規制当局の承認手続きが進む見通しであり、2027年以降の量産開始を目指したスケジュールが示される可能性が高い。また、本提携はソニーのイメージセンサー事業における生産能力の大幅な拡充につながり、Samsung ElectronicsやOmniVisionなど競合他社との差別化をさらに強化する契機となるだろう。日本政府の半導体産業支援策とも連動し、補助金や政策支援を受ける可能性も十分に考えられる。",
+    "ai_interpretation": "このニュースの本質は、ソニーが「設計・ブランド力」とTSMCが「製造・プロセス技術」を持ち寄ることで、単独では実現困難なスケールメリットと技術革新を同時に追求する「垂直連携型アライアンス」の構築にある。半導体産業において製造コストと技術開発の両立がますます困難になる中、世界トップクラスの企業同士が日本国内で手を結ぶことは、日本の半導体産業復権という大きな潮流を象徴する出来事でもある。さらに、AIや自動運転の普及によりイメージセンサーの高性能化・大量需要が見込まれる中、この提携は中長期的にソニーの収益基盤を強化する戦略的な一手と評価できる。",
+    "collected_at": "2026-05-08T20:08:30.243376",
+    "background": "スマートフォンやAIカメラ、自動車向けセンサーの需要拡大により、イメージセンサー市場は急速に成長しており、ソニーは世界シェアトップを維持しながらも次世代技術への投資を迫られている。一方、TSMCは熊本県に既にJASM（Japan Advanced Semiconductor Manufacturing）を設立しており、日本での半導体製造基盤をすでに有している。こうした状況の中、両社が技術・製造リソースを統合することで、競合他社への対抗力を高める狙いがある。"
+  },
+  {
+    "title": "NTTデータGの26年3月期はデータセンター譲渡で51％営業増益、今期は減益予想",
+    "japanese_title": "NTTデータグループ2026年3月期決算：DC譲渡益で営業利益51%増の4882億円、ただし今期は減益予想",
+    "url": "https://xtech.nikkei.com/atcl/nxt/news/24/03217/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. NTTデータグループの2026年3月期決算は売上高5兆46億円（前期比8%増）、営業利益4882億円（同51%増）と大幅な増収増益を達成した。",
+      "2. 増益の主要因はREITへのデータセンター譲渡益の計上という一時的な特殊要因によるものである。",
+      "3. 一方、今期（2027年3月期）は一時益の剥落により減益となる見通しが示されている。"
+    ],
+    "points": [
+      "・ 営業利益51%増という大幅増益の実態は、本業の収益力向上ではなくDC譲渡益という一時的要因が主体であり、数字の読み解きに注意が必要",
+      "・ 売上高が8%増の5兆円規模に達しており、一時益を除いた本業ベースでも着実な成長トレンドが継続している点は評価できる",
+      "・ 今期（2027年3月期）に減益予想を示している点は、市場・投資家への透明性確保の観点から重要なシグナルとなる"
+    ],
+    "prediction": "今期はDC譲渡益という特殊要因が剥落するため営業利益は減少する見込みであり、本業の実力値が改めて問われる局面となる。一方でAI・クラウド需要の旺盛な拡大を背景に、グローバルでのデジタルサービス受注は引き続き堅調に推移することが期待され、中長期的な収益成長の基盤は維持されるとみられる。REITへの譲渡後もデータセンターの運営自体は継続すると見られ、アセットライト化によって得た資金を成長投資に振り向けられるかが今後の焦点となる。",
+    "ai_interpretation": "このニュースの本質は、「見かけ上の大幅増益」と「実質的な本業成長」を峻別して理解することにある。51%という増益率は一時的なDC譲渡益に大きく依存しており、今期減益予想はその反動に過ぎず、必ずしも業績悪化を意味しない。より重要なのは、NTTデータグループがデータセンター資産のREIT活用という金融手法を通じて資本効率を高め、次の成長投資への原資を確保するという戦略的な経営判断を実行したという点であり、資産重視型から価値創造型のビジネスモデルへの転換を示す象徴的な動きと読み取れる。",
+    "collected_at": "2026-05-08T20:08:50.311842",
+    "background": "NTTデータグループはグローバルなデジタルサービス需要の拡大を受け、データセンター資産の効率的な活用・再編を進めてきた。その一環として、保有するデータセンター資産をREIT（不動産投資信託）へ売却・譲渡することで資産の流動化を図り、多額の譲渡益を計上した。こうした「アセットライト化」戦略は、IT大手が資本効率を高めながら事業投資余力を確保するための手法として近年注目されている。"
+  },
+  {
+    "title": "NTT副社長にNTTデータGの佐々木裕社長、データG社長に中山和彦氏が昇格",
+    "japanese_title": "NTT副社長にNTTデータG佐々木裕氏が就任——国内通信の限界突破へグローバル戦略を加速",
+    "url": "https://xtech.nikkei.com/atcl/nxt/news/24/03215/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. NTTは2026年5月8日、NTTデータグループ社長の佐々木裕氏をNTT副社長に昇格させる人事を発表した。",
+      "2. NTTデータグループ社長の後任には中山和彦氏が昇格する。",
+      "3. 国内通信事業の成長鈍化を受け、佐々木氏のグローバル事業経験を活かした海外展開強化が狙いとされる。"
+    ],
+    "points": [
+      "・佐々木氏はNTTデータGで組織変革と国内外の事業戦略を主導した実績を持ち、グループ全体の海外戦略立案に直接関与できるポジションへ引き上げられた点",
+      "・NTT本体の副社長という要職に、通信ではなくITサービス・データ事業出身者が就くことで、NTTグループの事業重心の変化が人事に明確に反映されている点",
+      "・後任の中山和彦氏がNTTデータGをどう引き継ぎ、グローバル競争力をさらに高めるかという後継体制の安定性"
+    ],
+    "prediction": "佐々木氏がNTT副社長としてグループ全体の戦略を担うことで、ITサービスやクラウド・AI分野における海外投資・M&Aが一層加速する可能性が高い。また、NTTデータグループとNTT本体の連携がより緊密になり、グローバル市場での統合的なサービス展開が進むと見られる。中山新社長のもとでNTTデータGも引き続き海外事業拡大を推進し、グループ全体の収益多角化が図られるだろう。",
+    "ai_interpretation": "この人事の本質は、NTTグループが「通信会社」から「グローバルデジタルサービス企業」へと変革する意志を、トップ人事という形で明確に示したことにある。国内インフラ事業に依存した成長モデルの限界を直視し、データ・IT領域の知見を持つ人材をグループ中枢に据えることで、変革の実行力を担保しようとする戦略的判断と言える。日本の大手通信企業がデジタルトランスフォーメーションの波に乗り遅れないための、構造的な自己変革の一環として注目に値する。",
+    "collected_at": "2026-05-08T20:09:07.841129",
+    "background": "NTTの主力である国内通信事業はスマートフォン普及の飽和や競合他社との価格競争により、成長が頭打ちの状態にある。一方でNTTデータグループはグローバルITサービス分野で積極的な海外展開を進めており、国際的な事業基盤を着実に拡大してきた。こうした状況を踏まえ、NTTグループ全体の成長エンジンをデジタル・グローバル領域へとシフトさせる必要性が高まっていた。"
+  }
+];
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>
