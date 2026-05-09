@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: flex; gap: 8px; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "GM agrees to pay $12.75M in California driver privacy settlement",
+    "japanese_title": "GM、カリフォルニア州のドライバープライバシー侵害訴訟で約19億円の和解に合意",
+    "url": "https://techcrunch.com/2026/05/09/gm-agrees-to-pay-12-75m-in-california-driver-privacy-settlement/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. ゼネラルモーターズ（GM）は、カリフォルニア州司法長官ロブ・ボンタ率いる法執行機関グループとプライバシー関連の和解に合意した。",
+      "2. 和解金額は1,275万ドル（約19億円）に上り、ドライバーの個人情報の取り扱いをめぐる問題が焦点となった。",
+      "3. この訴訟は、自動車メーカーによる運転データの収集・共有に関する透明性の欠如に対する法的対応の一環とみられる。"
+    ],
+    "points": [
+      "・ カリフォルニア州が主導する形で複数の法執行機関が連携し、自動車メーカーのデータ利用慣行に対し組織的に対抗した点",
+      "・ 1,275万ドルという和解金額は、企業のデータプライバシー違反に対する抑止力としての水準を示す先例となりうる点",
+      "・ GMだけでなく、他の自動車メーカーへの同様の調査・訴訟が波及する可能性がある点"
+    ],
+    "prediction": "今回の和解を受け、GMは車載データの収集・共有に関するポリシーを見直し、ドライバーへの透明性向上を迫られるとみられる。また、他の自動車メーカーも同様の法的リスクを認識し、データ取り扱い方針の自主的な改善に動く可能性が高い。さらに連邦レベルでも自動車データプライバシーに関する規制強化の議論が加速することが予想される。",
+    "ai_interpretation": "このニュースの本質は、「データ収集ビジネスモデル」と「個人プライバシー権」の衝突が自動車産業においても本格化したことを示している点にある。GMが売ったのは車ではなく「ドライバーの行動データ」であり、消費者が知らぬ間に情報資産化されていたという構造的問題を浮き彫りにしている。今後はコネクテッドカーを持つすべての自動車メーカーがデータガバナンスを事業戦略の中核に置くことを余儀なくされる、業界全体の転換点として記憶されるだろう。",
+    "collected_at": "2026-05-10T04:58:22.296058+09:00",
+    "background": "近年、コネクテッドカーの普及に伴い、自動車メーカーが走行データや運転行動データを大量に収集・第三者へ販売する慣行が問題視されるようになった。GMは車載システムを通じてドライバーの同意が不十分なまま詳細な運転データを保険会社等に提供していたとして批判を受けていた。カリフォルニア州は全米で最も厳格なプライバシー法（CCPA）を有しており、今回のような法的措置の先駆けとなった。"
+  },
+  {
+    "title": "The Instax Wide 400 builds on instant photography’s simplicity and stretches it, literally",
+    "japanese_title": "フジフイルム「Instax Wide 400」登場——アナログインスタントカメラがAI時代に再び輝く理由",
+    "url": "https://techcrunch.com/2026/05/09/the-instax-wide-400-builds-on-instant-photographys-simplicity-and-stretches-it-literally/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. フジフイルムがInstax Wide 400を発売し、インスタントフィルムカメラのシンプルさをワイドフォーマットでさらに進化させた。",
+      "2. AIやデジタル全盛の時代にもかかわらず、アナログフィルムカメラはノスタルジーと新鮮さを融合させ根強い人気を維持している。",
+      "3. レトロスタイルのカメラ文化は、単なる懐古趣味にとどまらず、新世代のユーザー層にも広がりを見せている。"
+    ],
+    "points": [
+      "・デジタル・AI技術が進化する時代において、あえてアナログのシンプルさを訴求する逆張り戦略が奏功している",
+      "・「ワイド」フォーマットの採用により、従来のInstaxよりも表現の幅が広がり、グループ写真や風景撮影に適した仕様となっている",
+      "・ノスタルジーと新規性（ノベルティ）という二つの異なる動機が、幅広い年齢層の消費者を引きつけている"
+    ],
+    "prediction": "インスタントカメラ市場はニッチながらも安定した成長を続けると見られ、フジフイルムやポラロイドなどのメーカーは引き続き新モデルを投入していくと予想される。デジタルとアナログを融合したハイブリッド製品（デジタルデータ保存＋物理プリント機能）の需要も高まる可能性がある。また、Z世代・α世代を中心に「リアルな物理的体験」への価値付けがさらに強まり、インスタントフィルム文化は一過性のブームではなく定着したカルチャーとして継続するだろう。",
+    "ai_interpretation": "このニュースの本質は、技術の高度化が必ずしも「アナログの終焉」を意味しないという逆説的な現実を示している。人々はデジタルの利便性に疲れ、「偶然性」「一期一会」「手触り感」といったアナログ特有の不完全さに価値を見出し始めており、これは単なるレトロブームではなく、過飽和なデジタル体験へのカウンターカルチャーとも言える。フジフイルムのInstax戦略は、テクノロジー企業が見落としがちな「人間の感情・体験」市場を巧みに捉えたビジネスモデルの好例である。",
+    "collected_at": "2026-05-10T04:58:43.832488+09:00",
+    "background": "スマートフォンのカメラ性能が飛躍的に向上し、AIによる画像生成・補正技術が普及する中、逆説的にアナログ体験への需要が高まっている。インスタントカメラはSNSが普及した2010年代以降に若年層を中心に再ブームを迎え、フジフイルムのInstaxシリーズはその代表的存在となった。今回のWide 400は、より広い画角でその体験を提供することで、市場のさらなる拡大を狙った製品と見られる。"
+  },
+  {
+    "title": "Nvidia has already committed $40B to equity AI deals this year",
+    "japanese_title": "Nvidiaが2024年にAI関連株式投資で既に4兆円超をコミット——AI覇権を資本力で固める戦略",
+    "url": "https://techcrunch.com/2026/05/09/nvidia-has-already-committed-40b-to-equity-ai-deals-this-year/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Nvidiaは2024年において、AI関連のエクイティ（株式）投資として400億ドル（約4兆円）以上をコミット済みであることが明らかになった。",
+      "2. 同社はGPU販売にとどまらず、AIエコシステム全体への積極的な投資家として存在感を高めている。",
+      "3. この動きはNvidiaがAI産業のサプライヤーであると同時に、戦略的出資者としての地位を確立しようとしていることを示す。"
+    ],
+    "points": [
+      "・ 400億ドルという投資規模は、テクノロジー企業の戦略投資としても異例の大きさであり、Nvidiaの財務的余裕と戦略的野心を示す",
+      "・ エクイティ投資によりNvidiaはAI企業の成長果実を直接享受できる構造を構築している",
+      "・ 投資先企業はNvidiaのGPUを優先利用する傾向が生まれやすく、ハードウェア販売との相乗効果が期待できる"
+    ],
+    "prediction": "NvidiaのAIエコシステムへの投資はさらに拡大し、同社はAI産業における「インフラ提供者」と「主要投資家」の二重の役割を強化していくと考えられる。投資先企業との連携深化により、競合他社（AMD・Intelなど）がNvidia製品を代替することをより困難にする囲い込み戦略が進むだろう。一方で、独占的影響力の拡大に対する規制当局の監視が強まるリスクも高まっていくと予測される。",
+    "ai_interpretation": "このニュースの本質は、Nvidiaが「半導体メーカー」から「AIインダストリーの設計者」へと変貌を遂げようとしているという点にある。チップという物理的製品の販売だけでなく、資本を通じてAI産業の構造そのものを自社に有利な形に組み替える戦略であり、かつてのIntelやMicrosoftが試みた産業支配の現代版とも言える。Nvidiaへの依存度が技術面だけでなく資本面でも高まることで、AI産業全体の方向性に対するNvidiaの影響力は今後さらに決定的なものになる可能性がある。",
+    "collected_at": "2026-05-10T04:59:03.528789+09:00",
+    "background": "NvidiaはAIブームの中で半導体メーカーとして爆発的な成長を遂げており、その潤沢なキャッシュフローを活用してAI関連スタートアップや企業への投資を積極化してきた。従来からOpenAIやCoreWeaveなど主要AI企業への出資を行っており、単なるチップ販売を超えたエコシステム構築戦略を推進している。GPU需要の拡大と株価上昇によって得た資本力を、業界全体への影響力強化に転換する動きが加速している。"
+  },
+  {
+    "title": "ソニーGとTSMC、イメージセンサーで合弁設立へ　十時社長「規模を確保」",
+    "japanese_title": "ソニーGとTSMCがイメージセンサー合弁会社設立へ――熊本新工場で共同生産ラインを構築",
+    "url": "https://xtech.nikkei.com/atcl/nxt/column/18/00001/11725/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. ソニーグループの子会社ソニーセミコンダクタソリューションズが、世界最大の半導体受託製造企業TSMCとイメージセンサー分野での合弁会社設立を発表した。",
+      "2. ソニーセミコンが過半数株式を保有する形で合弁を設立し、熊本県合志市の新工場に共同で開発・生産ラインを構築することを検討している。",
+      "3. ソニーの十時社長は「規模の確保」を目的として挙げており、競争激化する市場での生産能力強化が狙いだ。"
+    ],
+    "points": [
+      "・ソニーセミコンが過半数株式を保有する点で、TSMCの技術・製造力を活用しつつも経営主導権をソニー側が握る構造となっている",
+      "・熊本県合志市という国内拠点を選択したことで、日本政府の半導体産業支援策との連携・補助金活用が期待される",
+      "・「規模の確保」という発言が示すように、単なる技術提携にとどまらず生産キャパシティの大幅拡張が主目的となっている"
+    ],
+    "prediction": "合弁会社の正式設立に向けて、両社間での出資比率や事業範囲の詳細協議が進められ、数年以内に熊本工場での量産体制が整う見通しだ。政府からの補助金支援も追い風となり、日本国内のイメージセンサー生産能力は大幅に向上する可能性が高い。一方で、中国市場への輸出規制リスクや地政学的緊張が事業計画に影響を与える変数として残る。",
+    "ai_interpretation": "このニュースの本質は、単なる業務提携を超えた「日本の半導体産業の再構築」という大きな流れの一端を担う動きである。ソニーという需要側とTSMCという製造側が一体化することで、垂直統合型のサプライチェーンを国内に構築し、地政学リスクへの耐性を高める戦略的意図が読み取れる。また、TSMCという世界最高峰の製造技術をイメージセンサーという特定分野に集中投下することで、中国勢との差別化を図り、ソニーの競争優位を長期的に維持しようとする「選択と集中」の判断とも言える。",
+    "collected_at": "2026-05-10T04:59:22.438248+09:00",
+    "background": "イメージセンサー市場ではソニーが世界トップシェアを持つものの、中国メーカーの急速な台頭やスマートフォン市場の伸び悩みにより競争環境が厳しさを増している。一方、TSMCは熊本県に工場（JASM）をすでに建設しており、日本国内での半導体サプライチェーン強化という政策的潮流とも合致する。こうした状況の中、両社が技術・資本面での連携を深めることで、生産規模の拡大とコスト競争力の向上を目指す動きが加速した。"
+  },
+  {
+    "title": "NTTデータGの26年3月期はデータセンター譲渡で51％営業増益、今期は減益予想",
+    "japanese_title": "NTTデータグループ2026年3月期決算：DCのREIT譲渡益で営業利益51％増、ただし今期は減益予想",
+    "url": "https://xtech.nikkei.com/atcl/nxt/news/24/03217/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. NTTデータグループの2026年3月期連結決算は、売上高5兆46億円（前期比8％増）、営業利益4882億円（同51％増）と大幅な増収増益を達成した。",
+      "2. 営業利益の大幅増加の主因は、データセンター（DC）をREIT（不動産投資信託）へ譲渡したことによる一時的な譲渡益の計上である。",
+      "3. 一方、今期（2027年3月期）は譲渡益という特殊要因が剥落することにより、減益が予想されている。"
+    ],
+    "points": [
+      "・ 売上高が初めて5兆円台に到達し、グローバルITサービス企業としての規模拡大が鮮明になった点",
+      "・ 営業利益51％増という数字の裏側が「一時的なDC譲渡益」であり、本業ベースの実力値とは乖離している可能性がある点",
+      "・ 今期（2027年3月期）の減益予想が示されており、特殊益に依存しない持続的な収益成長モデルの構築が課題となっている点"
+    ],
+    "prediction": "譲渡益という一時的な押し上げ効果が消えるため、今期は営業利益が前期比で減少する見通しであり、投資家からは本業の成長力に対する精査が一層厳しくなると予想される。一方で、DCのREIT化によって得た資金は、AI・クラウド領域やグローバル事業への積極投資に充当される可能性が高く、中長期的な収益体質の強化につながるかが注目点となる。海外売上比率の向上や付加価値サービスの拡充が、持続的な成長の鍵を握ることになるだろう。",
+    "ai_interpretation": "このニュースの本質は、「見かけ上の大幅増益」と「本業の実力」を峻別して読む必要があるという点にある。DC譲渡という資産売却益による利益増は財務戦略上合理的であるが、それは事業そのものの競争力向上を意味するわけではない。NTTデータグループが真に評価されるべきは、アセットライト戦略で得た資源を、AIやDX需要が急拡大するグローバル市場においていかに本業の成長投資へ転換できるか、その実行力にかかっていると言える。",
+    "collected_at": "2026-05-10T04:59:42.950815+09:00",
+    "background": "近年、データセンターは企業のデジタル化やクラウド需要の急拡大を背景に価値が高騰しており、インフラ資産として機関投資家からの注目度が高まっている。NTTデータグループは保有するデータセンター資産をREITに売却することで、含み益を顕在化させ、手元資金を戦略的投資に再配分する「アセットライト」戦略を進めている。こうした不動産の流動化手法は、日本の大手ITインフラ企業の間でも広がりを見せている。"
+  },
+  {
+    "title": "NTT副社長にNTTデータGの佐々木裕社長、データG社長に中山和彦氏が昇格",
+    "japanese_title": "NTT副社長にNTTデータG佐々木裕氏が就任——国内通信の停滞打破へグローバル戦略を加速",
+    "url": "https://xtech.nikkei.com/atcl/nxt/news/24/03215/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. NTTは2026年5月8日、NTTデータグループの佐々木裕社長をNTT副社長に起用する人事を発表した。",
+      "2. NTTデータグループの後任社長には中山和彦氏が昇格する。",
+      "3. 国内通信事業の成長が頭打ちとなる中、佐々木氏のグローバルIT事業経験を活用して海外展開を強化する狙いがある。"
+    ],
+    "points": [
+      "・ 佐々木氏はNTTデータGで組織変革と国内外の事業戦略を主導した実績を持ち、グローバルIT領域のキーパーソンであること",
+      "・ NTTグループ全体の成長戦略が「国内通信」から「海外ITサービス」へと重心移動していることを人事が明確に示している点",
+      "・ NTTデータG社長に中山和彦氏が昇格することで、現場レベルの事業継続性がどう確保されるかも焦点となる点"
+    ],
+    "prediction": "佐々木氏がNTT副社長として海外事業戦略の指揮を執ることで、NTTグループのグローバルITサービス投資や提携・M&Aが加速する可能性が高い。また、NTTデータグループでは中山新社長のもとで佐々木氏が構築した戦略路線が引き継がれる一方、新たなリーダーシップのカラーが打ち出されるか注目される。NTT全体としては、通信インフラとITサービスを融合させた「総合デジタル企業」への転換がさらに鮮明になるとみられる。",
+    "ai_interpretation": "今回の人事は単なるポスト異動ではなく、NTTグループが「通信会社からグローバルデジタルサービス企業へ」という構造転換を本格化させるという強いメッセージを持っている。国内通信事業という従来の収益の柱が限界を迎えつつある中、IT・DX・海外展開を熟知した人材をグループ中枢に据えることは、経営の重心移動を象徴する戦略的選択といえる。この動きは、日本の大手通信キャリア全体が直面する「ポスト通信時代」への適応という業界共通の課題を映し出している。",
+    "collected_at": "2026-05-10T05:00:01.493946+09:00",
+    "background": "NTTの国内通信事業は市場の成熟化や競争激化により、大幅な成長が見込みにくい状況が続いている。一方でNTTデータグループは国内外のITサービス・デジタルトランスフォーメーション領域で事業拡大を進めており、グローバル市場での存在感を高めてきた。こうした状況を背景に、NTTはグループ全体の成長エンジンをIT・海外事業にシフトさせる戦略的意図のもと、今回の人事を決断したとみられる。"
+  }
+];
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>
