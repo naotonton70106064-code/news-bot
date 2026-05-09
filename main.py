@@ -1,9 +1,16 @@
 import json
 import os
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from collector import collect_articles, collect_all, FEEDS
 from summarizer import summarize_article
+
+JST = ZoneInfo("Asia/Tokyo")
+
+
+def now_jst():
+    return datetime.now(JST)
 
 
 def parse_summary(summary_text, category="it"):
@@ -68,7 +75,7 @@ def generate_article_page(results, category="it"):
     articles_dir = Path("articles") / category
     articles_dir.mkdir(parents=True, exist_ok=True)
 
-    date_str = datetime.now().strftime('%Y-%m-%d')
+    date_str = now_jst().strftime('%Y-%m-%d')
     output_filename = articles_dir / f"{date_str}.html"
     with open(output_filename, "w", encoding="utf-8") as f:
         f.write(html)
@@ -98,7 +105,7 @@ def process_category(category, articles):
             "points": parsed["points"],
             "prediction": parsed["prediction"].strip(),
             "ai_interpretation": parsed["ai_interpretation"].strip(),
-            "collected_at": datetime.now().isoformat(),
+            "collected_at": now_jst().isoformat(),
         }
 
         # カテゴリに応じたフィールド
@@ -113,7 +120,7 @@ def process_category(category, articles):
     articles_dir = Path("articles") / category
     articles_dir.mkdir(parents=True, exist_ok=True)
 
-    date_str = datetime.now().strftime('%Y-%m-%d')
+    date_str = now_jst().strftime('%Y-%m-%d')
     filename = articles_dir / f"{date_str}.json"
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
