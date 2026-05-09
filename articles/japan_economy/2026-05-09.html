@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: flex; gap: 8px; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "実の娘に性的暴行､元役員（54）に懲役8年確定　実は少なくない親族間暴力､加害者側に共通する｢認知の歪み｣とは？ | ライフ | 東洋経済オンライン",
+    "japanese_title": "親族間性暴力の実態と加害者心理：犯罪心理学・トラウマ研究から見る家庭内性的虐待の深層",
+    "url": "https://toyokeizai.net/articles/-/943887?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 実の娘への性的暴行で元役員（54歳）に懲役8年が確定した事件を契機に、家庭内における親族間性暴力の実態と加害者心理が改めて問われている。",
+      "2. 犯罪心理学・トラウマ研究の観点から、加害者側に共通する「認知の歪み」（自己正当化・被害の矮小化など）が暴力の背景として指摘されている。",
+      "3. 最も安全であるべき家庭内で生じる性暴力は被害者に深刻なトラウマをもたらし、回復への道筋の整備が社会的課題となっている。"
+    ],
+    "points": [
+      "・ 加害者が「元役員」という社会的地位を持つ人物であり、性犯罪が特定の階層に限らず広く発生していることを示している",
+      "・ 「認知の歪み」という心理的メカニズムの解明が、再犯防止プログラムや刑事司法制度の見直しに直結する重要課題である",
+      "・ 親族間（近親）暴力は発覚・通報が困難なため統計上の「氷山の一角」であり、実態把握と被害者支援制度の充実が急務とされている"
+    ],
+    "prediction": "政府・自治体による性犯罪・児童虐待対策の強化や、被害者支援機関への予算拡充が政策的に進む可能性が高まっている。刑事司法における加害者の認知行動療法（CBT）を取り入れた再犯防止プログラムの導入・拡充が議論される一方、被害者のトラウマケア体制整備に向けた公民連携の取り組みが加速することが予測される。また、性犯罪厳罰化・不同意性交等罪の運用強化を背景に、類似案件の摘発・立件件数が増加傾向をたどる可能性もある。",
+    "ai_interpretation": "このニュースの本質は、経済事件ではなく「社会的資本（ソーシャルキャピタル）の毀損」という問題であり、家庭という基盤的制度への信頼崩壊が社会全体の心理的安全性・生産性に影響を与えるという点で日本経済への間接的示唆がある。被害者が長期的なトラウマを抱えることによる労働参加率の低下・医療費増大・社会的孤立は、少子高齢化社会の日本において無視できない経済的損失につながる。加害者の「認知の歪み」への科学的介入と被害者の早期回復支援への投資は、単なる福祉政策を超えた「人的資本投資」として経済的観点からも重要性を増している。",
+    "collected_at": "2026-05-09T00:46:59.562631",
+    "market_impact": "このニュースは直接的な株式市場・為替への影響は限定的であるが、性犯罪対策・被害者支援サービス・心理カウンセリング産業への社会的関心と需要喚起という間接的影響が考えられる。児童福祉・メンタルヘルス関連企業や支援団体への公的資金配分拡大の議論が促進される可能性がある。社会的コストの増大という観点では、労働損失や医療費増加を通じて経済的な負荷が生じていることも示唆される。"
+  },
+  {
+    "title": "編集部厳選､注目の経済ニュース！【5月9日】 今週のトピックス＆来週のスケジュール | ビジネス | 東洋経済オンライン",
+    "japanese_title": "2025年5月9日版｜東洋経済が選ぶ今週の注目経済ニュースと来週の重要スケジュール総まとめ",
+    "url": "https://toyokeizai.net/articles/-/943865?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 東洋経済オンラインの編集部が、5月9日時点における国内外の注目経済トピックスを厳選して有料会員向けに提供している。",
+      "2. 今週の重要な経済イベントや市場動向を振り返るとともに、来週以降のスケジュールを先読みする内容となっている。",
+      "3. 有料会員向けコンテンツであるため、具体的な記事内容は限定公開となっており、詳細情報はサブスクリプション登録が必要。"
+    ],
+    "points": [
+      "・ 5月第2週という時期は、米国FOMCや日本の経済指標発表など重要イベントが集中しやすいタイミングである",
+      "・ 編集部が「厳選」した形式をとっており、情報の取捨選択自体がメディアのアジェンダ設定として機能している",
+      "・ 有料会員限定コンテンツという構造が、質の高い経済情報へのアクセス格差を生んでいる点も注目に値する"
+    ],
+    "prediction": "5月中旬以降は、日本銀行の金融政策運営に関する思惑や、米中関係・円相場の動向が引き続き市場の焦点となる見通しである。国内では企業決算発表シーズンが佳境を迎えており、業績見通しの上方・下方修正が個別株の値動きを左右する局面が続くと予想される。また、来週の経済スケジュールに重要指標が含まれる場合、発表結果次第で円安・円高どちらの方向にも振れる可能性がある。",
+    "ai_interpretation": "このニュースは記事の実質的な内容よりも、「有料メディアによる情報キュレーション」という経済メディアのビジネスモデルそのものを体現している点が本質的な意味を持つ。情報が溢れる現代において、信頼性の高い編集部が情報を選別・整理するサービスへの需要が高まっており、これは日本の経済リテラシー向上とメディア産業の変容を同時に示している。日本経済への示唆としては、質の高い経済情報へのアクセスが投資行動や経営判断の質を左右する時代において、情報格差の解消が国全体の経済的意思決定力に直結するという重要な課題を浮き彫りにしている。",
+    "collected_at": "2026-05-09T00:47:18.103172",
+    "market_impact": "提供された記事本文が概要のみであるため、具体的な市場への影響を断定することは困難である。ただし、東洋経済のような主要経済メディアが注目トピックスとして取り上げる内容は、投資家や企業経営者の注目を集め、株式市場や為替相場の短期的なセンチメントに影響を与える可能性がある。国内産業については、来週のスケジュールに含まれる経済指標や政策発表次第で、各セクターへの波及効果が見込まれる。"
+  },
+  {
+    "title": "｢噴火よりも風向きが問題｣｢公衆浴場が天然温泉｣…ジモトしか知らない鹿児島の\"観光名所\"と\"日常\"の境界線 | ライフ | 東洋経済オンライン",
+    "japanese_title": "地元民だけが知る鹿児島の隠れた魅力――「生活の場」が新たな観光資源になる時代",
+    "url": "https://toyokeizai.net/articles/-/942806?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 鹿児島には桜島や名グルメといった定番観光地に加え、地元民の日常に溶け込んだ「生活観光資源」が数多く存在する。",
+      "2. 公衆浴場の天然温泉や噴火との共生といった\"当たり前の日常\"が、観光客にとっては希少な体験価値を持つコンテンツになり得る。",
+      "3. 「旅するより暮らすように」という視点が、従来型の観光から「関係人口・長期滞在型」観光へのシフトを示唆している。"
+    ],
+    "points": [
+      "・「日常と観光の境界線」というコンセプトが、地域ブランディングの新たな切り口として機能している",
+      "・天然温泉付き公衆浴場など生活インフラ自体が観光資源化されることで、設備投資なしの観光振興が可能になる点",
+      "・桜島の噴火リスクを「共生文化」として再解釈することで、ネガティブ要素をポジティブな差別化要因に転換している点"
+    ],
+    "prediction": "政府が推進する「地方創生」や「観光立国推進基本計画」の方向性とも合致しており、こうした生活型・体験型コンテンツへの補助金・支援策が拡充される可能性がある。関係人口や移住促進にも波及効果が期待され、鹿児島のような地方都市が「住んでみたい場所」として再評価されることで、人口流出抑制や定住促進策の成功モデルになり得る。一方、過度な観光地化が進むと\"日常の希少性\"が失われるリスクもあり、持続可能な観光管理が課題となる。",
+    "ai_interpretation": "このニュースの本質は、「生活そのものが経済価値を持つ時代」への移行を示している点にある。日本の地方経済が人口減少と財政縮小に直面する中、新たなインフラ投資なしに既存の生活文化を資源化できる「暮らし型観光」は、低コスト・高付加価値な地域振興モデルとして極めて示唆に富む。日本全国の地方自治体が同様のアプローチを採用することで、観光産業の裾野が広がり、地域GDPへの貢献と文化保全の両立という「一石二鳥」の効果が期待できる。",
+    "collected_at": "2026-05-09T00:47:36.598548",
+    "market_impact": "地域密着型の観光コンテンツの発掘は、インバウンド消費の分散化や地方経済の活性化につながり、鹿児島県内の宿泊・飲食・交通関連の中小事業者にプラスの恩恵をもたらす可能性がある。為替市場への直接的な影響は限定的だが、円安基調が続く中でインバウンド需要を地方に取り込む文脈では追い風となる。国内観光産業においては、「オーバーツーリズム回避」の観点からも地方分散型モデルの好事例として注目される。"
+  },
+  {
+    "title": "アンソロピックと2800億円クラウド契約　米アカマイ、株価27%急騰",
+    "japanese_title": "アカマイがアンソロピックと約2800億円のクラウド契約締結――AI需要急拡大で株価27%急騰",
+    "url": "https://www.nikkei.com/article/DGXZQOGN090390Z00C26A5000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 米CDN大手アカマイ・テクノロジーズがAI企業アンソロピックと総額約20億ドル（約2800億円）規模のクラウドインフラ契約を締結した。",
+      "2. この発表を受けてアカマイの株価は27%という急激な上昇を記録し、市場に強いインパクトを与えた。",
+      "3. 生成AIの急速な普及を背景に、AIモデルの学習・推論を支えるクラウドインフラへの大型投資が加速していることを示す象徴的な案件となった。"
+    ],
+    "points": [
+      "・ アンソロピック（Claude開発元）がOpenAIに対抗するAI企業として巨額のインフラ投資を行うほど事業拡大していること",
+      "・ 従来CDN（コンテンツ配信）中心だったアカマイがAIクラウドへ事業転換を加速している構造変化",
+      "・ 2800億円規模という契約金額が示す、生成AIインフラ市場の爆発的な成長スピード"
+    ],
+    "prediction": "アンソロピックやOpenAIをはじめとするAI企業とクラウドプロバイダーとの大型・長期契約締結が今後も相次ぎ、クラウドインフラ市場の寡占化が一段と進むとみられる。米国政府のAI政策・輸出規制の動向次第では、同様の契約が地政学的リスクの影響を受ける可能性もあり、日本を含む同盟国での代替インフラ整備への需要が高まることも予想される。",
+    "ai_interpretation": "このニュースの本質は、生成AI競争が「モデルの優劣」から「インフラの確保」という物理的・資本集約的な争いへと主戦場を移しつつあることを示している。アカマイのような従来型ITインフラ企業がAIの波に乗り大変貌を遂げている事実は、日本企業にとっても既存のITインフラ資産をAI向けに再定義・再投資する好機であることを示唆する。日本経済においては、この流れに乗り遅れた場合のデジタル競争力の喪失リスクが深刻であり、官民連携によるAIインフラへの戦略的投資が急務といえる。",
+    "collected_at": "2026-05-09T00:47:55.404906",
+    "market_impact": "AI関連インフラ銘柄全体への投資家の関心が一層高まり、エヌビディアやAWSなど競合するクラウド・半導体銘柄にも波及効果をもたらす可能性がある。為替面では米国テック株への資金流入が続くことでドル高圧力が維持され、円安傾向が継続するリスクがある。国内産業においては、NTTやソフトバンク、富士通など日本のクラウド・インフラ事業者がAI向け大型契約獲得競争に乗り遅れるリスクが改めて浮き彫りになる。"
+  },
+  {
+    "title": "中米コスタリカ、新大統領が就任　前大統領「院政」で揺らぐ民主主義",
+    "japanese_title": "コスタリカ新大統領就任と「院政」疑惑が揺るがす中米民主主義の行方と経済的影響",
+    "url": "https://www.nikkei.com/article/DGXZQOGN08BWG0Y6A500C2000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 中米コスタリカで新大統領が就任したが、前大統領による「院政」（影響力の継続行使）が民主主義の根幹を揺るがす懸念が浮上している。",
+      "2. 政治的な不透明感が高まることで、外国直接投資や観光業など同国の主要経済基盤への影響が懸念される。",
+      "3. コスタリカは中米では比較的安定した民主主義国家として知られており、今回の政治的混乱は地域全体のガバナンスへの信頼低下につながるリスクをはらんでいる。"
+    ],
+    "points": [
+      "・前大統領の「院政」がどの程度制度的・実質的な影響力を持つか",
+      "・新大統領が独立した政策運営を実現できるかどうかの政治的自律性",
+      "・IMFや米国などとの関係維持・通商政策の継続性",
+      "・コスタリカに進出している多国籍企業（インテル等）の動向",
+      "・中米地域全体への民主主義後退シグナルとしての波及効果"
+    ],
+    "prediction": "政治的二重権力構造が続くようであれば、コスタリカの格付け機関による信用格付けへの影響や、米国との自由貿易協定（CAFTA-DR）運用における信頼性低下が懸念される。一方、同国の強固な司法・立法機能が機能すれば、「院政」に対する制度的歯止めが働き、経済的混乱は限定的にとどまる可能性もある。新大統領の初期の政策決定がその自律性を示す重要な試金石となるだろう。",
+    "ai_interpretation": "このニュースの本質は、**民主主義制度の「形式的継続」と「実質的後退」のギャップ**という現代的課題を象徴している点にある。選挙という民主的手続きを経ながらも、旧権力が影響力を保持し続けるという構造は、グローバルサウス全体で見られるガバナンス劣化の一形態であり、日本にとっては中米との経済連携（日コスタリカEPA等）における政治リスク管理の再点検を促すシグナルといえる。また日本企業がサプライチェーンや製造拠点の多角化を進める際、政治的安定性の評価基準をより精緻化する必要性を示す事例としても注目に値する。",
+    "collected_at": "2026-05-09T00:48:15.771319",
+    "market_impact": "コスタリカコロン（CRC）は政治的不確実性の高まりにより下落圧力を受ける可能性があり、外国投資家の様子見姿勢が強まることが予想される。半導体・医療機器製造など外資系企業が集積するコスタリカの輸出産業は、政策の継続性への不安から新規投資判断を先送りする動きが出る可能性がある。観光業は短期的には大きな打撃を受けないものの、長期的なカントリーリスクの上昇が懸念される。"
+  },
+  {
+    "title": "米国防総省がUFO資料公開　月面上で宙に浮く物体、日本周辺で目撃も",
+    "japanese_title": "米国防総省がUFO（UAP）機密資料を公開――月面浮遊物体や日本近海での目撃情報も含む",
+    "url": "https://www.nikkei.com/article/DGXZQOGN08BFZ0Y6A500C2000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 米国防総省が未確認空中現象（UAP/UFO）に関する資料を公式に公開し、月面上空で浮遊する物体の映像や日本周辺での目撃事例が含まれていることが明らかになった。",
+      "2. 本件は純粋な経済ニュースではなく、安全保障・航空宇宙・防衛技術分野に関わる政府発表であり、防衛予算や宇宙開発政策への波及が注目される。",
+      "3. 日本近海での目撃情報が含まれる点で、自衛隊や日本政府の対応・情報開示姿勢にも影響を与える可能性がある。"
+    ],
+    "points": [
+      "・ 日本周辺での目撃情報が公式資料に含まれることで、日本政府・防衛省への情報開示要求が強まる可能性",
+      "・ 防衛・宇宙産業への公的投資拡大（防衛費GDP比2%目標との連動）への影響",
+      "・ 民間宇宙ビジネスや航空安全管理における新たな規制・技術開発需要の発生"
+    ],
+    "prediction": "米国のUAP情報公開の流れは日本を含む同盟国の防衛政策にも影響を与え、情報共有体制の強化や共同監視システムへの投資が加速する可能性がある。日本国内では防衛予算の一層の増額や、宇宙・電磁波領域における新技術開発投資の正当化材料として活用される可能性がある。ただし、経済的インパクトは中長期的・間接的なものにとどまる見通しである。",
+    "ai_interpretation": "このニュースの本質は「経済ニュース」というよりも**安全保障と科学的透明性をめぐる政治的シグナル**であり、直接的な経済効果よりも防衛・宇宙産業への「予算配分の正当性強化」という間接効果が重要である。日本経済への示唆としては、防衛費増額の流れと宇宙安全保障への投資拡大が産業構造の変化を促す可能性があり、関連する素材・電子・センサー技術企業にとっては中長期的なビジネス機会となり得る。一方で、情報の信頼性・透明性が不明確なまま政策が動くリスクにも注意が必要である。",
+    "collected_at": "2026-05-09T00:48:32.734827",
+    "market_impact": "防衛・宇宙関連銘柄（三菱重工、IHI、川崎重工など）への投資家の関心が一時的に高まる可能性がある。為替への直接的な影響は限定的だが、米国防予算の拡大期待がドル買い材料として意識される局面もあり得る。国内では宇宙航空研究開発機構（JAXA）関連予算や防衛装備品への資金配分議論が活発化する可能性がある。"
+  }
+];
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>
