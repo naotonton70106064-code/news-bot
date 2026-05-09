@@ -248,8 +248,12 @@ def generate_index():
   </footer>
 
   <script>
+    const validCategories = ["it", "japan_economy", "world_economy"];
+    const urlCat = new URLSearchParams(window.location.search).get("cat");
+    const initialCategory = validCategories.indexOf(urlCat) >= 0 ? urlCat : "it";
+
     const categories = {categories_json};
-    let currentCategory = "it";
+    let currentCategory = initialCategory;
     let currentPage = 0;
 
     const weekdays = ["\\u65E5", "\\u6708", "\\u706B", "\\u6C34", "\\u6728", "\\u91D1", "\\u571F"];
@@ -354,6 +358,11 @@ def generate_index():
     // タブクリックイベント
     document.querySelectorAll(".tab-btn").forEach(btn => {{
       btn.addEventListener("click", () => switchCategory(btn.dataset.cat));
+    }});
+
+    // 初期タブの見た目を初期カテゴリに合わせる
+    document.querySelectorAll(".tab-btn").forEach(btn => {{
+      btn.classList.toggle("active", btn.dataset.cat === currentCategory);
     }});
 
     // 初期表示

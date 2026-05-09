@@ -111,8 +111,9 @@ def generate_weekly_summary(articles, monday, sunday, category):
     .header h1 {{ font-size: 22px; font-weight: 700; margin-bottom: 4px; }}
     .header .period {{ font-size: 14px; color: #666; }}
     .header .stats {{ font-size: 13px; color: #888; margin-top: 8px; }}
-    .back-link {{ display: inline-block; margin-bottom: 1rem; font-size: 13px; color: #1a73e8; text-decoration: none; }}
-    .back-link:hover {{ text-decoration: underline; }}
+    .back-link {{ display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; margin-bottom: 1rem; }}
+    .back-link:hover {{ background: #f0f0f0; }}
+    .back-link:active {{ background: #e8e8e8; }}
     .container {{ max-width: 800px; margin: 0 auto; }}
     .section {{ margin-bottom: 2rem; }}
     .section h2 {{ font-size: 18px; font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e5e5e5; }}
@@ -130,7 +131,7 @@ def generate_weekly_summary(articles, monday, sunday, category):
 </head>
 <body>
   <div class="container">
-    <a href="../../index.html" class="back-link">&larr; トップに戻る</a>
+    <a href="../../index.html?cat={category}" class="back-link">&larr; 一覧に戻る</a>
     <div class="header">
       <h1>{cat_name} 週次サマリー {week_id}</h1>
       <div class="period">{monday_str} 〜 {sunday_str}</div>

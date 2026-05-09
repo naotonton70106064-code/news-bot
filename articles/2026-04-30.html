@@ -34,9 +34,16 @@
     .posted { opacity: 0.4; pointer-events: none; }
     .badge-posted { font-size: 11px; color: #22c55e; }
     .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
   </style>
 </head>
 <body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
   <div class="header">
     <h1>今日のニュース</h1>
     <span class="date" id="date"></span>
@@ -47,6 +54,20 @@
   </div>
 
   <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
     document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
 
     const articles = [
