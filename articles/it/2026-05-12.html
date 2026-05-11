@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: flex; gap: 8px; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Daniel Ek-backed defense tech Helsing to raise $1.2B at $18B valuation",
+    "japanese_title": "Daniel Ek出資の欧州防衛テックHelsingが18億ドル評価額で12億ドル調達へ――軍事ドローン市場が急拡大",
+    "url": "https://techcrunch.com/2026/05/11/daniel-ek-backed-defense-tech-helsing-to-raise-1-2b-at-18b-valuation/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 欧州の軍事ドローンスタートアップ「Helsing」が、約1,200億円（12億ドル）の大型資金調達ラウンドに近づいている。",
+      "2. 今回の調達後の企業評価額は180億ドル（約2兆7,000億円）に達する見込みで、設立5年の企業としては異例の高評価となる。",
+      "3. SpotifyのCEOであるDaniel Ekが出資者として名を連ねており、著名テック起業家が防衛分野へシフトしていることを示している。"
+    ],
+    "points": [
+      "・ 設立わずか5年で企業評価額が180億ドルに達するという、防衛テックセクターとしては異例のスピード成長",
+      "・ Daniel Ek（Spotify創業者）をはじめとする著名テック起業家が防衛産業に積極参入している潮流の象徴的事例",
+      "・ 欧州発の防衛スタートアップとして、米国主導の防衛産業に対抗する欧州独自の技術エコシステム形成への貢献"
+    ],
+    "prediction": "今回の12億ドル調達が完了すれば、HelsингはAI搭載ドローンや防衛システムの研究開発・量産体制をさらに強化し、欧州NATO加盟国への納入拡大を加速させるとみられる。また、これほどの高評価を受けたことで、IPO（株式公開）に向けた動きも数年以内に現実味を帯びてくる可能性が高い。欧州の防衛テックへの投資競争はさらに激化し、類似スタートアップの資金調達にも追い風となるだろう。",
+    "ai_interpretation": "このニュースの本質は、「テクノロジー」と「安全保障」の融合が投資テーマとして完全に主流化したことを示している点にある。かつてシリコンバレー的価値観では倫理的タブーとされていた軍事技術への投資が、地政学的現実の前に急速に正当化されており、民主主義国家の防衛力をテクノロジーで支えるという新たな社会的使命として再定義されつつある。Helsingの躍進は、欧州が米国のPalantirやAndurilに対抗する独自の防衛テックエコシステムを本格的に構築しようとしている意志の表れでもある。",
+    "collected_at": "2026-05-12T05:48:10.576776+09:00",
+    "background": "ロシアによるウクライナ侵攻を契機に、欧州各国では防衛費の増強と防衛技術の自国開発に対する機運が急速に高まっている。従来は民間テック投資家が忌避しがちだった防衛・軍事分野に対し、地政学的リスクの高まりを背景にVCや著名投資家が積極的に資金を投じる流れが定着しつつある。Helsingはその流れを最大限に捉えたAI・ドローン特化型の防衛スタートアップである。"
+  },
+  {
+    "title": "Bravo is creating unscripted microdramas for the Peacock app",
+    "japanese_title": "PeacockがBravoブランドの縦型マイクロドラマ2作品を配信へ――米国でも短尺動画市場が本格化",
+    "url": "https://techcrunch.com/2026/05/11/bravo-is-creating-unscripted-microdramas-for-the-peacock-app/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Peacockは、Bravoブランドを活用したノンスクリプテッド（ノンフィクション系）マイクロドラマ2作品をPeacockアプリ内で配信すると発表した。",
+      "2. 背景には、ReelShortやDramaBoxといったマイクロドラマ専門アプリが数十億ドル規模の収益を静かに上げているという市場トレンドがある。",
+      "3. 大手ストリーミングサービスが既存の人気ブランドを活用してマイクロドラマ市場に参入する、初期段階の動きとして注目される。"
+    ],
+    "points": [
+      "・ ReelShortやDramaBoxなどの専門アプリが「静かに」数十億ドルを稼いでいるという市場規模の大きさ",
+      "・ 新規IPではなく既存の「Bravo」ブランドを活用することでリスクを抑えつつ認知度を担保する戦略",
+      "・ ノンスクリプテッド（ドキュメンタリー・リアリティ系）フォーマットをマイクロドラマに採用している点の新規性"
+    ],
+    "prediction": "Peacock以外のNetflixやMax、Huluなどの大手ストリーミングサービスも同様にマイクロドラマフォーマットへの参入を検討・発表する動きが相次ぐ可能性が高い。また、Bravoの2作品の成績次第では、同ブランドのフランチャイズ（Real Housewivesシリーズなど）を活用した追加展開も予想される。マイクロドラマ市場は従来の専門アプリと大手プラットフォームの競合が激化し、コンテンツ獲得競争が過熱するだろう。",
+    "ai_interpretation": "このニュースの本質は、「コンテンツ消費の断片化」が大手メディア企業の戦略を根本から変えつつあるという点にある。かつてプレミアムコンテンツの象徴であったストリーミングサービスが、TikTokやYouTube Shortsに代表される超短尺フォーマットに追随せざるを得なくなっており、視聴者の可処分時間と注意力をめぐる競争が新たなフェーズに入ったことを示している。Bravoというブランド資産の活用は合理的な一手だが、既存ファンへのブランド毀損リスクと新規フォーマットへの適応という二重の課題をどう両立させるかが成否を分けるだろう。",
+    "collected_at": "2026-05-12T05:48:29.229751+09:00",
+    "background": "中国発のマイクロドラマ（1話数分程度の短尺縦型動画）は、ReelShortやDramaBoxなどのアプリを通じて北米市場でも急成長しており、億単位のユーザーを獲得しつつある。こうした新興プレイヤーの台頭により、従来の長尺コンテンツ主体のストリーミング各社も短尺フォーマットへの対応を迫られるようになった。PeacockはBravoという確立されたリアリティTV브랜드を武器に、この成長市場への足がかりを築こうとしている。"
+  },
+  {
+    "title": "Digg tries again, this time as an AI news aggregator",
+    "japanese_title": "Diggが再起動——AIニュースアグリゲーターとして復活を目指す新たな挑戦",
+    "url": "https://techcrunch.com/2026/05/11/digg-tries-again-this-time-as-an-ai-news-aggregator/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. かつて人気を誇ったソーシャルニュースサイト「Digg」が、AIニュースアグリゲーターとして再び復活を試みている。",
+      "2. 今回のリニューアルでは、AIを活用したニュース収集・配信を主軸に据えた新しいコンセプトを採用している。",
+      "3. Diggにとってこれは複数回目の再起動であり、生き残りをかけた新たな方向転換となる。"
+    ],
+    "points": [
+      "・ かつての「ユーザー投票型」モデルから「AI駆動型」へと根本的なコンセプトを転換している点",
+      "・ AIニュースアグリゲーター市場はすでに競争が激化しており、差別化戦略が鍵となる点",
+      "・ レガシーブランド「Digg」の知名度をどこまで資産として活用できるかが問われる点"
+    ],
+    "prediction": "AIを活用したニュースアグリゲーターはPerplexityやGoogleなど大手も参入しており、Diggが差別化を図るには独自のキュレーション品質やUXの洗練が不可欠となるだろう。ブランド認知度はある程度の初期流入を見込めるものの、旧来のユーザー層とAIネイティブな新規ユーザーの両方を取り込めるかが成否を分ける。成功すれば買収ターゲットになる可能性もあるが、過去の失敗パターンが繰り返されるリスクも否定できない。",
+    "ai_interpretation": "このニュースの本質は、「ブランドの延命」と「AIトレンドへの便乗」という二つの動機が交差している点にある。かつての栄光を持つプラットフォームがAIという旬のキーワードで再生を図るのは、技術的イノベーションというよりもサバイバル戦略としての側面が強い。メディア業界全体でAIによる情報収集・要約が標準化しつつある中、Diggの挑戦はその流れへの適応の象徴であると同時に、ブランド価値だけでは生き残れない厳しい現実を映し出している。",
+    "collected_at": "2026-05-12T05:48:46.089029+09:00",
+    "background": "Diggは2000年代に絶大な人気を誇ったソーシャルニュースプラットフォームだったが、度重なる仕様変更やRedditなどの競合台頭により急速にユーザーを失った。その後も何度か復活を試みてきたが、いずれも大きな成功には至らなかった。今回はAIブームという時代の波に乗り、AIを核心技術として据えた新たなビジネスモデルで再参入を図っている。"
+  },
+  {
+    "title": "Google、量子プロセッサー「Willow」　早期アクセスへ実験提案を募集",
+    "japanese_title": "Google、次世代量子プロセッサー「Willow」の早期アクセスプログラム開始――選抜研究者向けに実験提案を募集",
+    "url": "https://xtech.nikkei.com/atcl/nxt/column/18/03098/041400066/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. Googleが量子プロセッサー「Willow」への早期アクセスプログラムを開始し、選ばれた研究者に限定公開する。",
+      "2. 参加者は個別に設計された実験を実行できる特別な環境が提供される。",
+      "3. 一般公開前の段階で外部研究者との連携を深め、量子コンピューティングの実用化を加速させる狙いがある。"
+    ],
+    "points": [
+      "・ 一般公開前という段階での限定アクセスであり、参加できる研究者は高い競争倍率をくぐり抜けた精鋭に限られる点",
+      "・ 個別設計の実験が可能という柔軟な運用形態が、実用的なユースケース発掘を促進する可能性がある点",
+      "・ 外部研究者のフィードバックをハードウェア・ソフトウェア改善に活かせる「共同開発」的な側面を持つ点"
+    ],
+    "prediction": "早期アクセスを通じて得られた研究成果や知見は、Willowの改良版や次世代プロセッサーの開発に反映される可能性が高い。また、優れた実験結果が論文や発表として公開されることで、Googleの量子技術に対する信頼性と注目度がさらに高まると予想される。中長期的には、このプログラムが量子クラウドサービスの商用展開への足がかりとなる可能性もある。",
+    "ai_interpretation": "このニュースの本質は、単なる技術公開ではなく「エコシステムの構築」にある。Googleは外部研究者を巻き込むことで、量子コンピューティングの応用領域を自社だけでは到達できない速度で開拓しようとしている。これは量子技術の覇権争いが「ハードウェア性能」だけでなく「コミュニティと実用事例の厚み」でも決まる段階に入ったことを示唆している。",
+    "collected_at": "2026-05-12T05:49:01.032056+09:00",
+    "background": "Googleは2024年に量子プロセッサー「Willow」を発表し、従来の量子チップを大幅に上回る性能と誤り訂正能力を持つとして注目を集めた。量子コンピューティング分野ではIBMやMicrosoftなども競争を激化させており、Googleは研究コミュニティとの連携強化によって技術的優位性を維持・拡大しようとしている。早期アクセスプログラムはその戦略的な一手として位置づけられる。"
+  },
+  {
+    "title": "AIブラウザでWebサイトから特定の記事を探す、ローカルLLMでも稼働できる",
+    "japanese_title": "AIブラウザ自動化ツール「Browser Use」活用法：ローカルLLMにも対応したWeb記事検索を徹底解説",
+    "url": "https://xtech.nikkei.com/atcl/nxt/column/18/03576/040600002/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. AIブラウザ自動化フレームワーク「Browser Use」を使ってWebサイトから特定の記事を検索・取得する方法が紹介されている。",
+      "2. 「Run Agent」タブから自然言語でタスクを指示するだけで、AIがブラウザ操作を自動実行する仕組みを解説している。",
+      "3. クラウドLLMだけでなく、ローカルLLM環境でも動作可能である点が大きな特徴として挙げられている。"
+    ],
+    "points": [
+      "・自然言語による指示だけでブラウザ操作を自動化できる高い操作性",
+      "・ローカルLLM対応により、APIコストやデータプライバシーの懸念を解消できる点",
+      "・連載形式の記事（第1回から継続）であり、実践的なチュートリアルとして体系的に学べる構成"
+    ],
+    "prediction": "Browser UseのようなAIブラウザエージェントは、今後さらに高度な業務自動化（リサーチ・データ収集・フォーム入力など）へ応用が拡大していくと予想される。ローカルLLMの性能向上とともに、企業内のオンプレミス環境での活用も加速するだろう。また、競合ツールの台頭により、UIの使いやすさや対応モデルの幅が競争軸となっていく可能性が高い。",
+    "ai_interpretation": "このニュースが示す本質は、「AIによるブラウザ操作の民主化」が着実に進んでいるという点である。特にローカルLLM対応は、クラウドサービスに依存せずとも高度な自動化が実現できることを意味し、個人・中小企業レベルでのAI活用の裾野を大きく広げるものだ。Web情報収集という日常的なタスクがAIエージェントに委ねられる時代が現実のものとなりつつあり、人間の情報処理の役割そのものが変質していくことを示唆している。",
+    "collected_at": "2026-05-12T05:49:17.195414+09:00",
+    "background": "近年、LLM（大規模言語モデル）の進化により、AIがブラウザを自律的に操作する「AIエージェント」技術への注目が急速に高まっている。Browser Useはそうした流れの中で登場したオープンソースフレームワークであり、開発者や技術者の間で実用的なツールとして普及しつつある。プライバシーやコスト面からローカルLLMへの需要も増しており、その対応が評価されている。"
+  },
+  {
+    "title": "「河川・砂防」は建設技術研究所が首位不動、2位日本工営とも微増に転じる",
+    "japanese_title": "河川・砂防分野で建設技術研究所が首位維持、日本工営と共に売上100億円超え－2025年建設コンサル業務ランキング",
+    "url": "https://xtech.nikkei.com/atcl/nxt/column/18/03590/042000001/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. 2025年期末決算をもとにした建設コンサルタントの業務分野別ランキングで、「河川・砂防・海岸・海洋」分野の首位は建設技術研究所が維持した。",
+      "2. 2位の日本工営とともに、両社だけが同分野で売上高100億円を超え、上位2社による寡占構造が鮮明になっている。",
+      "3. 両社はいずれも売上高が微増に転じており、市場全体での需要回復・拡大の兆しが見られる。"
+    ],
+    "points": [
+      "・建設技術研究所が複数年にわたり首位を維持しており、同分野における圧倒的なブランド力と技術力を示している",
+      "・売上100億円超えが上位2社のみという構造は、中堅以下との格差拡大を示唆しており、業界内の二極化が進んでいる可能性がある",
+      "・両社が「微増」に転じた点は、防災投資の継続や公共事業費の下支えによる市場の底堅さを反映している"
+    ],
+    "prediction": "防災・国土強靱化に関する公共投資は中長期的に継続される見通しであり、建設技術研究所・日本工営の上位2社はさらなる売上成長が期待される。一方で、技術者不足や人件費高騰が業界共通の課題となっており、収益性の維持が今後の焦点となるだろう。また、デジタル技術（DXやAI活用）の導入加速により、業務効率化と差別化競争が一層激しくなると予想される。",
+    "ai_interpretation": "このランキング結果は、河川・砂防分野における技術的専門性と実績の蓄積が、そのまま市場競争力に直結することを示している。大規模インフラ案件では信頼性と過去の実績が発注の決め手となるため、上位企業の優位性は構造的に固定化されやすい。裏を返せば、新規参入や中堅企業の成長には高い参入障壁が存在しており、業界の健全な競争環境を維持するための政策的配慮も求められる局面と言える。",
+    "collected_at": "2026-05-12T05:49:33.208204+09:00",
+    "background": "近年、気候変動による豪雨災害や河川氾濫が頻発しており、治水・砂防インフラへの投資需要が国内で高まっている。政府は防災・減災・国土強靱化に向けた予算を継続的に確保しており、河川・砂防分野の建設コンサルタント需要は安定的に推移してきた。こうした社会的背景を受け、専門性の高い大手企業への業務集中が進んでいる。"
+  }
+];
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>

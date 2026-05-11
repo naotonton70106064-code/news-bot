@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: flex; gap: 8px; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "ドローン免許4万人時代でも実は｢ペーパードライバー｣ばかり…､そこに商機見つけた九電ドローンサービスの勘所　 | ビジネス | 東洋経済オンライン",
+    "japanese_title": "ドローン免許保有者4万人超でも「ペーパードライバー」急増——九電ドローンサービスが「現場力」で切り開く新市場戦略",
+    "url": "https://toyokeizai.net/articles/-/943977?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 国家資格化により急増したドローン免許保有者の多くは実務経験が乏しく、即戦力として機能していない「ペーパードライバー」状態にある。",
+      "2. 九州電力グループの九電ドローンサービスは、インフラ点検で培った「現場知（現場での実践的ノウハウ）」を強みに、ドローン活用支援事業の拡大を狙っている。",
+      "3. 資格保有者の実務スキルギャップという業界課題が、新たなビジネス機会（教育・支援サービス）を生み出している構図が明確になりつつある。"
+    ],
+    "points": [
+      "・ 国家資格制度（2022年導入）が生み出した「資格と実力のミスマッチ」という構造的問題が、新規ビジネス創出の温床となっている点",
+      "・ 九州電力グループという大手インフラ企業の信用力・現場実績が、スタートアップには難しい差別化要因（安全性・信頼性）として機能している点",
+      "・ インフラ点検・測量・農業など複数分野での横展開可能性があり、単一事業にとどまらないプラットフォーム化の潜在性がある点"
+    ],
+    "prediction": "ドローンの活用義務化や規制緩和（レベル4飛行の普及）が進む中、実務スキルを持つ人材・企業への需要は一層高まり、育成プログラムや資格+実務一体型サービスの市場が急拡大する見通しである。政府のインフラ老朽化対策・人手不足解消の政策的後押しも加わり、公共調達においてもドローン活用企業への発注が増加し、大手インフラ系企業の優位性がさらに強まる可能性が高い。一方、中小ドローン事業者は差別化が難しくなり、業界再編・M&Aの動きも活発化することが予想される。",
+    "ai_interpretation": "このニュースの本質は、「資格の民主化」が必ずしも「スキルの民主化」を意味しないという日本の産業政策上の盲点を露呈している点にある。免許制度の整備が先行する一方で、実務経験の場や教育インフラが追いついていない構造は、ドローンに限らずDX人材やグリーン人材の育成課題にも共通する日本経済の慢性的課題である。九電ドローンサービスの事例は、既存の大企業が「現場知」という参入障壁を武器に新規事業を育てるモデルとして注目に値し、エネルギー会社の事業ポートフォリオ転換という文脈でも日本経済の変革期を象徴するケーススタディと言えるだろう。",
+    "collected_at": "2026-05-12T05:49:55.962740+09:00",
+    "market_impact": "ドローン関連市場は国内で数千億円規模への成長が見込まれており、実務人材の育成・派遣・支援サービス分野への投資資金流入が加速する可能性がある。電力・インフラ系企業がドローン事業に参入する動きは、既存のドローンベンチャー企業の競争環境を激化させ、株価や企業価値にも影響を与えうる。為替への直接的影響は限定的だが、国産ドローン活用の拡大は部品調達や技術開発を通じて製造業の需要構造に変化をもたらす可能性がある。"
+  },
+  {
+    "title": "家賃5.9万･築60年木造アパートの｢ひとり暮らし｣…｢わかったふりはしたくない｣と葛藤する29歳現場監督の\"幸せの形\" | ライフ | 東洋経済オンライン",
+    "japanese_title": "29歳現場監督が語る「月5.9万・築60年アパート」のひとり暮らし――若年労働者の住居費抑制と生き方の選択が示す日本の縮図",
+    "url": "https://toyokeizai.net/articles/-/943698?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 建築現場で働く29歳の男性が、家賃5.9万円・築60年の木造アパートに居住しながら、仕事と生活の意味を模索している。",
+      "2. 「わかったふりをしない」という姿勢で職人的な仕事と真摯に向き合い、コストを抑えた生活の中に独自の幸福感を見出している。",
+      "3. 高騰する都市部の住宅費の中で、あえて古い物件を選ぶ若者の価値観が、消費行動や住宅市場の変化を示唆している。"
+    ],
+    "points": [
+      "・ 家賃5.9万円という水準は都市部の平均を大きく下回り、若年労働者が可処分所得を確保するための合理的選択を反映している",
+      "・ 築60年の木造アパートを選ぶ背景には、住宅の「資産価値」よりも「生活の安心感・居心地」を優先する価値観の転換がある",
+      "・ 建設・土木現場を支える若手人材が「わからないことに正直である」姿勢を持つことは、技術継承や安全管理の観点からも重要な示唆を含む"
+    ],
+    "prediction": "築古物件のリノベーション需要や空き家活用政策が今後さらに重要性を増す中、政府の空き家対策・住宅ストック活用施策が加速する可能性がある。建設業における2024年問題（時間外労働規制）の影響で現場監督・技術者の働き方改革が急務となっており、若手定着率向上のための賃金・環境改善が業界再編を促すことも予想される。若年層の「小さな幸福」志向が続く限り、高額新築マンションや消費財市場の回復は緩やかにとどまる見通しだ。",
+    "ai_interpretation": "このニュースは表面上は一個人のライフスタイル記事だが、その本質は「経済成長の恩恵を実感できない若年労働者が、消費を抑制しながら精神的充足を優先する」という日本社会の構造的課題を映し出している。建設現場を支える若手が低廉な住居に甘んじざるを得ない現実は、労働生産性向上と賃金上昇が追いついていないことを示しており、人手不足が深刻化する建設業の持続可能性にも警鐘を鳴らす。「わかったふりをしない」という言葉は個人の誠実さを超え、日本の職場文化における形式主義・忖度文化への静かなアンチテーゼとも読み取れる。",
+    "collected_at": "2026-05-12T05:50:18.240510+09:00",
+    "market_impact": "若年層による低家賃・築古物件への需要継続は、新築住宅需要の鈍化や不動産市場の二極化をさらに加速させる可能性がある。建設業界では慢性的な人手不足が続く中、現場労働者の賃金・待遇改善が業界全体の課題として浮き彫りとなっており、関連企業の人件費増加が収益を圧迫する懸念もある。為替や株式市場への直接的な影響は限定的だが、若年層の消費抑制傾向が内需停滞の一因となりうる点は注視が必要だ。"
+  },
+  {
+    "title": "｢改正物流効率化法（物効法）｣本格施行──迫る｢特定荷主｣届け出期限､CLOの選任､10月末までには中長期計画書の提出も | ビジネス | 東洋経済オンライン",
+    "japanese_title": "改正物流効率化法が本格施行──特定荷主の届け出・CLO選任・中長期計画提出で物流業界が構造転換へ",
+    "url": "https://toyokeizai.net/articles/-/943637?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 改正物流効率化法（物効法）が全面施行され、荷主企業を含むすべての事業者に物流効率化が法的義務として課された。",
+      "2. 「特定荷主」への指定を受けた企業は、CLO（最高物流責任者）の選任や中長期計画書の提出（10月末期限）など、具体的な対応が急務となっている。",
+      "3. 背景には物流2024年問題（トラックドライバーの時間外労働規制）、深刻な人手不足・高齢化など、日本の物流インフラが直面する構造的な危機がある。"
+    ],
+    "points": [
+      "・「特定荷主」に指定された企業がいつまでに何を行うべきか──届け出・CLO選任・中長期計画提出の3段階の期限管理が焦点",
+      "・CLO（最高物流責任者）という新たな経営幹部ポストの設置義務が、企業ガバナンスや経営戦略に与える影響",
+      "・物流2024年問題と本法施行の\"ダブルプレッシャー\"により、中小荷主企業や中小運送業者が対応しきれないリスク"
+    ],
+    "prediction": "対応が遅れた企業には行政指導や勧告・公表といった制裁が想定されており、2025年度以降は法令違反事例の顕在化とともに業界再編・M&Aが加速する可能性が高い。また、政府はデジタル化（物流DX）や共同配送の推進を後押しする補助金・税制優遇策を拡充するとみられ、物流テック企業への投資拡大が期待される。中長期的には、荷主と物流事業者の対等なパートナーシップへの転換が業界標準となり、商慣行そのものが変わる局面を迎えるだろう。",
+    "ai_interpretation": "このニュースの本質は、日本が長年放置してきた「物流の無償化・軽視」という商慣行に、国家が初めて法律をもって強制的にメスを入れたという歴史的転換点を示している。物流は「コストではなく戦略資産」という認識への転換を企業に迫るものであり、単なる規制強化ではなく日本型ビジネスモデルの構造改革そのものといえる。少子高齢化が加速する中、物流インフラの持続可能性を確保できるかどうかは、日本経済全体のサプライチェーン競争力を左右する根幹的な課題である。",
+    "collected_at": "2026-05-12T05:50:38.686856+09:00",
+    "market_impact": "物流関連株（倉庫・運送・3PL企業）にとっては、法令対応需要の拡大やシステム投資増加が追い風となり、関連銘柄への注目度が高まる可能性がある。一方、荷主企業側では物流コストの上昇や社内体制整備のための費用負担が増し、製造業・小売業の収益圧迫要因となりうる。為替への直接的な影響は限定的だが、物流コスト上昇が輸出競争力や国内物価に波及するリスクも見逃せない。"
+  },
+  {
+    "title": "英仏でなく「スペインなら買える」　政治不安で国債リスクに異変",
+    "japanese_title": "政治リスクが国債市場を逆転：スペイン国債が英仏を上回る安全資産に浮上",
+    "url": "https://www.nikkei.com/article/DGXZQOCD08BDD0Y6A500C2000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 従来は財政懸念国とされていたスペイン国債が、英国・フランスの政治的不安定を背景に相対的な安全資産として投資家から選好される異例の事態が発生している。",
+      "2. 英国はブレグジット後遺症や財政運営への不信、フランスは議会の分断と財政赤字拡大懸念から国債スプレッドが上昇し、スペインとのリスク格差が縮小・逆転しつつある。",
+      "3. 政治的安定性が財政ファンダメンタルズを上回る国債評価基準となるという、債券市場における評価軸の構造的変化を示している。"
+    ],
+    "points": [
+      "・ スペインのサンチェス政権が連立維持に成功し、財政規律路線を継続していることが市場の信認を獲得した点",
+      "・ フランスの議会ねじれ（マクロン政権の少数与党化）による予算審議の難航が、長期金利上昇の直接的要因となっている点",
+      "・ 英国では労働党政権発足後も財政拡張懸念が払拭されず、ギルト（英国債）への売り圧力が継続している点",
+      "・ 「政治リスクプレミアム」が伝統的な「財政リスクプレミアム」を超える新たな国債評価モデルへの移行が加速している点"
+    ],
+    "prediction": "フランスの政局が安定しない限り、仏独スプレッドの高止まりは継続し、ECBの金融政策運営にも域内分断というノイズが加わり続ける公算が大きい。スペイン国債への資金流入が続けば同国の借り入れコスト低下という好循環が生まれる一方、政治状況が急変した場合の反動リスクも内包している。中長期的には欧州各国の政治ガバナンスの質そのものが国債格付けや金利水準を左右する時代が本格化すると予想される。",
+    "ai_interpretation": "このニュースの本質は、**「国の信用リスクの測定軸が財政数値から政治的統治能力へとシフトしている」**という債券市場の認識変化にある。日本への示唆としては、財政赤字が世界最大水準にあっても円建て国債が安定しているのは政治的安定性と日銀・国内投資家による需給構造に支えられているという脆弱な均衡を再認識させる。もし日本で政治的混乱や政策信頼性の著しい低下が生じた場合、欧州の事例のように財政ファンダメンタルズへの市場の目が一気に厳しくなるリスクがあり、政治安定の維持が経済安全保障の一環であることを示す警告と読み取れる。",
+    "collected_at": "2026-05-12T05:51:03.115226+09:00",
+    "market_impact": "ユーロ圏内での国債格差（スプレッド）の再編が進み、従来の「コア国 vs 周辺国」という構図が崩れることで、欧州資産全体の価格形成に混乱が生じるリスクがある。英ポンドには下押し圧力がかかりやすく、対円・対ドルでの変動性が高まる可能性がある。日本の機関投資家（生保・年金）が保有する欧州国債ポートフォリオの見直しを迫られる場面も想定される。"
+  },
+  {
+    "title": "福井のチャンスメーカー、買収でDM事業を増強　多様な販促素材強み",
+    "japanese_title": "福井のチャンスメーカーが買収でDM事業を強化——多様な販促素材で競争力向上へ",
+    "url": "https://www.nikkei.com/article/DGXZQOCC074AG0X00C26A5000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 福井県に拠点を置く販促・印刷関連企業「チャンスメーカー」が、買収によってダイレクトメール（DM）事業の拡充を図った。",
+      "2. 多様な販促素材を扱える強みを活かし、買収によるシナジー効果で事業規模と対応力の向上を目指している。",
+      "3. 地方中堅企業がM&Aを活用して事業領域を拡大するという、地方経済活性化の一事例として注目される。"
+    ],
+    "points": [
+      "・ 地方中堅企業がM&Aを活用して事業規模を拡大する「地方発の成長戦略」の好事例である点",
+      "・ デジタルマーケティングが隆盛する中で、DM・印刷物などアナログ販促の需要が一定程度根強く残っている点",
+      "・ 多様な販促素材を一括提供できる「ワンストップサービス」が差別化戦略の核となっている点"
+    ],
+    "prediction": "デジタルとアナログを融合したオムニチャネル型の販促需要は今後も堅調に推移すると見られ、DM事業は単なる紙媒体にとどまらずデータ活用型のターゲティング郵便などへと進化していく可能性が高い。地方企業のM&Aは後継者不足問題の解決手段としても機能しており、今後も同様の案件が増加すると予測される。政策面でも地方経済の活性化を後押しする補助金・税制優遇措置が継続される中、地方発のM&Aはさらに促進されるだろう。",
+    "ai_interpretation": "このニュースの本質は、「デジタル化の逆風下でもアナログ販促の専門性を磨き、M&Aで競争力を高める地方企業の生存戦略」にある。単なる業界再編ではなく、地方中小企業が規模の経済を獲得しながら独自の強みを維持しようとする姿勢は、日本の地方経済が抱える縮小課題への一つの回答といえる。今後、同様のモデルが地方の製造業やサービス業にも波及すれば、地域経済の底上げと産業競争力の維持に貢献する可能性を秘めている。",
+    "collected_at": "2026-05-12T05:51:19.793520+09:00",
+    "market_impact": "印刷・DM業界においては、デジタル化の波に対抗するためにアナログ販促手法の付加価値向上が求められており、今回のような業界内再編が加速する可能性がある。地方企業によるM&Aは地域経済の雇用維持・拡大にも寄与するため、地方創生の観点からも好影響が期待される。為替や株式市場への直接的な影響は限定的だが、中小印刷・マーケティング関連株のセンチメント改善につながり得る。"
+  },
+  {
+    "title": "サウジアラムコCEO｢原油週1億バレル供給消失｣　ホルムズ封鎖継続で",
+    "japanese_title": "サウジアラムコCEO警告：ホルムズ海峡封鎖が続けば世界の原油供給週1億バレルが消失する危機",
+    "url": "https://www.nikkei.com/article/DGXZQOGR11AWZ0R10C26A5000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. サウジアラムコのCEOが、ホルムズ海峡の封鎖が継続した場合、世界の原油供給から週約1億バレルが失われると警告した。",
+      "2. ホルムズ海峡は世界の原油輸送量の約20〜30%が通過する極めて重要な海上輸送路であり、封鎖は即座にエネルギー危機を引き起こす。",
+      "3. この発言は中東の地政学的緊張が依然として高水準にあることを示し、エネルギー安全保障への国際的な懸念を改めて浮き彫りにした。"
+    ],
+    "points": [
+      "・ ホルムズ海峡はサウジアラビア・UAE・イラク・クウェートなど主要産油国の輸出ルートであり、封鎖の影響は中東一国にとどまらず世界規模",
+      "・ 日本は原油輸入の約9割以上を中東に依存しており、ホルムズリスクは日本経済に対して構造的・直接的な脆弱性をもたらす",
+      "・ IEAの戦略石油備蓄（SPR）の放出や、代替輸送ルートの確保が緊急課題となる可能性がある"
+    ],
+    "prediction": "ホルムズ封鎖が現実化・長期化した場合、原油価格は1バレル100ドルを大幅に超える水準まで上昇し、世界経済はスタグフレーション的な環境に直面するリスクがある。各国政府はエネルギー安全保障政策の見直しを迫られ、再生可能エネルギーへの移行加速や備蓄強化、産油国の多角化が政策的優先事項となる。日本においても「GX（グリーントランスフォーメーション）」推進と並行して、短期的なエネルギー確保策の強化が政治・経済両面で急務となる。",
+    "ai_interpretation": "このニュースの本質は、単なる地政学リスクの警告にとどまらず、世界のエネルギーシステムが依然として中東の地政学的安定に極めて脆弱であるという構造的問題を改めて示している点にある。日本経済にとっては、円安・エネルギー高騰・物価上昇という「三重苦」が同時進行するシナリオへの備えが急務であり、エネルギー自給率の低さという慢性的課題が再び表面化している。サウジアラムコCEOの発言は市場への警告であると同時に、国際社会に対して外交的解決と多元的エネルギー戦略の構築を促す強いメッセージと読み取ることができる。",
+    "collected_at": "2026-05-12T05:51:41.248217+09:00",
+    "market_impact": "原油価格は短期的に急騰リスクが高まり、エネルギー関連株や海運株には上昇圧力がかかる一方、製造業・航空・化学業界などエネルギーコスト依存型の企業には収益圧迫要因となる。円安圧力も強まりやすく、日本のような資源輸入国にとっては輸入物価上昇を通じたインフレ再燃の懸念が生じる。国内では電力・ガス料金の再値上げリスクや、企業のコスト増加による景気下押し圧力も警戒される。"
+  }
+];
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>
