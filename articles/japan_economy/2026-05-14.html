@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "460軒が消えた業界で｢1日700人｣を集める寿湯､元プロボクサー3代目が語る｢銭湯がなくなった街｣の行方 | ライフ | 東洋経済オンライン",
+    "japanese_title": "東京・寿湯が1日700人を集客できる理由――廃業続く銭湯業界で生き残る3代目の経営戦略",
+    "url": "https://toyokeizai.net/articles/-/943768?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 東京・東上野の銭湯「寿湯」は、銭湯が460軒以上消えた東京で1日700人を集める異例の繁盛店として注目されている。",
+      "2. 家族3代にわたる職人的技術の継承と、若者・外国人観光客を意識した新たなブランディング戦略を組み合わせることで差別化に成功している。",
+      "3. 元プロボクサーという異色の経歴を持つ3代目が、伝統文化の保存と現代的な集客手法の融合という難題に挑んでいる。"
+    ],
+    "points": [
+      "・ 廃業が相次ぐ「絶滅危惧種」業界において、差別化戦略（若者・インバウンド取り込み）が有効に機能していること",
+      "・ 3代にわたる技術・ノウハウの継承が競合優位性の源泉となっており、無形資産の価値が経営の根幹を支えていること",
+      "・ 元プロボクサーという異業種経験を持つ後継者が、外部視点で業界慣習を打破し新たな顧客層を開拓している点"
+    ],
+    "prediction": "インバウンド消費が引き続き拡大する中、「本物の日本文化体験」として銭湯の需要は一定程度維持・回復する可能性があり、成功事例の横展開が業界再生の鍵となるだろう。一方、後継者不足・燃料費高騰・施設老朽化という構造問題は依然深刻であり、行政による補助金制度や銭湯を地域インフラとして再定義する政策論議が加速することが予想される。成功モデルとしての「寿湯」がフランチャイズ化・コンサルティング化へと発展するシナリオも現実味を帯びてくる。",
+    "ai_interpretation": "このニュースの本質は、「衰退産業においても正しい差別化戦略と後継者の資質があれば生存・成長が可能である」という日本の中小・零細事業者全体に通じる普遍的なメッセージにある。少子高齢化・後継者不足・コスト上昇という三重苦に直面する日本の伝統的商業施設が、インバウンド需要や新世代経営者の感性を武器に再生できることを示す象徴的な事例であり、地方創生や中小企業政策にも重要な示唆を与えている。銭湯という「場の文化」が持つコミュニティ機能を再評価することは、孤立化・希薄化が進む都市社会における公共的価値の再定義という、より大きな経済・社会的議論にも接続される。",
+    "collected_at": "2026-05-14T05:50:03.632448+09:00",
+    "market_impact": "銭湯業界は構造的な縮小が続いており、株式市場への直接的な影響は限定的だが、インバウンド需要の取り込みに成功している点は観光・サービスセクターにとってポジティブなモデルケースとなり得る。地域密着型小規模事業者の生存戦略として、観光庁や地方自治体の補助政策とも連動する可能性があり、地域経済への波及効果が期待される。為替面では円安が外国人観光客の来店増加を後押しし、こうした和文化体験施設の収益を間接的に押し上げる要因となっている。"
+  },
+  {
+    "title": "15年で460軒消滅…｢花咲くどころかつぼみにもならず｣のボクサーが38歳で挑んだ\"第二のリング\"は｢沈みゆく銭湯｣だった | ライフ | 東洋経済オンライン",
+    "japanese_title": "元プロボクサーが38歳で継いだ「銭湯再生」の挑戦――東京で15年間に460軒消滅した老舗業態の未来とは",
+    "url": "https://toyokeizai.net/articles/-/943767?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 東京では過去15年間で約460軒の銭湯が廃業しており、地域インフラとしての公衆浴場が急速に消滅しつつある深刻な業態縮小が続いている。",
+      "2. プロボクサーとして花開かなかった長沼亮三氏が38歳でキャリアチェンジし、老舗銭湯「寿湯」を継承したが、設備の相次ぐ故障など経営上の苦難に直面した。",
+      "3. 異業種からの参入者が廃業危機にある伝統的生活インフラを引き継ぐ「事業承継×地域再生」モデルの一例として注目される取り組みである。"
+    ],
+    "points": [
+      "・ 東京都内の銭湯数は15年間で約460軒減少しており、廃業ペースは年平均30軒超と業態消滅が加速している",
+      "・ 異業種（スポーツ）からの中途参入による事業承継は、後継者難の伝統業種における新たな担い手モデルとして政策的にも示唆が大きい",
+      "・ 「機械の反乱」と表現される設備老朽化は、銭湯業界全体の資本投資不足・収益構造の脆弱性を象徴しており、修繕費用の捻出が経営存続の最大のボトルネックとなっている"
+    ],
+    "prediction": "東京都や各自治体による銭湯への公的支援（補助金・税制優遇・光熱費補助）が拡充されなければ、廃業トレンドは今後も継続し、2030年代には現存軒数がさらに半減するリスクがある。一方で、「サウナブーム」「ウェルネス需要」「インバウンド観光」を取り込む形でリブランディングに成功した銭湯は収益改善の実績を上げており、業態転換・付加価値化が生き残り戦略の鍵となるだろう。事業承継税制の活用や、地域コミュニティ施設としての公設民営化モデルの普及が、政策的な解決策として議論される可能性が高まっている。",
+    "ai_interpretation": "このニュースの本質は「銭湯の衰退」という個別業態の話を超え、日本の中小零細業種全体が直面する**高齢経営者・後継者不在・設備老朽化・コスト高騰の四重苦**を凝縮して示している点にある。元ボクサーという異色の経歴を持つ参入者の存在は、既存業界の枠外からの人材流入が地域インフラ維持に不可欠になりつつあるという日本経済の構造変化を象徴している。「衰退産業＝投資不要」という固定観念を覆し、適切な資本注入・ブランド再構築・コミュニティとの連携があれば伝統的生活インフラも再生可能であるという示唆は、地方創生・中小企業政策にとって重要なモデルケースとなり得る。",
+    "collected_at": "2026-05-14T05:50:28.125761+09:00",
+    "market_impact": "銭湯業界は直接的な株式市場への影響は限定的だが、関連する不動産・設備投資・地域商業の観点では、廃業跡地の利活用問題として都市部の小規模不動産市場に影響を与え得る。エネルギーコスト高騰（ガス・電気代）が銭湯経営を直撃しており、エネルギー関連政策や公共料金の動向が業態の存続を左右する構造的課題となっている。国内の中小・零細サービス業全般に共通する後継者不足問題の縮図として、事業承継支援策や補助金政策の需要拡大につながる可能性がある。"
+  },
+  {
+    "title": "法律を守れば人が死ぬ　破れば救える命がある――震災で下した違反という決断､｢俺に言わずよくやった｣と褒めた部下 | 政治・経済・投資 | 東洋経済オンライン",
+    "japanese_title": "東日本大震災で「超法規的決断」を下した伝説の官僚・徳山日出男――危機時のリーダーシップと行政の限界が問う日本の危機管理体制",
+    "url": "https://toyokeizai.net/articles/-/943067?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 2011年東日本大震災において、官僚・徳山日出男氏は法律の壁を越えた「超法規的措置」を連発し、現場での人命救助を最優先に判断・行動した。",
+      "2. 「法律を守れば人が死ぬ、破れば命が救える」という究極のジレンマに直面し、行政官として異例の決断を繰り返した姿勢が「伝説」として語り継がれている。",
+      "3. 部下が独自判断で違反行為に踏み切った際も「俺に言わずよくやった」と評価するなど、硬直した官僚文化とは一線を画すリーダーシップが注目されている。"
+    ],
+    "points": [
+      "・ 平時の法律・規制が非常時においていかに「足かせ」となり得るか、日本の行政制度の構造的問題を鮮明に映し出している点",
+      "・ 現場裁量と法的責任の間で苦悩する官僚個人の判断が、制度論・法律論を超えた倫理的問いを提起している点",
+      "・ 「上に報告せずに動いた部下を褒める」という行動様式が、日本型組織文化における自律的判断の重要性を再考させる契機となっている点"
+    ],
+    "prediction": "能登半島地震や南海トラフ巨大地震への備えが急務とされる中、こうした事例の再評価は「緊急時における行政の特例権限」を法制化する議論を加速させる可能性がある。政府・与党は災害対策基本法や国土強靱化関連法の改正を通じて、現場官僚が超法規的判断を迫られないような制度的裏付けを整備する動きを強めるとみられる。一方で、権限の乱用リスクや民主的統制の観点から、立法化には慎重論も根強く残るだろう。",
+    "ai_interpretation": "このニュースの本質は、「ルールの遵守」と「人命の保護」が衝突したとき、日本の行政システムがいかに脆弱であるかを示す構造的問題の告発にある。個人の倫理観と勇気に依存した危機対応は再現性がなく、日本経済・社会の強靱性を高めるためには、非常時に現場が迅速に動ける法的・組織的枠組みの整備が不可欠であることを示唆している。特に巨大災害が頻発する日本において、この教訓を「美談」で終わらせず、制度設計・人材育成・予算配分へと昇華できるかが、将来の経済的損失を最小化する鍵となる。",
+    "collected_at": "2026-05-14T05:50:49.612631+09:00",
+    "market_impact": "このニュース自体は過去の事例の振り返りであるため、株式市場や為替への直接的・即時的な影響はほぼない。ただし、日本の危機管理体制の脆弱性や法整備の不備が改めて浮き彫りになることで、防災・インフラ関連銘柄や危機管理コンサルティング業界への注目が高まる可能性がある。能登半島地震など近年の災害対応への批判と重なり、政府の災害対応予算や政策論議に間接的な影響を与えることも考えられる。"
+  },
+  {
+    "title": "FRB議長にウォーシュ氏　米上院が承認、インフレ抑制に意欲",
+    "japanese_title": "ウォーシュ新FRB議長が米上院で承認――インフレ抑制優先の金融政策で市場に緊張走る",
+    "url": "https://www.nikkei.com/article/DGXZQOGN030CI0T00C26A5000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 米上院がケビン・ウォーシュ氏をFRB（連邦準備制度理事会）議長として正式に承認し、新体制がスタートする見通しとなった。",
+      "2. ウォーシュ氏はインフレ抑制を最優先課題として掲げており、金融引き締め継続・利下げ慎重姿勢を示すとみられる。",
+      "3. トランプ政権の意向と中央銀行の独立性のバランスが、今後の最大の焦点となる。"
+    ],
+    "points": [
+      "・ **FRBの独立性維持**：トランプ政権による利下げ圧力とウォーシュ氏の姿勢が対立するか否か",
+      "・ **利下げ時期の後退**：インフレ抑制重視により、市場が期待する利下げシナリオが大幅に後ずれするリスク",
+      "・ **日米金利差の動向**：米金利高止まりが続けば、円安圧力が長期化し日銀の政策運営にも影響"
+    ],
+    "prediction": "ウォーシュ新議長のもとでFRBは当面、データ重視の慎重な姿勢を維持し、早期の大幅利下げには否定的なシグナルを発する可能性が高い。米長期金利の高止まりが続けば、新興国からの資本流出や世界経済の減速リスクが高まり、日本経済にも外需鈍化という形で影響が波及しうる。一方、インフレが想定以上に鈍化した場合には政策転換の余地も残るため、経済指標の動向が今後の鍵を握る。",
+    "ai_interpretation": "このニュースの本質は、**米国の金融政策の舵取り役が交代することによる「不確実性の増大」**にある。FRB議長の交代は単なる人事ではなく、世界の基軸通貨ドルの管理方針の転換を意味し、グローバル金融市場全体のリスク再評価を促すイベントである。日本経済にとっては、円安の長期化・輸入インフレの再燃・日銀の利上げペースへの制約など複合的な課題が生じる可能性があり、政府・日銀ともに対応戦略の見直しが迫られる局面といえる。 --- *※本分析は提供情報をもとにしたAIによる推定であり、投資判断の根拠とはなりません。*",
+    "collected_at": "2026-05-14T05:51:13.658889+09:00",
+    "market_impact": "株式市場では、引き締め的な金融政策継続への警戒からグロース株・ハイテク株を中心に売り圧力が強まる可能性がある。為替市場ではドル高・円安方向への圧力が生じやすく、日本の輸入コスト上昇や物価高への波及が懸念される。国内産業では、自動車・電機など輸出関連企業は円安恩恵を受ける一方、エネルギーや食料品の輸入コスト上昇が中小企業や家計を直撃するリスクがある。"
+  },
+  {
+    "title": "英保健相、首相退陣求め党首選に出馬検討　ブレア路線の継承者",
+    "japanese_title": "英保健相がブレア路線継承者として党首選出馬検討、ブラウン首相に退陣要求",
+    "url": "https://www.nikkei.com/article/DGXZQOGR13D9P0T10C26A5000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 英国の保健相がゴードン・ブラウン首相の退陣を求め、労働党党首選への出馬を検討していることが明らかになった。",
+      "2. 出馬検討者はトニー・ブレア前首相路線の継承者として位置づけられており、党内の路線対立が表面化している。",
+      "3. ブラウン政権への求心力低下が続く中、労働党内の権力闘争が本格化する可能性が高まっている。"
+    ],
+    "points": [
+      "・ブレア路線（第三の道）とブラウン路線の政策的差異がどこにあるか",
+      "・党首選が実際に行われた場合の労働党の支持率回復可能性",
+      "・次期総選挙（保守党との対決）を見据えた労働党内の戦略的判断"
+    ],
+    "prediction": "党首交代が現実となれば、英国の財政・医療・教育政策に変化が生じる可能性があり、外資企業の英国投資判断にも影響を与えかねない。また、政治的混乱が長期化すれば英国経済の先行き不透明感が増し、欧州全体の金融市場にも波及するリスクがある。保守党との差が縮まる中、労働党が結束を保てるかが英国経済政策の安定性を左右する鍵となる。",
+    "ai_interpretation": "このニュースの本質は、経済政策の路線対立を伴う政権内部の権力闘争であり、「成長重視のブレア路線」対「再分配・規制重視のブラウン路線」という構図が背景にある。日本経済への示唆としては、政治リーダーシップの安定性が経済政策の継続性と市場信頼に直結するという普遍的な教訓が読み取れる。日本においても政権交代期における経済政策の一貫性確保が、企業の長期投資判断や円相場の安定に不可欠であることを改めて示している。",
+    "collected_at": "2026-05-14T05:51:30.897108+09:00",
+    "market_impact": "英国の政治的不安定化は、ポンドの対ドル・対ユーロ相場に下押し圧力をかける可能性があり、為替市場での変動リスクが高まる。英国株式市場（FTSE100）においても、政策の継続性への不透明感から投資家心理が悪化する恐れがある。日本の対英輸出企業や英国に拠点を持つ日系企業にとっては、為替リスク管理の見直しが必要となる局面といえる。"
+  },
+  {
+    "title": "防衛テックの米アンドゥリル、7900億円調達　評価額2倍の9兆円超に",
+    "japanese_title": "米防衛テック企業アンドゥリル、約7,900億円の巨額調達で評価額9兆円超へ―防衛×AI投資の新潮流",
+    "url": "https://www.nikkei.com/article/DGXZQOGN13D340T10C26A5000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 米国の防衛テクノロジー企業アンドゥリル・インダストリーズが約7,900億円（約52億ドル）規模の資金調達を実施し、企業評価額が前回比約2倍となる9兆円超に到達した。",
+      "2. 同社はAIや自律型兵器システムを中核とする次世代防衛技術に特化しており、地政学的緊張の高まりを背景に民間防衛テック企業への投資が急加速している。",
+      "3. 今回の調達は、従来の大手防衛産業（ロッキード・マーチンなど）に代わる、シリコンバレー発のテック主導型防衛産業という新たなエコシステムの台頭を鮮明に示している。"
+    ],
+    "points": [
+      "・ 評価額がわずか数年で2倍に膨らんだ背景には、ウクライナ紛争・台湾海峡緊張など地政学リスクの長期化がある",
+      "・ AIと防衛の融合という新市場カテゴリーが確立されつつあり、ベンチャーキャピタルの投資テーマとして「デフェンステック」が定着してきた",
+      "・ 米国防総省（ペンタゴン）が従来型の大手防衛企業だけでなく、スタートアップとの連携を積極化している政策転換が追い風になっている"
+    ],
+    "prediction": "米国の防衛予算拡大とNATO諸国の国防費増強の流れを受け、アンドゥリルのようなデフェンステック企業のIPOや追加調達が今後相次ぐ可能性が高い。日本においても防衛費のGDP比2%への引き上げ方針の下、国内スタートアップや外資系防衛テック企業との協業・投資案件が増加すると予想される。政策面では、デュアルユース（軍民両用）技術への公的支援枠組みの整備が一層求められるようになるだろう。",
+    "ai_interpretation": "このニュースの本質は、「安全保障の民営化とテクノロジー化」という歴史的転換点を象徴している点にある。冷戦期以来、防衛産業は少数の大手企業と政府の閉じた関係で成立していたが、AIや自律システムの登場がその構造を根本から塗り替えつつある。日本経済への示唆としては、防衛と先端技術の融合領域で出遅れれば、安全保障上の依存リスクのみならず、次世代産業競争力においても大きな格差が生じる可能性があり、官民連携による「日本版デフェンステック戦略」の早期策定が急務といえる。",
+    "collected_at": "2026-05-14T05:51:51.324212+09:00",
+    "market_impact": "防衛・航空宇宙セクターへの民間資金流入が加速する中、日本市場でも三菱重工や川崎重工など防衛関連株への投資家注目度がさらに高まる可能性がある。また、円安局面においてドル建て資産への資金シフトが強まれば、為替市場でもドル需要が継続する圧力となりうる。国内防衛産業においても、AIや自律技術への投資加速を促す刺激材料となるだろう。"
+  }
+];
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>

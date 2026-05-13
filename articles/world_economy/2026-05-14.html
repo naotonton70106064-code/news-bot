@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Trump's Fed chair pick Kevin Warsh confirmed by US Senate",
+    "japanese_title": "トランプ大統領指名のケビン・ウォーシュ氏、僅差で米連邦準備制度理事会（FRB）議長に上院承認",
+    "url": "https://www.bbc.com/news/articles/ce8p71p4nezo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. トランプ大統領が指名したケビン・ウォーシュ氏が、米上院でFRB議長として承認された。",
+      "2. 承認は上院での投票が必要になって以来、最も僅差の票差での承認となった。",
+      "3. この僅差の結果は、ウォーシュ氏の指名および金融政策の方向性を巡る政治的分断を鮮明に示している。"
+    ],
+    "points": [
+      "・ 承認票差が史上最僅差であり、超党派的支持を得られなかったことがFRBの政治的独立性への懸念を示唆",
+      "・ ウォーシュ氏のタカ派的金融政策スタンスと、トランプ大統領が求める低金利政策との間の潜在的な緊張関係",
+      "・ 連邦公開市場委員会（FOMC）の今後の利下げ・利上げ判断に対する不確実性の増大"
+    ],
+    "prediction": "ウォーシュ新FRB議長はインフレ抑制を優先する姿勢を維持する可能性が高く、トランプ政権の景気刺激策・関税政策とのポリシーミックスが世界経済の不安定要因となりうる。また、FRBの独立性を巡る政治的圧力が続く中で、グローバルな金融市場のボラティリティが高まる局面も想定される。日本・欧州などの主要中央銀行も米金融政策の動向を注視し、自国の政策調整を迫られる可能性がある。",
+    "ai_interpretation": "このニュースの本質は、FRBという世界の基軸通貨国の中央銀行トップ人事が「政治的産物」として受け取られるリスクが顕在化した点にある。僅差承認という事実は、FRBの政策決定に対する市場・議会双方の信頼性が試される局面が続くことを意味し、グローバルな金融秩序の安定装置としてのFRBの権威が問われている。長期的には、中央銀行の独立性に対する国際的な信頼の低下が、基軸通貨ドルの地位やグローバルな資本フローに構造的な影響を与える可能性を秘めている。",
+    "collected_at": "2026-05-14T05:52:09.331960+09:00",
+    "market_impact": "僅差での承認はFRBの独立性や金融政策の先行きに対する市場の不透明感を高め、米国債・ドル相場に短期的な変動をもたらす可能性がある。ウォーシュ氏はタカ派寄りの姿勢で知られており、利上げ継続や早期の利下げへの慎重姿勢が株式市場、特に成長株・テクノロジー株に下押し圧力を与えるリスクがある。新興国市場にとってはドル高・資金流出の懸念が再燃する可能性もある。"
+  },
+  {
+    "title": "Tui sees summer sales fall 10% due to cautious UK customers",
+    "japanese_title": "TUI、夏季売上10%減少——イラン情勢への懸念でイギリス人旅行者が予約を先送り",
+    "url": "https://www.bbc.com/news/articles/ce8p31ngv90o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 欧州大手旅行会社TUIは、夏季の旅行販売が前年比10%減少したと発表し、主な原因としてイギリス人顧客の慎重な消費行動を挙げた。",
+      "2. 中東情勢（特にイランを巡る地政学的緊張）への懸念から、顧客が休暇の予約を意図的に遅らせている傾向が明確になった。",
+      "3. 地政学的リスクが消費者心理に直結し、旅行・観光産業のサプライチェーン全体に影響を与え始めている。"
+    ],
+    "points": [
+      "・イラン情勢という地政学リスクが、消費者の「予約タイミング」という極めて日常的な行動にまで影響を与えている点が重要",
+      "・イギリス国内ではすでに高インフレ・高金利による家計圧迫が続いており、地政学不安が「追い打ち」となっている可能性",
+      "・「キャンセル」ではなく「予約先送り」という行動は、需要の消滅ではなく延期である点で、回復余地を残している"
+    ],
+    "prediction": "中東情勢が落ち着きを見せれば、先送りされた予約が一気に集中する「リベンジ消費」的な回復が起きる可能性があるが、緊張が長期化・拡大すれば旅行需要の本格的な冷え込みへと転じるリスクがある。グローバルな観光業界は地政学リスクに対する構造的な脆弱性を改めて露呈しており、中東依存度の高い旅行ルートの見直しやリスク分散が業界課題となるだろう。英国経済全体としても、消費者マインドの悪化が内需を一層減速させる要因となる可能性がある。",
+    "ai_interpretation": "このニュースの本質は、**地政学リスクが金融市場だけでなく「一般消費者の行動」を通じて実体経済に波及するメカニズム**を可視化している点にある。TUIの売上減少は単なる旅行業界の問題ではなく、不確実性が高まると人々が支出を防衛的に絞るという普遍的な経済心理の現れである。グローバル化が進んだ現代では、遠方の地政学的緊張が英国の中産階級の夏休み計画にまで即座に影響するという「リスクの即時伝播」が常態化しており、企業・投資家ともに地政学リスク管理をより精緻に組み込む必要性が高まっていると言えよう。",
+    "collected_at": "2026-05-14T05:52:29.532701+09:00",
+    "market_impact": "旅行・航空・ホスピタリティセクターの株価に下押し圧力がかかる可能性があり、特にTUIを含む欧州系旅行株への売りが強まる懸念がある。英ポンドは消費関連指標の悪化を背景に若干の弱含みとなる可能性があり、UK国内の個人消費全体の停滞を示唆するシグナルともなりうる。また、中東路線を抱える航空会社やホテルチェーンにとっても予約キャンセルや需要減少という二次的ダメージが想定される。"
+  },
+  {
+    "title": "WhatsApp launches totally private 'incognito' conversations with its AI chatbot",
+    "japanese_title": "WhatsApp、AIチャットボットとの完全プライベート「匿名会話」機能を導入―セキュリティ専門家が懸念を表明",
+    "url": "https://www.bbc.com/news/articles/c99lmyr1dnxo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. WhatsAppがAIチャットボットとの会話履歴を残さない「匿名（インコグニート）モード」を新たに導入した。",
+      "2. ユーザーのプライバシー保護を強化する一方、サイバーセキュリティ専門家はチャット履歴削除による「説明責任の欠如」リスクを警告している。",
+      "3. AIとの対話における透明性とプライバシーのバランスという、テクノロジー業界全体に共通する課題を浮き彫りにしている。"
+    ],
+    "points": [
+      "・ プライバシー保護とAIの説明責任（Accountability）の両立という根本的なジレンマが顕在化",
+      "・ Meta社がAI分野での競争力強化を狙い、ユーザー獲得・囲い込み戦略を加速させている点",
+      "・ 悪用・誤用発生時の追跡・検証が困難になるという法的・倫理的リスク"
+    ],
+    "prediction": "各国規制当局（特にEUおよび英国ICO）がAIチャット履歴の保管義務化に向けた規制議論を加速させる可能性が高く、テック企業は新たなコンプライアンス対応を迫られるだろう。また、競合他社（Google、Telegram、Appleなど）も同様のプライバシー強化AI機能を追随導入することで、「プライバシー競争」が業界標準を塗り替えていく可能性がある。",
+    "ai_interpretation": "このニュースの本質は、「利便性・プライバシー」対「安全性・透明性」というデジタル時代の根本的なトレードオフを象徴している点にある。WhatsAppの新機能はユーザー体験を向上させる一方、AIが誤情報や有害コンテンツを生成した際の追跡不能リスクを拡大させ、プラットフォームの社会的責任が問われる新局面を生む。グローバル経済においては、AI規制の国際標準化議論をさらに複雑化させ、企業の地政学的リスク管理コストの増大につながる重要な示唆を含んでいる。",
+    "collected_at": "2026-05-14T05:52:46.915721+09:00",
+    "market_impact": "Meta（WhatsApp親会社）をはじめとするビッグテック各社のAIサービス競争がさらに加速し、プライバシー重視型AI機能が差別化の鍵となる可能性がある。EU一般データ保護規則（GDPR）や各国のデータ規制当局による審査強化が予想され、コンプライアンスコストの上昇がテック株の重荷となり得る。また、プライバシー技術・サイバーセキュリティ関連産業への投資需要が高まる可能性がある。"
+  },
+  {
+    "title": "Palestinians Stream Back to Northern Gaza on Foot",
+    "japanese_title": "イスラエルがガザ北部への帰還を許可―人質解放の行き詰まり打開で避難民が徒歩で移動開始",
+    "url": "https://www.wsj.com/articles/palestinians-flock-back-to-northern-gaza-on-foot-after-hostage-release-breakthrough-3f60e2db",
+    "source": "WSJ.com: World News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. イスラエルは、ガザ地区を二分する軍事ゾーンを通じて、避難していたパレスチナ人が北部へ戻ることを許可した。",
+      "2. この動きは、人質解放をめぐる交渉の膠着状態が打開されたことを受けて実現した。",
+      "3. 多くのパレスチナ人が徒歩で北部ガザへの帰還を開始しており、停戦合意の一定の進展を示している。"
+    ],
+    "points": [
+      "・ガザ地区を分断していた軍事ゾーンの通過許可という具体的な措置は、停戦・和平交渉の進展を示す重要なシグナル",
+      "・人質解放問題の行き詰まり打開が今回の措置の直接的引き金となっており、交渉の構造的複雑さを示している",
+      "・避難民が「徒歩」で帰還している点は、インフラ破壊の深刻さと人道危機の継続を象徴している"
+    ],
+    "prediction": "停戦合意が維持・拡大されれば、ガザおよび周辺地域の復興需要が建設・資材・人道支援関連市場を刺激する可能性がある。一方、交渉が再び決裂した場合は地政学リスクが急速に高まり、原油高・リスクオフの動きが再燃するリスクも残る。中東全体の安定化に向けた国際社会の関与（米国・カタール・エジプトの仲介）が今後の展開を大きく左右するだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる人道的措置にとどまらず、複雑な政治・安全保障交渉における「信頼醸成措置（CBM）」として機能している点にある。人質問題という非対称な交渉カードが、民間人の移動の自由という人道的成果と結びついた構造は、今後の中東和平プロセスの雛形となり得る。グローバル経済的には、中東安定化はエネルギー安全保障・サプライチェーン（スエズ運河経由の海運）の正常化に直結しており、世界のインフレ動向にも間接的な影響を与える重要変数として注視が必要だ。",
+    "collected_at": "2026-05-14T05:53:05.248753+09:00",
+    "market_impact": "中東地政学リスクの部分的な緩和として受け止められ、原油価格の上昇圧力がやや和らぐ可能性がある。ただし、和平プロセスは依然として脆弱であり、再悪化リスクを完全には排除できないため、エネルギー市場や新興国通貨への影響は限定的にとどまる見通しだ。イスラエルのシェケルや周辺国通貨（エジプトポンドなど）は短期的に小幅上昇する可能性がある。"
+  },
+  {
+    "title": "Leading China Property Developer Reports Huge loss, in Sign of Widening Real-Estate Woes",
+    "japanese_title": "中国大手不動産デベロッパー「万科」が巨額損失を計上——不動産危機のさらなる拡大を示す警戒信号",
+    "url": "https://www.wsj.com/articles/even-chinas-property-stalwart-isnt-immune-from-the-crisis-19799863",
+    "source": "WSJ.com: World News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 中国を代表する不動産大手・万科（Vanke）が巨額の損失を報告し、中国不動産セクターの危機が依然として深刻であることが改めて浮き彫りになった。",
+      "2. 恒大集団（Evergrande）に始まった不動産危機が、比較的健全とみられていた大手企業にまで波及していることを示しており、業界全体への信頼が揺らいでいる。",
+      "3. 中国政府・国家資本が救済に乗り出すかどうかが市場の最大の焦点となっており、政策対応の行方が今後の鍵を握る。"
+    ],
+    "points": [
+      "・ 万科は国有資本が関与する「準国有」企業であり、政府が見捨てられるかどうかという「モラルハザード」の問題が問われる",
+      "・ 不動産危機が民間企業だけでなく、国家関与企業にも及んでいるという事実は、問題の構造的深刻さを示している",
+      "・ 中国当局の政策介入（公的資金注入・債務再編支援・金融緩和）の有無とそのタイミングが市場センチメントを左右する最重要変数となる"
+    ],
+    "prediction": "中国政府が万科への支援を明確化しない場合、市場は「不動産危機の際限なき拡大」シナリオを織り込み始め、中国経済全体の成長見通しが下方修正される可能性が高い。一方、国家による救済が実施されれば短期的な市場安定につながるものの、長期的には不動産セクターの過剰債務問題の根本解決が先送りされるリスクを孕む。地政学的観点では、中国経済の不安定化はグローバルサプライチェーンや貿易パートナー国（日本・韓国・ASEAN諸国）の景気にも連鎖的な下押し圧力をもたらすと予測される。",
+    "ai_interpretation": "このニュースの本質は、「中国不動産危機は一部の過剰投資した民間企業の問題」という従来の楽観的な解釈が崩れ、システミックリスクへの転換点に差し掛かっている可能性を示唆している点にある。万科のような相対的に堅実とされてきた大手企業が巨額損失を計上したという事実は、問題が個別企業の財務規律の問題ではなく、中国の不動産市場構造そのものの機能不全を反映していると解釈すべきである。グローバル経済への示唆としては、中国の内需回復が世界経済の重要な牽引役として期待されてきた中で、その前提条件が大きく崩れつつあり、2024〜2025年の世界経済見通しに対する下方リスクとして真剣に織り込む必要があることを意味している。",
+    "collected_at": "2026-05-14T05:53:28.674480+09:00",
+    "market_impact": "中国不動産セクターへの懸念が再燃することで、香港ハンセン指数や中国本土株式市場に下落圧力がかかる可能性があり、人民元の対ドル相場にも弱含みの影響を与えかねない。鉄鋼・セメント・銅などの建設関連コモディティ市場にも需要減退懸念が波及し、資源輸出国（オーストラリア・ブラジルなど）の経済にも悪影響が及ぶリスクがある。また、グローバルな投資家のリスク回避姿勢が強まれば、新興国市場全体からの資金流出を促す可能性もある。"
+  },
+  {
+    "title": "Freed Israeli Hostages Still Had Shrapnel in Their Bodies From Oct. 7 Attack",
+    "japanese_title": "解放されたイスラエル人質、10月7日攻撃の砲弾破片が体内に残存――8ヶ月間トンネルに監禁の実態が明らかに",
+    "url": "https://www.wsj.com/articles/freed-israeli-hostages-still-had-shrapnel-in-their-bodies-from-oct-7-attack-3de8cd1e",
+    "source": "WSJ.com: World News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 解放されたイスラエル人質の一部は、2023年10月7日のハマス攻撃時に負った傷による砲弾破片が、依然として体内に残った状態で帰還したとイスラエルの医療当局者が明らかにした。",
+      "2. 女性人質の中には長期間にわたり単独で拘束された者もおり、約8ヶ月間をガザ地下トンネルの中で過ごしていたケースも確認されている。",
+      "3. 身体的損傷だけでなく、極度の孤立・劣悪環境による深刻な心身へのダメージが報告されており、人道的危機の深刻さが改めて浮き彫りになった。"
+    ],
+    "points": [
+      "・人質が体内に破片を抱えたまま拘束されていたという事実は、ガザにおける医療アクセスの完全な欠如を示す重大な証拠となる",
+      "・8ヶ月に及ぶトンネル内単独拘禁は、国際人道法（ジュネーブ条約）違反に相当する可能性があり、今後の法的・外交的追及に発展しうる",
+      "・人質の心身への深刻なダメージは、イスラエル国内世論における停戦交渉・残存人質解放への圧力をさらに強める要因となる"
+    ],
+    "prediction": "人質の悲惨な状況が国際社会に広く伝わることで、停戦・人質解放交渉に対する国際的な圧力がさらに高まり、米国・カタール・エジプトを仲介とした外交的解決への動きが加速する可能性がある。一方でイスラエル国内では強硬派とネタニヤフ政権への批判が同時に高まるという複雑な政治力学が生じ、地政学的リスクは短期的に高止まりが続くと見られる。原油市場や中東関連資産の不安定性は当面払拭されず、グローバルなリスクオフムードを断続的に刺激する展開が予想される。",
+    "ai_interpretation": "このニュースの本質は、単なる人道的悲劇の報告にとどまらず、現代の非対称戦争・テロ組織による人質戦略がいかに長期的・構造的な国際問題となっているかを示す点にある。人質問題は停戦交渉の核心的カードであり続けており、その解決なしには中東の地政学的安定もエネルギー市場の正常化も困難であることをあらためて示している。グローバル経済への示唆としては、地政学リスクが「一時的ショック」ではなく「慢性的な不確実性」として価格形成・サプライチェーン・投資判断に織り込まれる時代に突入しているという認識が重要である。",
+    "collected_at": "2026-05-14T05:53:52.589975+09:00",
+    "market_impact": "中東情勢の緊張継続は原油価格の不安定要因として残存しており、WTI・ブレント原油への上昇圧力が続く可能性がある。イスラエルのシェケルや周辺産油国通貨にも地政学的リスクプレミアムが反映されやすく、為替市場では安全資産（円・スイスフラン・ドル）への需要が高まる展開が想定される。また、防衛・医療・人道支援関連セクターへの資金流入が引き続き注目される。"
+  }
+];
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>
