@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "〈巨額損失計上〉第一三共､抗がん剤｢エンハーツ｣絶好調の裏でADC供給計画に\"誤算\"､問われるリスク管理と情報開示姿勢 | ビジネス | 東洋経済オンライン",
+    "japanese_title": "第一三共、売上2兆円超の快挙と巨額損失の二面性――ADC製造計画の\"誤算\"がリスク管理と情報開示の課題を浮き彫りに",
+    "url": "https://toyokeizai.net/articles/-/944546?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 第一三共は主力抗がん剤「エンハーツ」の好調に牽引され売上収益2兆円超を達成したが、ADC（抗体薬物複合体）の製造・供給計画の見込み違いにより巨額の損失補償が発生し、業績に大きな影を落とした。",
+      "2. 製造能力の過大見積もりや需給予測の甘さが今回の損失の根本原因とみられ、グローバルなサプライチェーン管理の難しさとともに、リスク管理体制の脆弱性が露呈した。",
+      "3. 投資家や市場関係者からは損失発生に至る経緯の説明が不十分との批判が上がっており、情報開示姿勢そのものがコーポレートガバナンスの観点から問われている。"
+    ],
+    "points": [
+      "・ ADC製造計画の「誤算」の具体的規模と損失補償額の全容が依然として不透明であり、追加の損失計上リスクが残存している点",
+      "・ エンハーツの売上成長が持続する中でも、製造キャパシティとの乖離が解消されなければ、せっかくの需要機会を逃す「機会損失」が続くリスク",
+      "・ 情報開示の遅れや説明責任の不足が、海外機関投資家からの信頼低下や株主アクティビズムを招く可能性"
+    ],
+    "prediction": "製造設備への追加投資や外部委託（CDMO活用）の拡充によってADC供給体制の立て直しが急務となり、短期的には設備投資負担が財務を圧迫する見通しだ。一方、規制当局や機関投資家からの圧力を受け、第一三共はリスク情報の開示基準を引き上げる方向に動くとみられ、日本の製薬業界全体のガバナンス改革を加速させる契機になり得る。中長期的にはエンハーツの適応拡大や次世代ADCパイプラインの進展が業績回復を支えると予測されるが、製造リスクの管理能力が企業価値評価の重要な分岐点となる。",
+    "ai_interpretation": "このニュースの本質は、日本企業がグローバルな最先端バイオ医薬品市場で主役級の競争力を持ち始めた一方で、製造・サプライチェーン管理やリスクコミュニケーションという「経営の土台」が技術力に追いついていないという構造的な課題を象徴している点にある。「エンハーツ」の成功は日本の創薬力復活の象徴として高く評価される一方、今回の損失はその成功を確実に収益化するための「実行力」と「透明性」が依然として弱いことを示しており、技術的優位性だけでは持続的な企業価値向上に限界があることを改めて示唆している。日本経済全体への示唆としては、グローバル競争を勝ち抜く産業の育成には技術投資と同等に、ガバナンス・情報開示・リスク管理への投資が不可欠であるという教訓を、製薬業界を超えて広く問いかけている。",
+    "collected_at": "2026-05-15T05:30:04.752966+09:00",
+    "market_impact": "第一三共株は好調な事業成長への期待と巨額損失リスクへの警戒が交錯し、投資家心理の不安定化が続く可能性がある。製薬セクター全体にも、ADCなど高度な製造技術を要するモダリティへの過剰投資リスクが再評価されるきっかけとなり得る。また、円建て収益規模の拡大は日本企業のグローバル競争力を示すポジティブな側面がある一方、損失補償のキャッシュアウトが為替感応度を高め、短期的な株価ボラティリティを増幅させる懸念もある。"
+  },
+  {
+    "title": "【人事異変】主役はドコモではないし､ましてや東西でもない｣…NTT次期グループトップ候補に急浮上した人物の名前 | ビジネス | 東洋経済オンライン",
+    "japanese_title": "NTT次期グループトップにNTTデータ系人材が急浮上――ドコモ苦戦で成長戦略の軸が通信からITサービスへ転換か",
+    "url": "https://toyokeizai.net/articles/-/944628?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. NTTは業績目標の達成時期を延期しており、中核子会社であるNTTドコモの通信事業の苦戦が主因となっている。",
+      "2. グループの成長ドライバーが従来の通信事業からNTTデータグループが担うITサービス・データセンター事業へと移行しつつある。",
+      "3. こうした事業構造の変化を反映し、次期グループトップ候補としてNTTデータ系の人物が急浮上するという異例の人事情報が浮上している。"
+    ],
+    "points": [
+      "・ドコモの通信ARPU低迷と競争激化が、グループ全体の収益構造における「重心移動」を加速させている点",
+      "・NTTデータグループが国内外でデータセンター・クラウド・AI基盤事業を急拡大しており、グループの次世代収益柱として現実味を増している点",
+      "・トップ人事がNTTドコモや東西（NTT東日本・西日本）の従来ラインではなくデータ系から選出されるとすれば、NTT130年の歴史における経営哲学の転換点となりうる点"
+    ],
+    "prediction": "NTTは今後、通信インフラの安定収益を土台としつつ、ITサービス・データセンター・IOWN（革新的光通信ネットワーク）を三位一体とする成長モデルへの移行を加速させるとみられる。次期トップの出身母体によっては、グループ内の資源配分や子会社再編の優先順位が大きく変わり、ドコモの位置づけ見直し（持株会社との関係再整理など）も議論に上る可能性がある。政府・総務省との関係においても、通信料金規制より国際競争力強化の文脈でNTTへの政策的支援が強まる方向へシフトするかが注目点となる。",
+    "ai_interpretation": "このニュースの本質は、「日本最大の通信グループが、通信会社からデジタルインフラ・ITサービス企業へと自己変革できるか」という問いへの経営陣の答えが、人事という形で顕在化しつつあるという点にある。NTTの動向は単なる一企業の問題にとどまらず、日本の通信・DX・データセンター産業全体のエコシステムに波及するため、その戦略転換は日本経済のデジタル競争力に直結する。GAFAMや中国IT大手と対峙できる「日本発のデジタル巨人」を国策として育てられるかどうか、NTTの次の一手は日本経済にとって試金石となる。",
+    "collected_at": "2026-05-15T05:30:27.102394+09:00",
+    "market_impact": "NTT株（9432）にとっては、成長戦略の再定義と次期経営体制への不透明感が短期的な株価の重石となる可能性がある。一方で、データセンターやITサービスへのピボットが明確化されれば、国内クラウド・AI関連銘柄全体にポジティブなセンチメントをもたらす可能性もある。為替への直接的な影響は限定的だが、NTTデータの海外事業拡大が続けば円建て海外収益の拡大を通じた業績改善期待が高まる。"
+  },
+  {
+    "title": "NTT､\"通信中心の終焉\"を象徴する幹部人事で反撃なるか…｢次期グループトップ｣の有力候補に急浮上した人物とは？ | ビジネス | 東洋経済オンライン",
+    "japanese_title": "NTTが「通信からITサービス」へ経営転換——次期グループトップ候補に\"データ畑\"出身者が急浮上、日本最大級通信企業の構造変革が加速",
+    "url": "https://toyokeizai.net/articles/-/944385?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. NTTが通信事業の停滞を受け、ITサービス・データビジネスを中核とした成長戦略へ経営の軸足を大きく移し始めている。",
+      "2. 従来は通信系エリートが独占してきたNTT本社（大手町）の中枢ポストに、データ系出身者が次期グループトップ候補として急浮上するという異例の人事が浮上した。",
+      "3. この幹部人事は「通信帝国」としてのNTTの自己変革意志を対外的に示す象徴的なシグナルと受け取られている。"
+    ],
+    "points": [
+      "・ \"データのプロパー\"がNTT本社中枢に入るという、同社史上異例の人事シフトの背景と意図",
+      "・ 通信インフラ依存からの脱却を目指すNTTのビジネスモデル転換の具体的な進捗状況",
+      "・ 次期グループトップ候補の経営哲学がNTTドコモ・NTTデータ・NTT東西など各子会社の戦略にどう波及するか",
+      "・ 政府筆頭株主（約3割保有）として国が容認・後押しするのか、規制・公共性の観点からの摩擦が生じるか"
+    ],
+    "prediction": "通信料金の低廉化・競争激化により国内モバイル・固定通信の収益拡大が構造的に見込みにくい中、NTTはクラウド・AI・データセンター事業での収益基盤確立を急ぐとみられる。人事刷新を契機に、NTTデータやNTTコミュニケーションズが担ってきたITサービス部門がグループ全体の「稼ぎ頭」として再定義される組織再編が加速する可能性が高い。また、国策としての「IOWN（光電融合）」構想との整合性をどう取るかが、新体制の経営課題として浮上するだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる人事異動ではなく「20世紀型インフラ企業が21世紀型デジタル企業に脱皮できるか」という日本の大企業変革の試金石である点にある。NTTは日本の代表的\"レガシー大企業\"であり、その人事・戦略転換は、同様の課題を抱えるJR・電力・郵政など他のインフラ系国策企業にも変革圧力を与えるモデルケースとなり得る。日本経済全体への示唆として、「技術・データ人材が経営中枢を担う時代」への移行が大企業レベルでも不可逆的に進みつつあることを、このNTTの人事は象徴的に物語っている。",
+    "collected_at": "2026-05-15T05:30:50.787918+09:00",
+    "market_impact": "NTT株（9432）にとってはITサービス事業への本格転換を示す人事であり、成長期待が高まれば中長期的な株価の下支え要因となり得る。一方、通信セクター全体では「コア事業の縮小」というネガティブな側面も意識され、NTTドコモ等の関連銘柄への影響も注視が必要だ。国内ITサービス産業においては、NTTという巨大プレーヤーの本格参入姿勢が競合他社（富士通・NEC・日立等）との競争環境を一層激化させる可能性がある。"
+  },
+  {
+    "title": "NY商品、原油小反発　ホルムズ海峡の航行巡る不透明感で　金は反落",
+    "japanese_title": "NY原油が小幅反発－ホルムズ海峡の地政学リスクが支援、金価格は反落",
+    "url": "https://www.nikkei.com/article/DGXZQOFL14CWE0U6A510C2000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. ニューヨーク商品市場において原油価格が小幅に反発し、中東の地政学的緊張、特にホルムズ海峡の航行を巡る不透明感が価格を下支えした。",
+      "2. ホルムズ海峡は世界の原油海上輸送量の約20%が通過する戦略的要衝であり、航行リスクの高まりが原油供給不安を引き起こしやすい構造にある。",
+      "3. 一方、金価格は反落し、リスク回避ムードの後退やドル動向など複合的な要因が売り圧力として働いたとみられる。"
+    ],
+    "points": [
+      "・ホルムズ海峡を巡る地政学的緊張（イラン・米国関係、タンカー安全航行問題）の動向",
+      "・原油需給バランス（OPECプラスの生産政策・米国シェール生産動向）",
+      "・金価格反落の背景にある米ドル指数や米国債利回りの動き"
+    ],
+    "prediction": "ホルムズ海峡を巡る緊張が継続・拡大した場合、原油価格はさらに上値を試す展開となり、エネルギー輸入依存度の高い日本経済への打撃が大きくなる恐れがある。一方、外交的緊張緩和や米国の増産シグナルが出れば上昇圧力は限定的となろう。金については、米国の金融政策（利下げ期待の後退・維持）次第で再び上昇局面に転じる可能性も残っている。",
+    "ai_interpretation": "このニュースの本質は「地政学リスクのエネルギー安全保障への直撃」であり、日本のように原油の約90%を中東に依存する国にとってホルムズ海峡の不安定化は経済の根幹を揺るがす構造的脆弱性を改めて浮き彫りにしている。金の反落は必ずしも安心材料ではなく、市場参加者が短期的なリスク調整を行っている段階であり、地政学リスクが本格化すれば再び安全資産への資金流入が加速する可能性がある。日本としては、エネルギー源の多様化・再生可能エネルギーへの移行加速という長期的政策課題の重要性が、こうした局面で改めて問われていると言えよう。",
+    "collected_at": "2026-05-15T05:31:11.128481+09:00",
+    "market_impact": "原油価格の反発は、エネルギーコストの上昇懸念を通じて日本の製造業・輸送業の収益を圧迫する可能性があり、円安局面と重なれば輸入物価上昇に直結するリスクがある。株式市場では、石油関連株や海運株への影響が注視される一方、エネルギーコスト増大は内需型企業の収益にもネガティブに働きやすい。為替市場では、地政学リスクの高まりがリスクオフの円買い圧力につながる場面も想定される。"
+  },
+  {
+    "title": "英マンチェスター市長、国政復帰の意向表明　スターマー首相の対抗馬",
+    "japanese_title": "マンチェスター市長アンディ・バーナム、国政復帰を表明――スターマー首相への挑戦が英国政治に波紋",
+    "url": "https://www.nikkei.com/article/DGXZQOGR14DM00U6A510C2000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 英国マンチェスター市長のアンディ・バーナム氏が国政への復帰意向を表明し、労働党内でスターマー首相の有力な対抗馬として注目を集めている。",
+      "2. バーナム氏は地方行政での実績（医療・交通・住宅政策）を武器に、労働党の刷新を訴える立場を強めており、党内左派からの支持獲得を狙う構図が鮮明となっている。",
+      "3. スターマー政権が支持率低迷に直面するなか、この動きは英国労働党内の路線対立を表面化させる可能性がある。"
+    ],
+    "points": [
+      "・バーナム氏の「地方分権モデル」が国政レベルで通用するかが最大の焦点",
+      "・スターマー政権の緊縮財政路線への批判票を取り込めるかどうか",
+      "・英国労働党の「中道路線 vs 左派路線」という構造的対立の再燃リスク"
+    ],
+    "prediction": "スターマー政権が財政再建と社会保障のバランスを取り切れない場合、バーナム氏のような「第三の道」を掲げる候補への求心力が高まり、次期党首選・総選挙に向けた政治的流動性が増すと予測される。政策面では、医療・インフラ投資を重視するバーナム路線が台頭すれば、英国の財政拡張スタンスが強まる可能性があり、投資家の注視が必要だ。中長期的には、英国政治の安定性が問われる局面が続くことで、対英直接投資の判断材料として政局動向の重要性が増すだろう。",
+    "ai_interpretation": "このニュースの本質は、英国における「中央集権vs地方分権」「緊縮vs投資」という二項対立が、一人の政治家の動向を通じて可視化された点にある。日本経済への示唆としては、同様に地方創生と中央政府の政策方針が乖離しやすい構造を持つ日本にとって、地方行政の成功モデルが国政を動かす事例として参考になり得る。また、英国の政治不安定化は円高・ポンド安要因となる場面もあり、輸出企業や対英投資家は為替リスク管理の観点から英国政局を継続的にモニタリングすべき状況といえる。",
+    "collected_at": "2026-05-15T05:31:30.483355+09:00",
+    "market_impact": "英国の政治的不確実性が高まることで、ポンド相場が短期的に下押し圧力を受ける可能性がある。また、労働党内の路線対立が財政・社会政策の方向性を曖昧にすれば、英国国債（ギルト）市場にも若干の警戒感が生じ得る。日英両国間の貿易・投資交渉にも間接的な影響が及ぶリスクは低くないものの、現時点では限定的と見られる。"
+  },
+  {
+    "title": "NYで中国｢秘密警察署｣運営の男に有罪　民主活動家の居場所を報告",
+    "japanese_title": "ニューヨークで中国「秘密警察署」運営に有罪判決——民主活動家監視・情報提供が明らかに",
+    "url": "https://www.nikkei.com/article/DGXZQOGN14DN40U6A510C2000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. ニューヨークで中国政府の非公式「秘密警察署」を運営し、民主活動家の居場所を当局に報告していた男が有罪判決を受けた。",
+      "2. 中国による海外での反体制派監視・弾圧活動（いわゆる「越境的抑圧」）が米国司法によって正式に認定された形となった。",
+      "3. 米中間の法執行・主権をめぐる対立が改めて浮き彫りとなり、両国関係のさらなる緊張要因となっている。"
+    ],
+    "points": [
+      "・ 中国が世界各地に「非公式警察拠点」を設置しているとされる問題が司法レベルで認定された点",
+      "・ 米国が対中スパイ活動・内政干渉に対して刑事訴追で強く対応する姿勢を示した点",
+      "・ 民主主義国家間での情報共有・連携強化（日米欧）が今後加速する可能性がある点"
+    ],
+    "prediction": "米国は今後も対中スパイ・越境弾圧事案への取り締まりを強化するとみられ、中国企業や関連人物へのビザ制限・資産凍結などの制裁措置が拡大する可能性がある。これにより米中デカップリングがさらに進展し、サプライチェーン再編や対中投資規制の議論が加速するだろう。日本を含む同盟国にも同様の「秘密拠点」摘発・法整備への圧力が強まることが予想される。",
+    "ai_interpretation": "このニュースの本質は、経済問題にとどまらず「国家安全保障と経済活動の不可分化」という現代の地政学リスクの核心を示している。中国による越境的影響力行使が明確化されるほど、民主主義陣営は経済面でも中国との関係を「安全保障の観点」から再評価せざるを得なくなる。日本にとっても、対中経済依存度の見直しと経済安全保障法制の実効性強化が急務であることを改めて示唆するニュースといえる。",
+    "collected_at": "2026-05-15T05:31:49.164875+09:00",
+    "market_impact": "米中間の政治的摩擦が高まることで、投資家心理が悪化し、対中関連銘柄や半導体・テクノロジーセクターに売り圧力がかかる可能性がある。為替市場では地政学リスクの高まりを背景にドル高・人民元安の方向に作用しやすい。日本市場においても輸出関連銘柄や中国依存度の高い企業への影響が懸念される。"
+  }
+];
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>

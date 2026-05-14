@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Cerebras IPO makes billions for Benchmark but VC Eric Vishria almost didn’t take the meeting",
+    "japanese_title": "Cerebras IPOでベンチマークが数十億ドルの利益獲得——VC エリック・ヴィシュリアが「危うく商談を断るところだった」衝撃の裏話",
+    "url": "https://techcrunch.com/2026/05/14/cerebras-ipo-makes-billions-for-benchmark-but-vc-eric-vishria-almost-didnt-take-the-meeting/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. AIチップスタートアップCerebrasのIPOにより、投資ファンドのBenchmarkが数十億ドル規模の莫大なリターンを獲得した。",
+      "2. BenchmarkのパートナーであるEric Vishria氏は、同社がハードウェアスタートアップをほとんど投資対象としないため、約10年前にCerebrasのピッチを聞くこと自体を渋っていた。",
+      "3. 最終的に面談に応じた結果、歴史的な大型投資案件となり、「危うく見逃すところだった」投資として業界の注目を集めている。"
+    ],
+    "points": [
+      "・Benchmarkというトップティアのベンチャーキャピタルが「ほぼ投資しない」とされるハードウェア分野で大成功を収めた異例性",
+      "・AIブームがチップ・ハードウェア企業の評価額を急騰させ、IPO市場を活性化させている点",
+      "・投資判断における「直感・先入観」が大きなチャンスを見逃すリスクを孕んでいるという教訓的な側面"
+    ],
+    "prediction": "CerebrasのIPO成功はAIインフラ関連企業への投資熱をさらに加速させ、他のVCもハードウェアスタートアップへの投資姿勢を見直す契機となる可能性が高い。またCerebras自身はNVIDIAへの対抗馬として市場での存在感を一層高め、AI半導体市場での競争が激化するとみられる。Benchmarkにとってもこの成功事例はファンドの実績を大きく押し上げ、次のファンド調達において強力なアピールポイントとなるだろう。",
+    "ai_interpretation": "このニュースの本質は、「投資哲学の例外」が生んだ歴史的リターンという逆説にある。VCが自社の投資基準を厳格に守ることはリスク管理上合理的だが、時にそのルール自体が巨大な機会損失を生む危険性を示している。AIという時代の転換点においては、既存のフレームワークを柔軟に問い直す姿勢こそが、次世代の勝者を見極める上で不可欠であることを、このエピソードは力強く示唆している。",
+    "collected_at": "2026-05-15T05:28:06.022798+09:00",
+    "background": "Benchmarkは伝統的にソフトウェア系スタートアップへの投資を得意とし、資本集約型のハードウェアスタートアップへの投資は同社の投資哲学とは相容れないとされてきた。しかしAI需要の爆発的拡大により、高性能AIチップを開発するCerebrasへの注目度が急上昇し、同社はIPOへと至った。Vishria氏がおよそ10年前に渋々ピッチの場を設けたことが、結果的にBenchmarkにとって歴史的な投資案件へと発展した。"
+  },
+  {
+    "title": "What happens when AI starts building itself?",
+    "japanese_title": "AIが自分自身を改良し続ける時代へ——リチャード・ソーチャーの6億5000万ドルスタートアップが目指す「自己進化するAI」とは",
+    "url": "https://techcrunch.com/2026/05/14/what-happens-when-ai-starts-building-itself/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. AI研究者のリチャード・ソーチャー氏が、AIが自律的に研究・改善を繰り返すシステムの開発を目指す新スタートアップを立ち上げ、6億5000万ドルを調達した。",
+      "2. このAIは人間の介入を最小限に抑えながら、無期限に自己改良を続ける能力を持つことを目標としている。",
+      "3. 同氏は研究開発にとどまらず、実際に製品として市場に届けることを強く約束している。"
+    ],
+    "points": [
+      "・ AIが人間の監督なしに自分自身の能力を研究・強化するという「自己改良ループ」の実現を目指している点",
+      "・ 研究プロジェクトに終わらせず、実用的な製品として出荷することを明言しており、商業化への強いコミットメントがある点",
+      "・ 6億5000万ドルという大規模調達額が、この技術領域への市場の期待の高さを示している点"
+    ],
+    "prediction": "自己改善型AIの実現が近づけば、AI開発のスピードが指数関数的に加速し、既存のAI企業との競争構造が根本的に変わる可能性がある。一方で、制御不能なリスクや倫理的問題が浮上し、規制当局や研究コミュニティからの強い scrutiny（精査）を受けることが予想される。製品化の約束が果たせるかどうかが、同社の信頼性を左右する最初の試金石となるだろう。",
+    "ai_interpretation": "このニュースの本質は、AI開発が「人間がAIを作る時代」から「AIがAIを作る時代」へと移行し始めていることを象徴している点にある。自己改善型AIは技術的ブレークスルーの可能性を秘める一方、人間がその進化を管理・制御できるかという根本的な問いを社会に突きつける。「製品を実際に出荷する」という強調は、研究と実用の乖離という業界の課題を意識したものであり、AI開発における責任ある実用化への圧力が高まっていることを示唆している。",
+    "collected_at": "2026-05-15T05:28:23.965698+09:00",
+    "background": "リチャード・ソーチャー氏はSalesforceのAI研究部門元責任者であり、自然言語処理分野の著名な研究者として知られる。近年、OpenAIやAnthropicなどの競合が台頭する中、AI技術の「自律的な自己改善」という次のフロンティアを巡る競争が激化している。巨額の資金調達は、投資家がAGI（汎用人工知能）に近い技術への期待を高めていることを示している。"
+  },
+  {
+    "title": "OpenAI is reportedly preparing legal action against Apple; it wouldn’t be the first partner to feel burned",
+    "japanese_title": "OpenAI、Appleへの法的措置を準備中――パートナー企業との対立が表面化",
+    "url": "https://techcrunch.com/2026/05/14/openai-is-reportedly-preparing-legal-action-against-apple-it-wouldnt-be-the-first-partner-to-feel-burned/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. OpenAIがAppleに対して法的措置を検討しており、外部法律事務所を起用してオプションを検討中であることがBloombergの報道で明らかになった。",
+      "2. OpenAIにとってAppleは重要なパートナーであるが、今回の動きは両社の関係に深刻な亀裂が生じていることを示唆している。",
+      "3. OpenAIはAppleが初めて「裏切られた」と感じるパートナーではなく、以前にも他のパートナー企業との軋轢があった経緯がある。"
+    ],
+    "points": [
+      "・ OpenAIが外部法律事務所を起用したことで、法的措置は単なる脅しではなく本格的な検討段階に入っている",
+      "・ 世界最大級のテクノロジー企業2社の対立は、AI業界全体のパワーバランスに影響を与える可能性がある",
+      "・ OpenAIが複数のパートナーとの関係悪化を繰り返しているという点は、同社のビジネス慣行やガバナンスへの疑問を呼ぶ"
+    ],
+    "prediction": "実際に訴訟に発展するかどうかは不透明であり、法的措置の検討は交渉を有利に進めるための圧力手段である可能性もある。一方で、両社が訴訟に踏み切った場合、iOSとChatGPTの統合に関する契約内容や収益分配の詳細が明るみに出る可能性がある。AI覇権をめぐる大手テック企業間の競争・対立は今後さらに激化すると予想される。",
+    "ai_interpretation": "このニュースの本質は、AI技術の商業化が進む中で「協業」と「競争」の境界線がますます曖昧になっているという構造的問題を浮き彫りにしている。OpenAIはAppleという巨大な流通チャネルを必要とする一方で、Appleも生成AIの核心技術においてOpenAIへの依存を避けたいという矛盾した関係にある。この対立は単なる企業間トラブルではなく、AI時代における「プラットフォーム」と「モデル開発者」の主導権争いという、業界全体を揺るがす構造的な緊張の象徴と言える。",
+    "collected_at": "2026-05-15T05:28:41.792012+09:00",
+    "background": "OpenAIはAppleとiOSへのChatGPT統合などで協力関係を築いてきたが、その裏では事業上の利害関係をめぐる摩擦が生じていたとみられる。AppleはAI分野で独自路線（Apple Intelligence）を強化しており、OpenAIとの関係において主導権争いが激化している可能性がある。OpenAIはこれまでにも複数のパートナーや元従業員との法的紛争を経験しており、今回もその延長線上にある動きと見られる。"
+  },
+  {
+    "title": "予定価格の近似額漏洩は違法、入札前の公表でも　官製談合で最高裁判断",
+    "japanese_title": "最高裁が官製談合に厳格判断――予定価格の「近似額」漏洩も違法、元副市長の有罪確定",
+    "url": "https://xtech.nikkei.com/atcl/nxt/column/18/00142/02624/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. 宮崎県日南市の元副市長が、入札前に一部の建設会社へ予定価格に近い金額を漏らしたとして官製談合防止法違反に問われた。",
+      "2. 被告側は「入札前に公表する予定価格の近似額を漏らしても違法ではない」と主張し上告したが、最高裁はこれを棄却した。",
+      "3. 懲役2年・執行猶予3年の有罪判決が確定し、「近似額の漏洩も違法」という重要な司法判断が示された。"
+    ],
+    "points": [
+      "・ 「予定価格の近似額」であっても漏洩は違法とする最高裁の明確な判断が初めて示された点",
+      "・ 入札前公表制度を逆手にとった「抜け穴論」が司法に否定され、制度の趣旨が守られた点",
+      "・ 地方自治体の幹部職員（副市長）が関与した組織的・構造的な汚職である点"
+    ],
+    "prediction": "今回の最高裁判断により、「近似額なら許容される」という論理が完全に否定されたため、類似の手口による官製談合に対して捜査・訴追が行いやすくなると考えられる。地方自治体においては、入札情報の管理体制や内部コンプライアンスの強化が一層求められるようになるだろう。一方で、より巧妙な情報漏洩の手口が生まれる可能性もあり、継続的な監視・制度整備が課題となる。",
+    "ai_interpretation": "このニュースの本質は、法律の「文言の隙間」を利用した脱法的解釈を最高裁が明確に封じた点にある。公共調達の公正性は税金の適正使用と直結しており、形式的に「完全な予定価格ではない」と言い逃れできる余地をなくした今回の判断は、官製談合抑止に向けた重要な法的基盤を強化するものだ。地方行政における権力と業者の癒着構造に対し、司法が毅然とした姿勢を示したという点で、法治主義・公共調達の健全化という観点から大きな意義を持つ。",
+    "collected_at": "2026-05-15T05:29:01.816523+09:00",
+    "background": "日本では公共工事の入札をめぐる官製談合が長年にわたり問題視されており、発注側の職員が特定業者に有利な情報を流す行為を規制するため、官製談合防止法が整備されてきた。今回の事件は、予定価格そのものではなく「近似額」を漏らした点が違法性の判断基準として争点となり、法律の解釈が問われた。入札前公表制度（予定価格をあらかじめ公表する制度）の存在が、被告側の「違法ではない」という主張の根拠となっていた。"
+  },
+  {
+    "title": "外来ザリガニをセメントで封じ込め、池の水全部抜いて駆除",
+    "japanese_title": "那覇市の公園池でセメント封じ込め作戦！外来ザリガニ根絶へ2026年に大規模駆除工事",
+    "url": "https://xtech.nikkei.com/atcl/nxt/column/18/00142/02628/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. 那覇市の公園池に生息する外来種ザリガニを根絶するため、2026年秋に池の水を全て抜く大規模駆除工事が実施される。",
+      "2. 卵の流出を防ぐフィルター処理を施した上で、底の泥にセメントを混ぜてコンクリートで蓋をし、卵ごと完全に封じ込める。",
+      "3. 駆除完了後はコンクリートの上に水を戻し、池としての機能を維持する計画となっている。"
+    ],
+    "points": [
+      "・ 単なる捕獲にとどまらず、「卵の封じ込め」という発想で再繁殖を根本から断つ革新的な手法である点",
+      "・ フィルターによる排水管理など、駆除作業中の卵・幼体の二次的拡散防止策が徹底されている点",
+      "・ 駆除後も池の景観・機能を維持するという環境保全と市民利用の両立を意識した設計になっている点"
+    ],
+    "prediction": "2026年秋の工事完了後、効果の検証として生息状況のモニタリングが継続的に行われるとみられる。完全駆除に成功した場合、同様の手法が国内他地域の外来ザリガニ問題にも応用・展開される可能性が高い。一方で、施工後も周辺水域から再侵入するリスクが残るため、継続的な監視と防除体制の整備が課題となるだろう。",
+    "ai_interpretation": "このニュースの本質は、「捕獲」から「封じ込め・無効化」へと外来種対策のパラダイムが転換しつつあることを示している点にある。従来の駆除手法の限界を認め、土木工学的アプローチを生態系管理に組み合わせた点は、今後の外来種対策における新たなモデルケースとなり得る。また、那覇市がこれほど大規模かつコストのかかる工事を決断した背景には、沖縄の固有生態系を守ることへの強い行政的意志があり、生物多様性保全に対する社会的優先度の高まりを象徴している。",
+    "collected_at": "2026-05-15T05:29:18.757699+09:00",
+    "background": "外来種のザリガニ（主にアメリカザリガニなど）は日本各地の水辺に定着しており、在来の水生生物や植生を食い荒らす深刻な生態系破壊者として問題視されている。沖縄県は本土と異なる固有の生態系を持つため、外来種の影響が特に甚大とされており、行政による積極的な防除対策が求められてきた。従来の網や罠による捕獲駆除では卵や幼体の除去が困難なため、より抜本的な手法が模索されていた。"
+  },
+  {
+    "title": "「Googleレンズ」に似たiOSのカメラ検索、画像生成もAI連携で進化",
+    "japanese_title": "iOSの「ビジュアルインテリジェンス」がGoogleレンズを超える？AI連携で画像検索・翻訳・生成が一気に進化",
+    "url": "https://xtech.nikkei.com/atcl/nxt/column/18/03514/040800010/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. AppleのiOSに搭載された「ビジュアルインテリジェンス」は、カメラで被写体を認識するだけで翻訳・要約・検索などの操作を自動提示する機能だ。",
+      "2. 従来の「カメラ」アプリにも翻訳・要約機能はあったが、ビジュアルインテリジェンスはより少ない手順で結果にたどり着ける点が大きな差別化ポイントとなっている。",
+      "3. GoogleレンズのようなAI視覚検索の概念をAppleが独自進化させ、画像生成機能との連携も含めたより統合的な体験を提供しつつある。"
+    ],
+    "points": [
+      "・ カメラで被写体を認識するだけで翻訳・要約・検索が自動提示される「少ない手順」のUX設計が特徴的",
+      "・ 単なる検索にとどまらず、画像生成AIとの連携も視野に入れた多機能な発展が進んでいる点",
+      "・ GoogleレンズというAndroid陣営の強みに対し、AppleがiOSのエコシステム内で対抗軸を明確に打ち出している競争構図"
+    ],
+    "prediction": "ビジュアルインテリジェンスはApple Intelligenceの進化とともに精度・機能が継続的に向上し、対応デバイスの拡大も進むと予想される。GoogleレンズやSamsungのGalaxy AI（Bixby Vision）との競争が激化する中で、各社は「見る→理解する→行動する」という一連の体験をいかにシームレスにするかを競うフェーズに入るだろう。また、ARグラスなどウェアラブルデバイスへのビジュアルAI搭載も現実味を帯びてきており、カメラ検索は次世代UIの中核技術になり得る。",
+    "ai_interpretation": "このニュースの本質は、スマートフォンの「カメラ」が単なる撮影ツールから「世界を理解するAIインターフェース」へと根本的に役割変容しつつあるという点にある。テキストを打ち込む検索という行為が、「見るだけで完結する検索」へと置き換わる流れは、情報アクセスの民主化と同時に、プラットフォーム企業によるユーザー行動データの掌握競争をも意味する。AppleがGoogleの土俵であった検索・AI領域に本格参入する象徴的な動きとして、業界全体のパワーバランスに影響を与える重要な布石と言えるだろう。",
+    "collected_at": "2026-05-15T05:29:38.319613+09:00",
+    "background": "GoogleレンズをはじめとするAIを活用したビジュアル検索技術は近年急速に普及し、テキスト入力に頼らない直感的な情報検索のニーズが高まっていた。AppleはiOS 18以降のアップデートにおいてApple Intelligenceの一環としてビジュアルインテリジェンスを導入し、カメラを起点としたAI活用体験の強化を図ってきた。こうした動きは、スマートフォンにおけるAI機能の競争が検索・翻訳・生成の複合領域へと拡大していることを示している。"
+  }
+];
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>
