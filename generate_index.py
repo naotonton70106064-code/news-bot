@@ -60,7 +60,7 @@ def load_category_data(category):
             days.append({
                 "date": date_str,
                 "count": len(articles),
-                "titles": [get_display_title(a) for a in articles[:3]],
+                "titles": [get_display_title(a) for a in articles],
             })
         except (json.JSONDecodeError, KeyError):
             continue
@@ -120,7 +120,7 @@ def generate_index():
             legacy_days.append({
                 "date": date_str,
                 "count": len(articles),
-                "titles": [get_display_title(a) for a in articles[:3]],
+                "titles": [get_display_title(a) for a in articles],
             })
         except (json.JSONDecodeError, KeyError):
             continue
@@ -316,9 +316,6 @@ def generate_index():
         const display = dt.getFullYear() + "\\u5E74" + (dt.getMonth()+1) + "\\u6708" + dt.getDate() + "\\u65E5";
 
         let titlesHtml = day.titles.map(t => "<li>\\u30FB" + t + "</li>").join("");
-        if (day.count > 3) {{
-          titlesHtml += '<li class="more">...\\u4ED6' + (day.count - 3) + '\\u4EF6</li>';
-        }}
 
         const card = document.createElement("a");
         card.href = getArticlePath(currentCategory, day.date);
