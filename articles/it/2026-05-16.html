@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "A hotel check-in system left a million passports and driver’s licenses open for anyone to see",
+    "japanese_title": "ホテルチェックインシステムの設定ミスで100万件以上のパスポート・運転免許証が誰でも閲覧可能な状態に",
+    "url": "https://techcrunch.com/2026/05/15/a-hotel-check-in-system-left-a-million-passports-and-drivers-licenses-open-for-anyone-to-see/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. ホテルのチェックインシステムを管理するIT企業が、クラウドストレージを誤って「公開設定」にしたまま運用していた。",
+      "2. その結果、パスワードなしで誰でも顧客の個人情報（パスポート・運転免許証など）にアクセスできる状態が続いた。",
+      "3. 流出リスクにさらされた件数は100万件以上に上り、深刻な個人情報漏洩インシデントとなった。"
+    ],
+    "points": [
+      "・ 悪意ある攻撃ではなく、単純な「設定ミス」という人為的ミスが原因である点",
+      "・ パスポートや運転免許証という最も機密性の高い身分証明書が対象となっている点",
+      "・ ホテル本体ではなく委託先のIT企業の管理ミスという、サプライチェーンセキュリティの脆弱性が露呈した点"
+    ],
+    "prediction": "規制当局（特にGDPRが適用される欧州や各国の個人情報保護機関）による調査・制裁が行われる可能性が高く、多額の罰金が科される恐れがある。また被害を受けた顧客からの集団訴訟リスクも高まるとみられる。業界全体としても、クラウド設定の定期的な監査やサードパーティベンダーへのセキュリティ要件強化が急務となるだろう。",
+    "ai_interpretation": "このインシデントが示す本質は、「技術の高度化」と「運用管理の成熟度」の深刻なギャップである。クラウド技術がいかに進化しても、人間による設定・運用ミスが最大のリスクファクターであるという現実を改めて突きつけている。また、消費者が意識しないまま預けた最も重要な個人情報が、自分の知らない第三者企業によって無防備な状態で管理されうるという構造的問題は、今後のデータガバナンスとベンダー管理の在り方に根本的な見直しを迫るものである。",
+    "collected_at": "2026-05-16T05:18:32.104558+09:00",
+    "background": "ホテル業界ではチェックイン時に身分証明書のスキャン・保存が一般的な慣行となっており、大量の機密性の高い個人情報がデジタル管理されている。こうしたデータはサードパーティのIT企業がクラウド上で管理するケースが増えているが、セキュリティ設定の不備が今回のような重大なリスクを生む。クラウドの「公開設定ミス（misconfiguration）」は業界全体で繰り返されてきた典型的なヒューマンエラーの一つである。"
+  },
+  {
+    "title": "Silicon Valley’s vacationland needs a new energy provider just as AI is driving prices up",
+    "japanese_title": "AIが電力需要を急増させる中、シリコンバレーの人気リゾート地レイクタホで電気料金が高騰へ",
+    "url": "https://techcrunch.com/2026/05/15/silicon-valleys-vacationland-needs-a-new-energy-provider-just-as-ai-is-driving-prices-up/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. シリコンバレーのエリートに愛されるリゾート地レイクタホが、新たなエネルギー供給事業者への移行を迫られている。",
+      "2. AI技術の急速な普及により電力需要が爆発的に増加し、電気料金の大幅な値上がりが見込まれる。",
+      "3. 観光・リゾート地としての魅力維持と、エネルギーコスト上昇という二つの課題が同時に直撃する形となっている。"
+    ],
+    "points": [
+      "・ AI需要拡大が引き起こす電力価格上昇の影響が、都市部だけでなくリゾート地にまで波及している点",
+      "・ エネルギー供給事業者の切り替えという移行期に価格高騰が重なるという最悪のタイミング",
+      "・ テック業界の聖地ともいえる観光地が、テック業界が生み出した問題に悩まされるという構造的矛盾"
+    ],
+    "prediction": "エネルギーコストの上昇は宿泊施設や観光サービスの料金に転嫁される可能性が高く、観光客の負担増につながることが予想される。新たなエネルギー供給契約の内容次第では、再生可能エネルギーへの移行が加速する契機となる可能性もある。一方、コスト上昇が地域経済や不動産価値に与える影響についても、今後注視が必要となるだろう。",
+    "ai_interpretation": "このニュースはAI技術の恩恵を享受してきたシリコンバレーのコミュニティが、AI普及に伴うエネルギーコストという「負の側面」を初めて身近に体感するという象徴的な出来事を示している。テクノロジーの進歩がもたらす電力消費の増大は、今や都市のインフラ問題にとどまらず、生活・観光・地域経済全体に影響を及ぼす社会問題へと発展しつつある。この事例は、AI開発のコストを誰が・どのように負担するかという、今後の社会的議論を先取りする重要な示唆を含んでいる。",
+    "collected_at": "2026-05-16T05:18:49.969609+09:00",
+    "background": "AIデータセンターの急増により、米国全土で電力需要が急激に高まっており、電力インフラへの負担が増大している。レイクタホ地域はもともとエネルギー供給の選択肢が限られた地理的条件にあり、供給事業者の切り替えというタイミングの悪さが重なった。シリコンバレーのテック業界と深い結びつきを持つこの地域は、AI産業の恩恵を受ける一方で、そのコスト面の影響も直接受ける皮肉な立場に置かれている。"
+  },
+  {
+    "title": "Tesla reveals two Robotaxi crashes involving teleoperators",
+    "japanese_title": "テスラのロボタクシーで2件の衝突事故が発覚――遠隔操作者が関与していたことが判明",
+    "url": "https://techcrunch.com/2026/05/15/tesla-reveals-two-robotaxi-crashes-involving-teleoperators/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 新たに開示された事故報告書により、テスラのロボタクシーが遠隔操作者（テレオペレーター）関与のもとで2件の衝突事故を起こしていたことが明らかになった。",
+      "2. これらの事故は、テスラが自律走行タクシーサービスの規模拡大を図る中で直面している技術的・運用上の課題を浮き彫りにしている。",
+      "3. 報告書は当初一部が非公開とされていたが、今回の開示により事故の詳細が明らかになった。"
+    ],
+    "points": [
+      "・ 遠隔操作者が介在していたにもかかわらず事故が発生したという点で、「人間による監視」の限界が問われている",
+      "・ 事故報告書が一部伏せられていた経緯から、テスラの情報開示姿勢に対する透明性への疑問が浮上",
+      "・ ロボタクシーのスケールアップ（規模拡大）過程における安全管理体制の脆弱性が露呈した可能性がある"
+    ],
+    "prediction": "規制当局（NHTSAなど）がテスラのロボタクシー事業に対してより厳格な監視・調査を強化する可能性が高い。また、競合他社（Waymo等）との安全性比較が消費者・投資家の間で注目され、テスラの自律走行事業の信頼性に影響を与えるかもしれない。テスラは事故原因の説明と再発防止策の公表を求める社会的圧力に直面することになるだろう。",
+    "ai_interpretation": "このニュースの本質は、「自律走行＋人間の遠隔監視」というハイブリッドモデルが、完全な安全を保証するわけではないという現実を示している点にある。テレオペレーターの存在は安全の「補完策」として機能するはずだが、それ自体が新たな障害点（シングルポイントオブフェイラー）となり得ることを示唆している。自動運転技術の社会実装においては、技術の成熟度だけでなく、運用設計・監視体制・情報透明性の三位一体が不可欠であることを改めて問いかけるニュースといえる。",
+    "collected_at": "2026-05-16T05:19:08.473777+09:00",
+    "background": "テスラはイーロン・マスク氏の主導のもと、完全自動運転（FSD）技術を活用したロボタクシーサービスの商用展開を積極的に推進している。遠隔操作者（テレオペレーター）は、自律走行システムが対応困難な状況で人間が遠隔から車両を補助・制御する役割を担っており、完全無人化への移行段階における重要な安全装置とされている。しかし今回の事故報告により、その遠隔操作の仕組み自体にもリスクが存在することが示された。"
+  },
+  {
+    "title": "NTTデータ生え抜き初のNTT三役に佐々木裕氏、総合IT企業に脱皮へ",
+    "japanese_title": "NTTデータ出身の佐々木裕氏がNTT副社長に就任――通信からIT総合企業への歴史的転換を象徴する人事",
+    "url": "https://xtech.nikkei.com/atcl/nxt/column/18/00001/11733/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. NTTは、NTTデータグループの佐々木裕社長をNTT持ち株会社の副社長に起用することを決定した。",
+      "2. NTTデータの生え抜き社員がNTT持ち株会社の三役（会長・社長・副社長）に就くのは今回が初めてとなる。",
+      "3. この人事はNTTが通信事業中心の企業体質から総合IT企業への構造転換を加速させる意志を示すものだ。"
+    ],
+    "points": [
+      "・「生え抜き初」という歴史的意味：NTTデータ出身者が持ち株会社の経営中枢に入ることで、グループ内の権力構造・意思決定の重心がIT側にシフトする可能性がある",
+      "・総合IT企業への本気度：人事という最もわかりやすい形で、NTTの経営戦略の方向性が対外的に明示された点は市場へのシグナルとして強い",
+      "・NTTデータのグローバル展開：佐々木氏が率いてきたNTTデータの国際競争力・ITノウハウがグループ全体の戦略に反映される可能性が高い"
+    ],
+    "prediction": "NTTグループ内でのITサービス部門の発言力がさらに強まり、通信インフラ部門とデジタル・IT部門のリソース配分や投資戦略が見直される可能性がある。また、NTTデータを核としたグローバルIT事業の拡大や、AI・クラウド領域への積極的な投資加速が期待される。中長期的には、NTTの企業ブランド自体が「通信会社」から「総合ITサービス企業」へと再定義されていくことになるだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる人事異動ではなく、NTTが「どの事業を自社の未来の柱とするか」を内外に宣言したことにある。通信インフラという旧来の強みに依存するビジネスモデルの限界を認識し、ITサービス・データビジネスへの本格的な重心移動を組織の頂点から体現しようとしている点が重要だ。日本の大企業において「出身母体」が人事に色濃く反映される文化を考えると、この「初」という事実は、NTTが既得権益的な組織慣行を超えて変革を選んだことを示す、象徴的かつ勇気ある経営判断といえる。",
+    "collected_at": "2026-05-16T05:19:28.910243+09:00",
+    "background": "NTTはかねてより、通信インフラ事業への依存から脱却し、ITサービス・デジタルソリューションを軸とした事業構造への転換を経営課題として掲げてきた。NTTデータはグローバルITサービス市場で着実に存在感を高めており、その中核を担ってきた佐々木氏の実績がグループ全体の戦略立案に必要と判断されたとみられる。また、通信市場の成熟化や競争激化を背景に、NTTグループ全体の収益源を多角化する必要性が高まっていた。"
+  },
+  {
+    "title": "「客先常駐」も、OpenAIがAI導入の新会社　問われるIT部門やSIerの存在意義",
+    "japanese_title": "OpenAIが「客先常駐」モデルで新会社設立——SIerとIT部門の存在意義に迫る構造変化",
+    "url": "https://xtech.nikkei.com/atcl/nxt/column/18/00001/11746/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. OpenAIが投資ファンドと共同で新会社を設立し、エンジニアを顧客企業に常駐させてAI導入を直接支援するビジネスモデルに乗り出した。",
+      "2. このモデルは日本のSIerや企業内システム部門が長年担ってきた「システム導入・運用支援」の役割と真正面から競合する。",
+      "3. AI開発元自らが現場に入り込む新たな構造は、既存のIT産業の中間層を大きく揺るがす可能性がある。"
+    ],
+    "points": [
+      "・ 「客先常駐」という日本のSIer・ITベンダーに馴染み深い手法をOpenAI自身が採用した点に強い皮肉と脅威がある",
+      "・ AI開発元が導入ノウハウを直接蓄積することで、SIerが持つ「現場知識」という最後の優位性が侵食されるリスク",
+      "・ 国内IT企業・SIerが付加価値を再定義できなければ、単純な人月ビジネスからの脱却がさらに困難になる"
+    ],
+    "prediction": "OpenAIの動きに追随し、他のAIベンダーも同様の直接導入支援サービスを展開する可能性が高く、SIer市場への競争圧力は今後一層高まるだろう。一方、日本の大企業では規制・セキュリティ・言語対応などの課題から、完全な置き換えには時間を要するとみられる。国内SIerは業界特化の深い知見や信頼関係を武器に、AIベンダーとの「共存・協業」モデルへの転換を迫られる局面が加速するとみられる。",
+    "ai_interpretation": "このニュースの本質は、AI産業における「バリューチェーンの垂直統合化」であり、OpenAIがモデル開発者から「AI導入のゼネコン」へと役割を拡張しようとしていることを示している。従来、技術と現場をつなぐ「翻訳者」として価値を発揮してきたSIerやIT部門にとって、その存在意義の再定義は避けられない経営課題となった。真に問われているのは技術力よりも「人間・組織・業務への深い理解」であり、そこに特化できない中間プレイヤーは淘汰の波にさらされるという厳しい示唆を含んでいる。",
+    "collected_at": "2026-05-16T05:19:48.161128+09:00",
+    "background": "企業のAI活用ニーズが急拡大する中、導入の複雑さや専門人材不足が普及の壁となっていた。OpenAIはモデル提供にとどまらず、導入フェーズまで自社で囲い込むことで収益拡大と顧客ロックインを図る戦略に転換しつつある。こうした動きは、クラウド大手（AWS・Azureなど）がマネージドサービスを拡充して中間業者を圧迫してきた流れと同様のパターンといえる。"
+  },
+  {
+    "title": "予定価格の近似額漏洩は違法、入札前の公表でも　官製談合で最高裁判断",
+    "japanese_title": "最高裁が官製談合の上告を棄却｜予定価格の「近似額」漏洩も違法と確定判決",
+    "url": "https://xtech.nikkei.com/atcl/nxt/column/18/00142/02624/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. 宮崎県日南市の元副市長が、入札前に一部の建設会社へ予定価格に近い金額を漏洩したとして官製談合防止法違反に問われた。",
+      "2. 被告側は「入札前に公表予定の価格であるため違法ではない」と主張し上告したが、最高裁はこれを棄却した。",
+      "3. 懲役2年・執行猶予3年の有罪判決が確定し、「近似額の漏洩」も違法との司法判断が確立された。"
+    ],
+    "points": [
+      "・「予定価格そのもの」ではなく「近似額」であっても違法とする判断が最高裁レベルで確定した点",
+      "・「どうせ公表するから問題ない」という被告側の論理を司法が明確に否定した点",
+      "・地方自治体の幹部職員による情報漏洩に対する法的抑止力が強化された点"
+    ],
+    "prediction": "今回の最高裁判断により、「近似額ならセーフ」という解釈の余地が完全に封じられたため、類似事案での捜査・起訴・有罪認定がより容易になると考えられる。地方自治体はコンプライアンス体制の見直しを迫られ、入札情報の管理強化や内部通報制度の整備が加速する可能性がある。一方で、巧妙化・潜在化した談合行為の摘発には引き続き限界もあり、制度的な監視体制の強化が求められる。",
+    "ai_interpretation": "このニュースの本質は、法律の「文言の抜け穴」を塞ぐ司法判断が示された点にある。「公表予定だから違法でない」という主張は一見論理的に見えるが、最高裁は情報の非対称性こそが問題の核心であると判断したと言える。公共調達の公正性は民主主義における税金の適正利用に直結する問題であり、今回の判決は官製談合に対する法的規範を実質的に強化する重要な先例となるだろう。",
+    "collected_at": "2026-05-16T05:20:03.933657+09:00",
+    "background": "公共工事の入札では、発注者が設定する「予定価格」が落札額の上限となるため、事前にその情報を得た業者は競争入札で圧倒的に有利になる。官製談合防止法はこうした情報漏洩を禁じているが、本件では「公表予定の価格に近い金額」という抜け穴的な主張がなされた。地方自治体の首長・幹部による官製談合は全国で相次いでおり、公正な競争環境の確保が長年の課題となっている。"
+  }
+];
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>
