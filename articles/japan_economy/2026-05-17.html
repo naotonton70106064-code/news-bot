@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "ロシアのプーチン大統領が19日から2日間の日程で訪中､習国家主席と会談へ | 政治・経済・投資 | 東洋経済オンライン",
+    "japanese_title": "プーチン大統領が訪中・習近平と首脳会談｜中ロ同盟強化が世界経済と日本市場に与える影響を徹底分析",
+    "url": "https://toyokeizai.net/articles/-/944825?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. ロシアのプーチン大統領が19日から2日間の日程で中国を公式訪問し、習近平国家主席と首脳会談を行う。",
+      "2. 今年で締結25周年を迎える「中ロ善隣友好協力条約」を節目に、両国の戦略的パートナーシップをさらに深化させる狙いがある。",
+      "3. ウクライナ侵攻や米中対立が続く国際情勢のなかで、中ロの連携強化は地政学的リスクを一段と高める可能性がある。"
+    ],
+    "points": [
+      "・ エネルギー分野における中ロ協力の具体的合意内容（天然ガス・石油の長期供給契約など）",
+      "・ ウクライナ情勢や停戦交渉に対する中国の関与姿勢の変化と、西側諸国の反応",
+      "・ 人民元決済・デジタル通貨など、米ドル基軸体制への対抗を意識した金融協力の進展"
+    ],
+    "prediction": "中ロが経済・安全保障両面での協力を強化すれば、欧米主導の対ロ制裁の実効性がさらに低下し、国際秩序の再編が加速する恐れがある。日本にとっては、サハリンエネルギー権益の維持・喪失リスクや、対中輸出規制の強化圧力という形で経済政策上の難しい判断を迫られる局面が増えると予想される。また、中ロ接近を受けた日米同盟の強化や防衛費増額の正当化論が国内で強まり、財政・産業政策にも間接的な影響を及ぼす可能性がある。",
+    "ai_interpretation": "このニュースの本質は、単なる首脳外交を超えた「米西側主導の国際秩序への対抗軸形成」の加速であり、冷戦後の多国間協調体制が根本から揺らいでいることを象徴している。日本経済にとっては、エネルギー安全保障・サプライチェーン再編・同盟外交のコスト増という三重の構造的課題が同時進行するリスクを意味する。中ロいずれとも一定の経済関係を持つ日本は、価値観外交と実利外交のバランスを取るという極めて困難な立場に置かれており、企業・政府両レベルでのシナリオ対応力が今後の競争力を左右する。",
+    "collected_at": "2026-05-17T05:04:40.352247+09:00",
+    "market_impact": "中ロの経済・軍事連携強化への警戒から、エネルギー・防衛関連株や有事関連銘柄が国内外で注目される可能性がある。為替市場ではリスク回避的なドル高・円高圧力が一時的にかかる場面も想定され、輸出企業の業績見通しに影響を及ぼしかねない。また、中ロを介した制裁迂回リスクが意識されることで、欧米が対中規制を強める可能性があり、日本の半導体・精密機器メーカーにも余波が及ぶ恐れがある。"
+  },
+  {
+    "title": "｢プラダを着た悪魔2｣の\"鬼\"編集長は20年の時を経てちょっぴりやさしくなった　先の見えない時代に｢仲間こそ大事｣を知る | ライフ | 東洋経済オンライン",
+    "japanese_title": "『プラダを着た悪魔2』20年後の職場観――「競争」から「連帯」へ変わる令和のキャリア哲学とビジネストレンド",
+    "url": "https://toyokeizai.net/articles/-/944228?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 映画『プラダを着た悪魔2』が公開され、前作から20年を経た登場人物たちの変化が「時代のキャリア観の転換」を象徴するとして注目を集めている。",
+      "2. 鬼編集長ミランダが「やさしくなった」という設定は、Z世代・ミレニアル世代が重視する「心理的安全性」や「共感型リーダーシップ」の台頭を反映していると読み解ける。",
+      "3. 「先の見えない時代に仲間こそ大事」というメッセージは、個人競争主義から協調・コミュニティ重視へという現代の職場文化シフトを映し出している。"
+    ],
+    "points": [
+      "・「競争型」から「協調型」へのリーダーシップモデルの変化がエンタメを通じて可視化されている点",
+      "・Z世代・ミレニアル世代の労働価値観（心理的安全性・ウェルビーイング重視）が主流化しつつある社会的背景",
+      "・ファッション業界・メディア業界の20年間における構造変化（デジタル化・SNS台頭・紙媒体の衰退）が作品に投影されている点"
+    ],
+    "prediction": "日本企業においても「成果主義・個人競争」から「チームワーク・関係資本」を重視する人事・組織文化へのシフトが加速するとみられ、関連する人材育成サービスやコーチング市場の拡大が期待される。政府が推進する「働き方改革2.0」的な文脈とも親和性が高く、心理的安全性を指標化した職場評価制度の導入企業が増加する可能性がある。エンタメコンテンツが社会規範形成に与える影響力を踏まえると、本作のヒット次第では「共感型マネジメント」論が経営層へも波及するだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる映画続編の話題提供にとどまらず、「20年間で日本を含む先進国の職場文化がいかに変容したか」を映し鏡として示している点にある。バブル崩壊後の「失われた30年」を経て、日本社会でも「個の孤立した競争」より「集合知と連帯」を重視する価値観が若年層を中心に定着しつつあり、それが大衆文化を通じて再確認されている。日本経済への示唆としては、旧来型の「厳しい上司＝優秀」という神話が崩れつつある今、企業が「人的資本経営」を実質化するためには、リーダーシップ観そのものを刷新する必要があるというメッセージと捉えられる。",
+    "collected_at": "2026-05-17T05:05:03.025479+09:00",
+    "market_impact": "ファッション・ラグジュアリー業界（LVMH、リシュモン等）や映画・エンタメ関連株にとって、続編公開は一定のプロモーション効果をもたらす可能性がある。国内では、アパレル・ファッションメディア業界やOTTプラットフォーム（Netflix等）の視聴需要増加が見込まれる。為替への直接的な影響は限定的だが、円安継続下でのラグジュアリー消費トレンドとも連動し得る話題性を持つ。"
+  },
+  {
+    "title": "鈴木宗男参議院議員の訪ロと､鈴木宗男･佐藤優に向けられた24年前のバッシングを考える① | キャリア・教育 | 東洋経済オンライン",
+    "japanese_title": "鈴木宗男議員の訪ロが示す日ロ関係の新局面——ウクライナ侵攻後の外交チャネルと経済的影響を読む",
+    "url": "https://toyokeizai.net/articles/-/944503?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. ロシアのウクライナ侵攻後、日本の国会議員として唯一モスクワを訪問した鈴木宗男氏が、クレムリンとの会談を通じて関係改善への外交シグナルを探っている。",
+      "2. 鈴木氏はかつて「鈴木宗男事件」で大バッシングを受けた経緯があり、今回の訪ロも国内政界から批判・孤立した立場での独自外交として注目される。",
+      "3. 日本政府の対ロ制裁・強硬路線とは一線を画す形で、民間・議員レベルの対話チャネルが細々と維持されている実態が浮き彫りになっている。"
+    ],
+    "points": [
+      "・ 日本政府の公式外交ラインとは切り離された「非公式チャネル」としての鈴木氏の役割と、その情報がどこまで政策決定に反映されるか",
+      "・ クレムリン側が「関係改善のシグナル」を日本の野党・無所属議員を通じて発信する戦略的意図（情報工作・世論分断の可能性も含む）",
+      "・ 24年前のバッシング（外務省機密費問題・佐藤優氏逮捕）との比較から見える、日本の対ロ外交における構造的な問題点"
+    ],
+    "prediction": "ウクライナ情勢の停戦交渉が進展した場合、鈴木氏のような非公式チャネルが日ロ交渉の布石として政治的に再評価される可能性がある。一方、日本政府がG7の対ロ制裁協調路線を維持する限り、経済関係の本格回復には数年単位の時間軸が必要であり、北方領土問題も含めた包括交渉の再開は見通しにくい。エネルギー安全保障の観点から、サハリンプロジェクトへの関与継続・撤退判断が次の重要な政策的分岐点となる。",
+    "ai_interpretation": "このニュースの本質は、「経済的実利」と「外交的理念・同盟関係」の間で揺れる日本の対ロ政策のジレンマを一人の政治家の行動が可視化している点にある。鈴木氏の訪ロは単なる個人外交にとどまらず、エネルギー・食料・漁業権など対ロ経済依存の清算が完了していない日本の現実を映す鏡でもある。日本経済への示唆として、地政学リスクに脆弱なサプライチェーンと資源調達の多角化が急務であることを、改めて問い直す契機となっている。",
+    "collected_at": "2026-05-17T05:05:24.905073+09:00",
+    "market_impact": "日ロ関係が現状の制裁・断絶局面から変化する兆しは依然乏しく、エネルギー・水産・観光など対ロ依存度の高かった産業への直接的な回復効果は短期的には期待しにくい。ただし、サハリン関連エネルギープロジェクト（サハリン1・2）への投資継続の可否を巡る思惑から、エネルギー関連株や商社株には関連ニュースへの感応度が残る。為替面では、ルーブル建て取引の縮小が続く中、円・ルーブル間の市場インパクトはほぼ限定的である。"
+  },
+  {
+    "title": "日本株、米NVIDIA決算がAI相場左右　長期金利の上昇が懸念要因",
+    "japanese_title": "NVIDIAの決算発表が日本株のAI相場を左右——長期金利上昇リスクにも要警戒",
+    "url": "https://www.nikkei.com/article/DGXZQOUB14BAW0U6A510C2000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 米NVIDIAの決算内容が、AI関連株を中心とした日本株市場の方向性を大きく左右する重要イベントとして注目されている。",
+      "2. AI関連銘柄への期待感が市場を下支えする一方、長期金利の上昇が株式市場全体のバリュエーション圧力となりうる懸念材料として浮上している。",
+      "3. 米国発の金融・テクノロジー動向が日本株市場に直接的な影響を与える構図が改めて鮮明となっている。"
+    ],
+    "points": [
+      "・ NVIDIAの売上高・利益予想に対する達成度と次期ガイダンスの内容",
+      "・ 米国長期金利（10年債利回り）の水準とその上昇ペース",
+      "・ 日本銀行の金融政策正常化観測と国内長期金利への波及効果",
+      "・ 日本国内のAI関連銘柄（半導体製造装置・素材）への資金流入動向",
+      "・ 円相場の動向と輸出企業業績への影響"
+    ],
+    "prediction": "NVIDIAの決算が好調であれば短期的にAIテーマ株への物色が再燃し、日経平均は上値を試す展開が想定されるが、その持続性は米長期金利の動向に大きく依存する。米国のインフレ再燃懸念やFRBの利下げ先送り観測が強まれば、長期金利の高止まりが続き、日本株全体の上値を抑える展開となりやすい。国内では日銀の追加利上げ観測も絡み、日米双方の金利動向が複合的に市場を揺さぶるリスクシナリオに注意が必要だ。",
+    "ai_interpretation": "このニュースが示す本質は、日本株市場が「自律的な成長ストーリー」よりも「米国テクノロジー企業の業績と米金利動向」という外部変数に強く依存している構造的脆弱性である。AI投資ブームは日本の半導体関連産業に恩恵をもたらしているが、それはあくまで米国市場の\"下請け的ポジション\"に近く、独自のバリュエーション形成力が問われる局面でもある。日本経済が真の意味でAI成長を取り込むためには、国内需要創出やスタートアップ育成など、内発的な産業政策の強化が中長期的な課題として浮き彫りになっている。",
+    "collected_at": "2026-05-17T05:05:47.584746+09:00",
+    "market_impact": "NVIDIAの決算が市場予想を上回れば、日本の半導体・AI関連銘柄（東京エレクトロン、アドバンテストなど）に買いが波及し、日経平均の押し上げ要因となる可能性が高い。一方、長期金利の上昇は株式の相対的な割高感を強め、特にグロース株やPERの高いテック銘柄への売り圧力につながりやすい。為替面では、日米金利差の動向次第で円安・円高どちらにも振れうる不安定な局面が続く見込みである。"
+  },
+  {
+    "title": "「食害魚」クロダイ、食べて水産保全　混ぜご飯に缶詰に",
+    "japanese_title": "クロダイを食べて海を守る！「食害魚」の商品化で水産保全と地域経済活性化を両立",
+    "url": "https://www.nikkei.com/article/DGXZQOUB111O40R10C26A4000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 藻場を食い荒らす「食害魚」として問題視されてきたクロダイを、混ぜご飯の素や缶詰などの加工食品として商品化し、駆除と経済利用を同時に図る取り組みが進んでいる。",
+      "2. 漁業者・自治体・食品メーカーが連携し、これまで廃棄・低利用だったクロダイに付加価値をつけることで、漁業者の新たな収入源確保を目指している。",
+      "3. 海藻や稚魚を守る生態系保全と水産資源の有効活用を組み合わせた「課題解決型ビジネス」として、各地域での横展開が期待されている。"
+    ],
+    "points": [
+      "・ 駆除コストを「収益」に転換する逆転の発想が、水産業の持続可能性モデルとして注目される",
+      "・ SDGs・サステナブルシーフードへの消費者関心の高まりが、食害魚商品の市場受容を後押しする",
+      "・ 自治体補助金や水産庁の漁場保全政策と連携することで、事業の安定性が高まる可能性がある"
+    ],
+    "prediction": "水産庁や農林水産省が推進する「漁場環境改善」施策と民間ビジネスの融合が加速し、同様の取り組みがウニ・ボラ・カワウ被害魚など他の食害・低利用種にも広がる可能性が高い。食品ロス削減・生態系保全・地域創生を同時に達成できるモデルとして、ESG投資や地方創生ファンドからの資金流入も期待される。一方、安定した漁獲量の確保や消費者への認知拡大が課題であり、マーケティング投資の継続が事業成否のカギを握る。",
+    "ai_interpretation": "このニュースの本質は、「厄介者」を「資源」と再定義することで、環境保全と経済活動を対立ではなく共存させる「サーキュラーエコノミー型水産業」の萌芽である。日本の一次産業が直面する担い手不足・収益低下・生態系悪化という三重苦に対し、付加価値創出という民間主導の解決策を示しており、補助金依存からの脱却モデルとして政策的にも示唆が大きい。「食べることで守る」というシンプルなコンセプトが消費者の共感を得やすく、日本の地域水産業の新たなブランド戦略の方向性を示している点で、経済的意義は小さくない。",
+    "collected_at": "2026-05-17T05:06:09.572858+09:00",
+    "market_impact": "水産加工・食品業界において、低利用魚・外来種・食害魚の商品化という新市場が形成されつつあり、地方の中小食品メーカーや漁協に新たなビジネス機会をもたらす可能性がある。円安による輸入食材コスト上昇を背景に、国産・地場水産物への注目度が高まっており、クロダイのような国産未利用魚の商品化は追い風となり得る。地域漁業の収益改善を通じて、過疎・漁村地域の経済底上げにも寄与する可能性がある。"
+  },
+  {
+    "title": "極右と親パレスチナ、ロンドンで同時デモ　厳戒下で30人超逮捕",
+    "japanese_title": "ロンドンで極右・親パレスチナが同時デモ、厳戒態勢下で30人超逮捕―英国社会の分断が鮮明に",
+    "url": "https://www.nikkei.com/article/DGXZQOGR162ZN0W6A510C2000000/",
+    "source": "日経新聞 速報",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. ロンドンで極右勢力と親パレスチナ派が同日に別々のデモを開催し、大規模な警備態勢が敷かれた。",
+      "2. 両グループの衝突を防ぐため当局は厳重な警戒を行ったが、30人以上が逮捕される事態となった。",
+      "3. 英国内における政治・社会的分断の深刻化と、治安維持コストの増大が改めて浮き彫りとなった。"
+    ],
+    "points": [
+      "・極右勢力の活動活発化が欧州各国に波及しており、政治リスクの地政学的な広がりに要注意",
+      "・親パレスチナデモの継続は中東情勢と連動しており、エネルギー・防衛関連市場への影響チャンネルとなる可能性",
+      "・英国政府の対応姿勢（表現の自由と治安維持のバランス）が今後の政策・立法動向を左右する重要指標"
+    ],
+    "prediction": "英国では2025年以降も政治的分極化が進む可能性が高く、スターマー労働党政権は国内結束と治安強化の両立という難しいかじ取りを迫られる。デモの頻発化は警察・司法リソースを圧迫し、社会保障とのバランスで財政議論が再燃する可能性がある。欧州全体で極右勢力が伸長する中、英国の事例は他国の政策立案にも影響を与えるリトマス試験紙となるだろう。",
+    "ai_interpretation": "このニュースの本質は、中東紛争や移民問題を背景とした「価値観の断絶」が先進民主主義国家の社会基盤を揺るがしているという構造的問題にある。日本にとっての示唆は、同様の社会分断リスクが無縁ではなく、外国人労働者受け入れ拡大や国際情勢への立場表明が国内世論の分極化を招く潜在的リスクを内包している点である。社会的安定性は経済活動の基盤であり、日本の政策立案者もこの欧州の事例を「対岸の火事」と見なさず、予防的な社会統合政策を検討する必要性が高まっていると言える。",
+    "collected_at": "2026-05-17T05:06:29.480235+09:00",
+    "market_impact": "英国内の政治的不安定化はポンド相場の不透明感を高める要因となり得るが、今回の事案が直ちに為替や株式市場を大きく動かす可能性は低い。ただし、社会不安が長期化・頻発化すれば、英国への外国直接投資（FDI）や観光業に対してネガティブなセンチメントが広がるリスクがある。治安コストの増大は公共支出を圧迫し、財政運営にも間接的な影響を及ぼしうる。"
+  }
+];
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+  </script>
+</body>
+</html>
