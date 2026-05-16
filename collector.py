@@ -1,4 +1,12 @@
+import json
+from datetime import datetime
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
 import feedparser
+
+JST = ZoneInfo("Asia/Tokyo")
+COLLECTED_URLS_FILE = Path("collected_urls.json")
 
 # カテゴリ別RSSフィード
 FEEDS = {
@@ -26,10 +34,37 @@ FEEDS = {
 }
 
 
-def collect_articles(category="it"):
-    """指定カテゴリの記事を収集する"""
+def load_collected_urls():
+    """過去に取得済みのURL一覧を読み込む。形式は {url: collected_at_iso} の辞書。"""
+    if not COLLECTED_URLS_FILE.exists():
+        return {}
+    try:
+        with open(COLLECTED_URLS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, list):
+            # 旧形式（URLのリスト）から辞書へ移行
+            return {url: "" for url in data}
+        if isinstance(data, dict):
+            return data
+        return {}
+    except (json.JSONDecodeError, OSError) as e:
+        print(f"  [警告] {COLLECTED_URLS_FILE} の読み込みに失敗: {e}")
+        return {}
+
+
+def save_collected_urls(collected_urls):
+    """取得済みURLをJSONファイルに保存する。"""
+    with open(COLLECTED_URLS_FILE, "w", encoding="utf-8") as f:
+        json.dump(collected_urls, f, ensure_ascii=False, indent=2)
+
+
+def collect_articles(category="it", collected_urls=None):
+    """指定カテゴリの記事を収集する。collected_urlsに含まれるURLはスキップ。"""
     if category not in FEEDS:
         raise ValueError(f"Unknown category: {category}")
+
+    if collected_urls is None:
+        collected_urls = load_collected_urls()
 
     feed_config = FEEDS[category]
     articles = []
@@ -37,15 +72,26 @@ def collect_articles(category="it"):
     for feed_url in feed_config["sources"]:
         try:
             feed = feedparser.parse(feed_url)
-            for entry in feed.entries[:3]:  # 各サイトから3記事ずつ
+            picked = 0
+            skipped = 0
+            for entry in feed.entries:
+                if picked >= 3:  # 各サイトから新規3記事ずつ
+                    break
+                url = entry.link
+                if url in collected_urls:
+                    skipped += 1
+                    continue
                 article = {
                     "title": entry.title,
-                    "url": entry.link,
+                    "url": url,
                     "summary": entry.get("summary", ""),
                     "source": feed.feed.get("title", feed_url),
                     "category": category,
                 }
                 articles.append(article)
+                picked += 1
+            if skipped:
+                print(f"  [情報] {feed_url}: 取得済み{skipped}件をスキップ")
         except Exception as e:
             print(f"  [警告] {feed_url} の取得に失敗: {e}")
             continue
@@ -54,12 +100,26 @@ def collect_articles(category="it"):
 
 
 def collect_all():
-    """全カテゴリの記事を収集する"""
+    """全カテゴリの記事を収集し、新規取得URLを記録する。"""
+    collected_urls = load_collected_urls()
     all_articles = {}
     for category in FEEDS:
         print(f"[{FEEDS[category]['name']}] 収集中...")
-        all_articles[category] = collect_articles(category)
+        all_articles[category] = collect_articles(category, collected_urls)
         print(f"  {len(all_articles[category])}件収集")
+
+    # 新たに取得したURLを記録して保存
+    now_iso = datetime.now(JST).isoformat()
+    new_count = 0
+    for articles in all_articles.values():
+        for article in articles:
+            if article["url"] not in collected_urls:
+                collected_urls[article["url"]] = now_iso
+                new_count += 1
+    if new_count:
+        save_collected_urls(collected_urls)
+        print(f"[情報] {new_count}件のURLを{COLLECTED_URLS_FILE}に記録")
+
     return all_articles
 
 
