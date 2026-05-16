@@ -21,15 +21,20 @@ FEEDS = {
     "japan_economy": {
         "name": "日本経済",
         "sources": [
-            {"url": "https://toyokeizai.net/list/feed/rss", "limit": 3},
-            {"url": "https://assets.wor.jp/rss/rdf/nikkei/news.rdf", "limit": 3},
+            # ロイター日本語（公式RSSは廃止のためGoogleニュースのsite:jp.reuters.com検索を代替）
+            {"url": "https://news.google.com/rss/search?q=site:jp.reuters.com+when:7d&hl=ja&gl=JP&ceid=JP:ja", "limit": 3},
+            {"url": "https://www.nhk.or.jp/rss/news/cat4.xml", "limit": 2},
+            {"url": "https://toyokeizai.net/list/feed/rss", "limit": 2},
         ],
     },
     "world_economy": {
         "name": "世界経済",
         "sources": [
-            {"url": "https://feeds.bbci.co.uk/news/business/rss.xml", "limit": 3},
-            {"url": "https://feeds.a.dj.com/rss/RSSWorldNews.xml", "limit": 3},
+            # Reuters英語（公式RSSは廃止のためGoogleニュースのsite:reuters.com検索を代替）
+            {"url": "https://news.google.com/rss/search?q=site:reuters.com+business+when:7d&hl=en-US&gl=US&ceid=US:en", "limit": 3},
+            {"url": "https://www.cnbc.com/id/10001147/device/rss/rss.html", "limit": 2},
+            # AP News Business（rsshub.appが403のためGoogleニュースのsite:apnews.com検索を代替）
+            {"url": "https://news.google.com/rss/search?q=site:apnews.com+business+when:7d&hl=en-US&gl=US&ceid=US:en", "limit": 2},
         ],
     },
 }
