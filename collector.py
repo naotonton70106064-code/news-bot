@@ -8,27 +8,28 @@ import feedparser
 JST = ZoneInfo("Asia/Tokyo")
 COLLECTED_URLS_FILE = Path("collected_urls.json")
 
-# カテゴリ別RSSフィード
+# カテゴリ別RSSフィード（各ソースに新規取得件数 limit を指定）
 FEEDS = {
     "it": {
         "name": "IT・テクノロジー",
         "sources": [
-            "https://techcrunch.com/feed/",
-            "https://xtech.nikkei.com/rss/index.rdf",
+            {"url": "https://techcrunch.com/feed/", "limit": 3},
+            {"url": "https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml", "limit": 2},
+            {"url": "https://xtech.nikkei.com/rss/index.rdf", "limit": 2},
         ],
     },
     "japan_economy": {
         "name": "日本経済",
         "sources": [
-            "https://toyokeizai.net/list/feed/rss",
-            "https://assets.wor.jp/rss/rdf/nikkei/news.rdf",
+            {"url": "https://toyokeizai.net/list/feed/rss", "limit": 3},
+            {"url": "https://assets.wor.jp/rss/rdf/nikkei/news.rdf", "limit": 3},
         ],
     },
     "world_economy": {
         "name": "世界経済",
         "sources": [
-            "https://feeds.bbci.co.uk/news/business/rss.xml",
-            "https://feeds.a.dj.com/rss/RSSWorldNews.xml",
+            {"url": "https://feeds.bbci.co.uk/news/business/rss.xml", "limit": 3},
+            {"url": "https://feeds.a.dj.com/rss/RSSWorldNews.xml", "limit": 3},
         ],
     },
 }
@@ -69,13 +70,15 @@ def collect_articles(category="it", collected_urls=None):
     feed_config = FEEDS[category]
     articles = []
 
-    for feed_url in feed_config["sources"]:
+    for source in feed_config["sources"]:
+        feed_url = source["url"]
+        limit = source["limit"]
         try:
             feed = feedparser.parse(feed_url)
             picked = 0
             skipped = 0
             for entry in feed.entries:
-                if picked >= 3:  # 各サイトから新規3記事ずつ
+                if picked >= limit:
                     break
                 url = entry.link
                 if url in collected_urls:
