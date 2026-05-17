@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "大阪 吉村知事 来年春の知事選挙に立候補を表明",
+    "japanese_title": "吉村大阪府知事が来春の知事選出馬を表明――大阪都構想の住民投票実現へ再始動",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015124291000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 大阪府の吉村洋文知事が、任期満了に伴う来年春の知事選挙への立候補を正式に表明した。",
+      "2. 来年の統一地方選挙に合わせて、大阪都構想の住民投票実施を目指す意向を明らかにした。",
+      "3. 二度の住民投票で否決された大阪都構想が、再び政治的争点として浮上する可能性がある。"
+    ],
+    "points": [
+      "・ 過去2回（2015年・2020年）の住民投票で僅差で否決された大阪都構想が、3度目の挑戦を迎えるか否か",
+      "・ 統一地方選挙との同日実施という戦略により、投票率や世論動向が結果を大きく左右する点",
+      "・ 2025年大阪・関西万博を控える中、都市インフラ整備や行政効率化の観点から都構想の意義をどう訴求するか"
+    ],
+    "prediction": "吉村知事が再選を果たした場合、大阪都構想の住民投票実施に向けた具体的な協議が加速し、大阪市の行政・財政構造の再編議論が本格化する可能性が高い。都構想が実現すれば、大阪市の財政資源の再配分や広域行政の一元化が進み、関西経済圏全体の競争力強化につながるとの見方がある一方、移行コストや行政サービスの混乱リスクも指摘されている。政策の行方次第では、国内他都市の地方行政改革モデルとして波及効果をもたらす可能性もある。",
+    "ai_interpretation": "このニュースの本質は、単なる地方選挙の動向を超え、「地方分権と大都市制度改革」という日本の構造的課題への挑戦を象徴している点にある。大阪都構想は、二重行政の解消と財政効率化を通じた成長戦略であり、その成否は日本の地方自治のあり方に対する重要な試金石となる。少子高齢化・財政悪化が進む中、地方自治体が自律的な経済圏を形成できるかどうかという問いは、大阪だけでなく日本全体の経済モデル転換を左右する議論として引き続き注視が必要である。",
+    "collected_at": "2026-05-18T05:07:12.458575+09:00",
+    "market_impact": "大阪都構想の再推進は、大阪・関西エリアの都市開発や不動産市場に対するポジティブな期待感を高める可能性があり、関西圏に基盤を持つ不動産・建設関連銘柄に短期的な注目が集まることが考えられる。一方、都構想の実現可否に関する不確実性が高いため、大きな市場変動を引き起こす可能性は現時点では限定的とみられる。為替への直接的な影響は軽微であるが、大阪・関西万博との相乗効果により、地域経済活性化への期待から関連セクターへの資金流入が見込まれる。"
+  },
+  {
+    "title": "中東情勢受けて補正予算案の必要性を検討 政府",
+    "japanese_title": "中東情勢悪化で補正予算編成を検討――電気・ガス補助継続へ与野党から圧力高まる",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015123151000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 中東情勢の長期化懸念を背景に、与野党双方から今年度補正予算案の編成を求める声が浮上している。",
+      "2. 補正予算の主な目的は、エネルギー価格上昇に対応した電気・ガス料金への補助金支援策の継続・拡充である。",
+      "3. 政府は現時点で補正予算の必要性について検討を進める方針を示している。"
+    ],
+    "points": [
+      "・ 中東情勢の長期化がエネルギー価格（原油・LNG）に与える上昇圧力の度合い",
+      "・ 与党内からも補正予算を求める声が出ている点（政権内の合意形成の早期化を示唆）",
+      "・ 補助金の規模・対象範囲（家庭向けのみか、企業・産業向けも含むか）"
+    ],
+    "prediction": "中東情勢が収束しない場合、年末に向けて政府は補正予算案の編成に踏み切る可能性が高く、規模は数兆円規模に達する可能性がある。エネルギー補助政策の延長・拡充は物価上昇の抑制に一定の効果をもたらすが、日銀の金融政策正常化シナリオに微妙な影響を与えることも予想される。また、財源確保の議論が本格化すれば、増税や国債増発をめぐる政治的対立が再燃するリスクもある。",
+    "ai_interpretation": "このニュースの本質は、日本が依然としてエネルギー安全保障の脆弱性を抱えており、地政学リスクが直ちに財政・物価政策に波及する構造的課題を改めて示している点にある。補助金による「痛み止め」的対応は家計や企業を短期的に守る一方で、エネルギー自給率向上や再生可能エネルギーへの構造転換という根本的な課題解決を先送りにするリスクをはらんでいる。日本経済にとっての真の示唆は、補正予算の是非よりも、外部ショックに左右されない強靭なエネルギー・経済構造の構築が急務であるという点である。",
+    "collected_at": "2026-05-18T05:07:28.896920+09:00",
+    "market_impact": "補正予算編成の可能性が高まれば、財政出動への期待からエネルギー関連株や内需株に短期的な買いが入る可能性がある。一方、財政悪化懸念が意識されれば円安圧力が強まり、輸入コストのさらなる上昇を招くリスクもある。国内産業全般では、エネルギーコスト抑制策が製造業や中小企業の経営を下支えする効果が期待される。"
+  },
+  {
+    "title": "自民 平氏 アンソロピック社とAI「ミュトス」めぐり意見交換",
+    "japanese_title": "自民党がアンソロピック社と高性能AI「クロード・ミュトス」について意見交換——日本のAI戦略・サイバーセキュリティ政策に注目",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015123221000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 自民党「国家サイバーセキュリティ戦略本部」の平本部長が、米新興AI企業アンソロピックの担当者と約30分間面会し、最新AIモデル「クロード・ミュトス」について意見交換を行った。",
+      "2. 会談は自民党本部で行われ、日本のAI政策・安全保障との連携を念頭に置いた情報収集・政策立案の一環とみられる。",
+      "3. アンソロピックは安全性重視のAI開発で知られており、日本政府との連携強化に向けた働きかけを積極化している可能性がある。"
+    ],
+    "points": [
+      "・「国家サイバーセキュリティ戦略本部」という安全保障機関が窓口となっており、AIを単なる産業政策ではなく安全保障の観点から捉えていることを示す",
+      "・アンソロピックの「クロード・ミュトス」は高性能モデルとして注目されており、OpenAIやGoogleに対抗する第三極として日本市場への浸透を図っている可能性がある",
+      "・日本政府が特定の外資系AI企業と個別に意見交換を行うことは、今後の公共調達・規制設計に影響を与えかねず、企業間の公平性確保が問われる"
+    ],
+    "prediction": "今回の面会を契機に、日本政府はAI活用に関するガイドラインや調達基準の整備を加速させる可能性が高く、セキュリティ審査を通過した外資系AIの政府利用拡大につながる可能性がある。国内AI産業の競争力強化に向けた補助金・規制緩和措置と並行して、外資AI企業との協力枠組みが形成される動きも予想される。中長期的には、日米間のAIガバナンス協力が深化し、経済安全保障の観点からAIサプライチェーンの管理が政策課題として浮上するだろう。",
+    "ai_interpretation": "このニュースの本質は、AIが単なるテクノロジーの話題を超え、**国家安全保障・経済主権**と直結した戦略課題として日本政府に認識され始めたことを示している点にある。アンソロピックのような外資系AI企業が政策立案の中枢に近づくことは、日本のデジタル主権（データ・インフラの自律性）をめぐる議論を不可避に呼び起こし、国産AI育成政策との整合性が問われることになる。日本経済への示唆として、官民・日米のAI協力枠組みが整備される一方、国内スタートアップや既存IT大手が「土俵」に乗り遅れるリスクも内包しており、政策の透明性と産業競争力のバランスが今後の焦点となる。",
+    "collected_at": "2026-05-18T05:07:50.897193+09:00",
+    "market_impact": "アンソロピックと日本政府の接近は、国内AI関連銘柄（半導体・クラウド・セキュリティ関連）への投資家の関心を高める可能性がある。為替への直接的な影響は限定的だが、米AI企業への資本流出懸念と国内AI産業育成策の動向が注目される。国内IT・防衛関連企業にとっては、官民連携の新たなビジネス機会が生まれる契機となりうる。"
+  },
+  {
+    "title": "［2026年5月18日］日経ビジネス最新号　新聞広告の掲載記事 (今週の新聞広告)",
+    "japanese_title": "",
+    "url": "https://business.nikkei.com/atcl/gen/19/00682/051300089/",
+    "source": "日経ビジネス電子版　最新記事",
+    "category": "japan_economy",
+    "summary_lines": [],
+    "points": [],
+    "prediction": "",
+    "ai_interpretation": "",
+    "collected_at": "2026-05-18T05:07:57.884179+09:00",
+    "market_impact": ""
+  },
+  {
+    "title": "マスク氏、再訪中　EVや宇宙開発で敵視されるもハイテク業界のアイドル (Views)",
+    "japanese_title": "イーロン・マスク氏が中国を再訪問――EV・宇宙開発で競合しながらもハイテク業界の象徴的存在として熱狂的支持を獲得",
+    "url": "https://business.nikkei.com/atcl/seminar/19/00030/051500766/",
+    "source": "日経ビジネス電子版　最新記事",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. イーロン・マスク氏が中国を再訪問し、EV・宇宙開発分野では競合・敵視される一方、ハイテク業界では「偶像（アイドル）」として高い人気を誇るという二面性が改めて注目されている。",
+      "2. 中国はテスラの主要市場であると同時に、BYDなど国内EVメーカーが台頭する競争の激戦地であり、マスク氏の訪中は政治・経済両面での戦略的意図を含む可能性が高い。",
+      "3. 米中対立が深まる地政学的文脈の中で、マスク氏は民間外交的な役割を果たしつつ、自社ビジネスの中国展開を維持・拡大しようとする綱渡りの姿勢が際立っている。"
+    ],
+    "points": [
+      "・ マスク氏が中国政府・産業界の要人と何を協議したか（テスラの現地生産拡大、規制緩和、データ移転問題など）",
+      "・ SpaceXや宇宙開発分野での中国との競合構造が、訪中の政治的センシティビティをどこまで高めているか",
+      "・ 米国内（トランプ政権・議会）からの対中強硬論とマスク氏のビジネス優先姿勢との摩擦がエスカレートするリスク"
+    ],
+    "prediction": "中国当局はテスラを「外資活用の成功モデル」として位置づけながらも、国内EV産業保護との兼ね合いでテスラへの優遇策を段階的に調整していくとみられる。米中ハイテク摩擦が継続する中、マスク氏の訪中は短期的な関係改善のシグナルとなる可能性があるが、構造的な対立は解消されず、テスラの中国依存リスクは中長期的に残存する。日本政府・産業界もこの動向を注視し、EV・半導体サプライチェーンの再編戦略を加速させる必要に迫られるだろう。",
+    "ai_interpretation": "このニュースの本質は、「一人の経営者が地政学的対立を超えてビジネスを維持しようとする現代グローバル資本主義の矛盾」を象徴している点にある。マスク氏の存在は米中双方にとって利用価値がある一方、どちらの国からも完全には信頼されないという構造的ジレンマを体現している。日本経済への示唆としては、技術・資本・市場が国境を越えて複雑に絡み合う時代において、日本企業もまた「脱中国依存」と「中国市場活用」のバランスをいかに取るかという同質の課題に直面していることを改めて認識させる事例といえる。",
+    "collected_at": "2026-05-18T05:08:21.147065+09:00",
+    "market_impact": "テスラ株にとって中国市場の動向は業績直結の重要ファクターであり、マスク氏の訪中が生産・販売拡大の合意につながれば株価にポジティブな影響を与える可能性がある。為替面では、米中関係の緊張緩和期待がリスクオン心理を促し、円安方向に若干の圧力がかかる場面も想定される。日本の自動車・半導体産業にとっては、中国市場でのテスラ攻勢が再強化された場合、競争環境がさらに厳しくなるリスクがある。"
+  },
+  {
+    "title": "南海･新観光列車｢GRAN天空｣知られざる別の任務　難波と高野山を直結｢観光公害｣緩和にもなるメリット | ビジネス | 東洋経済オンライン",
+    "japanese_title": "南海電鉄の新観光列車「GRAN天空」が高野山のオーバーツーリズム緩和と鉄道分社化後の収益強化を同時に狙う戦略的一手",
+    "url": "https://toyokeizai.net/articles/-/944610?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 南海電鉄が大阪・難波と高野山を結ぶ新たな観光列車「GRAN天空」の運行を開始し、インバウンド需要の取り込みと沿線観光の活性化を図っている。",
+      "2. 高野山では世界遺産への訪問客集中によるオーバーツーリズムが深刻化しており、新列車による観光客の分散・誘導効果が期待されている。",
+      "3. 南海電鉄は2025年4月に鉄道部門を「NANKAI」として分社化しており、新観光列車は独立した新会社の収益源確立という経営的使命も担っている。"
+    ],
+    "points": [
+      "・鉄道分社化（NANKAI）後の初の大型観光戦略として、新会社の事業モデルの方向性を示す試金石となる点",
+      "・高野山のオーバーツーリズム緩和という社会課題解決と商業的利益を両立させる「パブリック・プライベート連携」的アプローチ",
+      "・プレミアム列車による客単価向上戦略が、人口減少による乗客数減少を補う地方鉄道の生存戦略として機能するかどうか"
+    ],
+    "prediction": "高野山へのインバウンド需要は引き続き高水準で推移すると予測され、「GRAN天空」の需要は当面堅調に維持される可能性が高い。鉄道分社化した「NANKAI」が観光列車事業で成果を上げれば、他の地方鉄道・私鉄各社にも同様のプレミアム観光列車戦略の導入を促す波及効果が生まれるだろう。一方、オーバーツーリズム対策としての実効性については、受け入れ側の高野山の受容キャパシティ拡充や観光マネジメント施策との連携が不可欠であり、行政・寺院側との協働が今後の課題となる。",
+    "ai_interpretation": "このニュースの本質は、日本の地方鉄道が抱える「利用者減少による収益低下」と「特定観光地への集中によるオーバーツーリズム」という二つの構造的課題を、一つの観光列車で同時に解決しようとする戦略的イノベーションにある。単なる観光列車の新設ではなく、鉄道分社化という経営改革のタイミングと重ねることで、「移動手段の提供者」から「観光体験のプロデューサー」へと事業定義を転換しようとする意志が読み取れる。日本経済全体への示唆としては、インフラ企業が社会課題解決を収益モデルに組み込む「ソーシャルビジネス型経営」が、人口減少社会における持続可能な事業モデルとして今後さらに重要性を増すことを示す好例といえる。",
+    "collected_at": "2026-05-18T05:08:41.500487+09:00",
+    "market_impact": "南海電鉄グループの観光・輸送収益の向上が見込まれ、沿線の宿泊・飲食・土産業など関連産業への経済波及効果も期待できる。インバウンド需要が堅調に推移する中、プレミアム観光列車という付加価値戦略は鉄道各社にとって収益改善モデルとして注目される。為替への直接的影響は限定的だが、訪日外国人消費の地方分散という観点では観光関連銘柄全体にポジティブな材料となりうる。"
+  },
+  {
+    "title": "成果乏しい首脳会談を経て米中関係は新たな｢長期的対立｣の時代へ､ただし中国にとっては明らかに利点があった | 政治・経済・投資 | 東洋経済オンライン",
+    "japanese_title": "米中首脳会談「成果なし」の深層――長期的対立時代に突入、中国が密かに得た戦略的優位とは",
+    "url": "https://toyokeizai.net/articles/-/944856?utm_source=rss&utm_medium=http&utm_campaign=link_back",
+    "source": "東洋経済オンライン",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. トランプ・習近平首脳会談は目に見える成果を欠いたものの、激しい貿易戦争を経て米中関係は「管理された長期対立」という新たなフェーズへ移行した。",
+      "2. 表面上は失敗に見えた会談が、中国側にとっては競争のルール設定と戦略的安定の確保という観点で実質的な利点をもたらした。",
+      "3. 両国は全面衝突を避けながらも構造的な覇権争いを継続するという、長期的なパワーゲームの構図が鮮明になりつつある。"
+    ],
+    "points": [
+      "・「成果なし」という結果が中国にとって戦略的に有利に働いた背景と理由",
+      "・米国が対中強硬姿勢を維持しながらも全面衝突を回避しようとする二重構造の外交戦略",
+      "・貿易戦争から「長期的対立」へのフレーム転換が、日本を含む第三国に与える地政学的影響"
+    ],
+    "prediction": "米中両国は経済的相互依存を部分的に維持しながらも、先端技術・安全保障分野での切り離し（デカップリング）を加速させる「選択的分離」戦略を深化させるとみられる。中国は多国間外交や新興国との連携強化によって米国主導の包囲網に対抗する動きを強め、国際経済秩序の多極化がさらに進む可能性がある。日本や欧州諸国は米中いずれかへの明確な傾斜を迫られる場面が増え、経済・外交政策の選択肢が一段と狭まるリスクがある。",
+    "ai_interpretation": "このニュースの本質は、米中関係が「対話と緊張の繰り返し」という従来パターンを超え、構造的・恒常的な大国間競争として制度化されつつある点にある。中国が「成果なき会談」から利点を引き出せたという事実は、短期的な合意よりも長期的な戦略的ポジショニングを重視する北京の外交的成熟を示している。日本経済にとっては、米中どちらとも緊密な経済関係を持つがゆえに、デカップリングの加速が輸出・投資・技術協力の各分野でトレードオフを生む構造的課題として浮上しており、政府・企業双方に対して戦略的な「リスク分散と価値観外交の両立」が急務となっている。",
+    "collected_at": "2026-05-18T05:09:06.629896+09:00",
+    "market_impact": "米中対立の長期化・構造化が確認されたことで、サプライチェーンの再編圧力が一層強まり、製造業関連株や半導体・電子部品セクターへの影響が継続する可能性が高い。為替市場では不確実性が残存し、円やアジア通貨のボラティリティ上昇が懸念される。国内産業においては、中国依存度の高い企業が引き続き調達・販売戦略の見直しを迫られる局面が続くとみられる。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-05-18",
+  "currentCategory": "japan_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-05-18.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-05-17",
+    "href": "2026-05-17.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
