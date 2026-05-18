@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "CDC says American tests positive for Ebola in Africa, risk in the U.S. remains low",
+    "japanese_title": "CDCがアフリカでのアメリカ人エボラ陽性を発表、米国内のリスクは依然低水準",
+    "url": "https://www.cnbc.com/2026/05/18/ebola-outbreak-american-tests-positive-in-congo.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米疾病予防管理センター（CDC）がアフリカでアメリカ人のエボラウイルス陽性反応を確認したと発表した。",
+      "2. 現時点で米国内においてエボラ感染が確認された事例はなく、アメリカ国民および渡航者全体のリスクは低いとされている。",
+      "3. CDCは状況を注視しつつも、国内への感染拡大に対する警戒レベルは高くないとの見解を示している。"
+    ],
+    "points": [
+      "・ 感染者がアフリカ滞在中のアメリカ人であり、渡航リスク管理の重要性が再認識される",
+      "・ CDCが「米国内リスクは低い」と明言しており、過度なパニックを抑制するメッセージ戦略が重視されている",
+      "・ 2014年のエボラ流行時のような世界的パンデミック不安の再現につながるかが市場の焦点となる"
+    ],
+    "prediction": "アフリカ現地での感染拡大状況が今後の最重要注視点となり、WHO・CDCの発表頻度が増えた場合には市場のセンチメント悪化につながるリスクがある。国際的な渡航制限や入国規制が議論される段階になれば、グローバルサプライチェーンや観光業に一定の打撃を与える可能性も排除できない。ただし現状では封じ込めの初期段階にあると見られ、2014〜2016年規模の経済的混乱に発展する可能性は低い。",
+    "ai_interpretation": "このニュースの本質は「感染症リスクの情報管理と市場心理のコントロール」にある。CDCが迅速に「リスクは低い」と発信した背景には、2014年エボラ禍での過剰反応による経済的損失の教訓が活きていると考えられる。グローバル経済においては、感染症そのものの拡大よりも「情報の不透明さ」と「パニック的行動」が経済ダメージを増幅させる傾向があり、今回の透明性ある迅速な情報公開は、健全な市場維持のための重要な経済的行動でもあると言える。",
+    "collected_at": "2026-05-19T05:31:35.537565+09:00",
+    "market_impact": "感染症関連ニュースは短期的に航空・観光・旅行関連株への売り圧力となる可能性があるが、今回はリスクが低いとの当局見解があるため市場への影響は限定的とみられる。一方、医薬品・バイオテクノロジーセクター（エボラワクチン・治療薬メーカー）には注目が集まり、株価上昇の思惑が生じる可能性がある。為替市場への直接的な影響は現時点では軽微と判断されるが、感染拡大の兆候が出た場合はリスクオフの円高・ドル安圧力が強まる可能性もある。"
+  },
+  {
+    "title": "Lululemon takes battle with Chip Wilson public, calls founder 'misguided' and 'outdated'",
+    "japanese_title": "ルルレモン創業者チップ・ウィルソンの株主工作に公開反論——「時代遅れ」と批判し株主支持を訴える",
+    "url": "https://www.cnbc.com/2026/05/18/lululemon-proxy-war-with-chip-wilson-goes-public-sets-annual-meeting.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ルルレモンは創業者チップ・ウィルソンによる株主向けキャンペーンに対し、株主への公開書簡で正式に反論した。",
+      "2. 同社はウィルソン氏の主張を「誤った方向性」かつ「時代遅れ」と断じ、年次株主総会での自社支持を呼びかけた。",
+      "3. 創業者と現経営陣の間で経営方針・企業戦略をめぐる対立が表面化し、コーポレートガバナンス問題として注目を集めている。"
+    ],
+    "points": [
+      "・ 創業者 vs. 現経営陣という「お家騒動」がプロキシーファイト（委任状争奪戦）へ発展するリスク",
+      "・ ウィルソン氏が掲げる戦略的主張の具体的内容（多様性方針・海外展開・製品戦略など）",
+      "・ 機関投資家・一般株主がどちらの支持に回るかが株主総会の鍵を握る点"
+    ],
+    "prediction": "年次株主総会の結果次第で、ルルレモンの経営陣構成や中長期戦略の方向性が大きく変わる可能性があり、株価への影響も継続すると見られる。創業者が一定の株式を保有している場合、プロキシーファイトが長期化し、経営リソースの分散や企業ブランドへのダメージが懸念される。グローバルに展開するプレミアムアパレルブランドとして、ガバナンス不安は特に中国・アジア市場での拡大戦略に悪影響を与えかねない。",
+    "ai_interpretation": "このニュースの本質は、「創業者のビジョン」と「スケールした企業の組織論理」の衝突という、成長企業が普遍的に直面するガバナンスの断層を象徴している。ルルレモンがウィルソン氏を「時代遅れ」と公言したことは、DEI（多様性・公平性・包括性）やグローバル化路線を守る強い意思表示とも読め、現代の企業経営における価値観の争いでもある。グローバル経済へのより広い示唆として、カリスマ創業者依存型ブランドが機関投資家主導のガバナンスへと移行する際の摩擦は、今後も多くの消費財企業で繰り返される構造的課題といえる。",
+    "collected_at": "2026-05-19T05:31:57.020235+09:00",
+    "market_impact": "ルルレモン（LULU）株はこうした内紛報道を受け投資家心理が揺らぎやすく、短期的な株価の不安定要因となる可能性がある。アスレジャー市場全体への信頼感にも波及しうるが、競合のナイキやアンダーアーマーには相対的な恩恵が生じる可能性もある。為替への直接的な影響は限定的だが、カナダ発グローバルブランドとしての評判リスクは中長期的に注視が必要だ。"
+  },
+  {
+    "title": "Homebuilder sentiment improves on late spring surge in demand",
+    "japanese_title": "住宅建設業者の景況感が改善——晩春の需要急増が市場に追い風",
+    "url": "https://www.cnbc.com/2026/05/18/may-homebuilder-sentiment-improves.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国の住宅建設業者の景況感が改善し、買い手の市場訪問数（トラフィック）の増加が確認されている。",
+      "2. 晩春シーズンにおける潜在的な需要急増が、業界全体のセンチメントを押し上げている。",
+      "3. ただし「若干の改善」にとどまっており、市場回復が本格化しているかは引き続き慎重な判断が必要。"
+    ],
+    "points": [
+      "・「晩春の需要急増」という季節性要因が、構造的回復なのか一時的現象なのかが最大の焦点",
+      "・住宅ローン金利が依然高水準にある中での需要回復は、潜在需要の根強さを示唆",
+      "・建設業者のセンチメント改善が着工件数・許可件数の増加につながるか今後の指標が鍵"
+    ],
+    "prediction": "FRBの金融政策が住宅市場の回復ペースを大きく左右し、利下げ実施のタイミングによっては住宅需要がさらに加速する可能性がある。グローバルには、米国の住宅投資拡大が建設資材（木材・鉄鋼・銅など）の国際需要を押し上げ、資源輸出国の経済にプラスの波及効果をもたらすだろう。一方で、供給制約やインフレ再燃リスクが回復の持続性に対する懸念材料として残る。",
+    "ai_interpretation": "このニュースの本質は、高金利環境下でも米国の住宅需要が完全には冷え込んでいないという「底堅さの確認」にある。消費者が高い住宅ローン金利を受け入れ始めているとすれば、それは「金利慣れ」という新たな市場心理の転換点を示唆しており、FRBの政策効果の限界を示している可能性がある。グローバル経済への示唆としては、米国の住宅セクター回復が内需主導の経済成長を下支えし、景気後退懸念を和らげる緩衝材として機能しうる点で、世界市場のリスクセンチメント改善にも寄与すると考えられる。",
+    "collected_at": "2026-05-19T05:32:15.292701+09:00",
+    "market_impact": "米国住宅市場の改善は、建設資材・家電・家具など関連産業への波及効果をもたらし、素材株や消費財セクターに好影響を与える可能性がある。為替市場では、住宅需要の回復がFRBの利下げ期待を後退させるシナリオも想定され、ドル強含みの要因となり得る。一方、日本など輸出依存型経済にとっては円安圧力継続として注視すべき動向である。"
+  },
+  {
+    "title": "Jury dismisses all claims in Elon Musk's lawsuit against OpenAI CEO Sam Altman",
+    "japanese_title": "陪審員がイーロン・マスクのOpenAI提訴を全面棄却――サム・アルトマンの地位は揺るがず",
+    "url": "https://www.npr.org/2026/05/18/nx-s1-5822366/musk-altman-openai-jury-verdict-claims-dismissed",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. イーロン・マスクがOpenAIのCEOサム・アルトマンらに対して起こした訴訟において、陪審員はマスク側の全請求を棄却した。",
+      "2. マスクはアルトマンらが当初の非営利ミッションへの義務に違反し、不当に利益を得たと主張し、アルトマンの経営者としての地位を追い落とそうとしていた。",
+      "3. 今回の判決によりアルトマンのCEO職は法的に守られ、OpenAIの現在の経営路線の正当性が司法的に支持される形となった。"
+    ],
+    "points": [
+      "・OpenAIの「非営利から営利へ」の転換路線が法的障壁を乗り越えたことで、企業価値評価と資金調達がさらに加速する可能性がある",
+      "・マスクによる法的攻勢が失敗に終わったことで、彼のxAIやテスラAI部門との競争はビジネス・技術面に移行すると予想される",
+      "・AIガバナンスと創業者の「ミッション遵守義務」に関する法的先例として、業界全体に波及する判例的意義を持つ"
+    ],
+    "prediction": "マスクが控訴または別の法的手段を講じる可能性は残るものの、OpenAIは今回の判決を追い風に営利企業への完全移行と大規模な資金調達（IPO含む）をさらに推進するとみられる。地政学的観点では、米国のAI覇権を担う主要プレーヤーの内部紛争が一段落したことで、中国・欧州のAI勢力との競争に米国が集中できる環境が整う。AI規制議論においても、企業統治（ガバナンス）のあり方が引き続き焦点となるだろう。",
+    "ai_interpretation": "このニュースの本質は、「シリコンバレー的理想主義（非営利ミッション）vs. 商業資本主義（営利転換）」という現代テクノロジー産業の根本的矛盾が司法の場で問われた点にある。陪審がアルトマン側を支持したことは、AI企業が営利モデルへ進化することを市場・社会が実質的に容認したシグナルとも読める。グローバル経済への示唆として、AIインフラへの巨大投資競争はいよいよ加速段階に入り、その主導権争いは今後も法廷ではなく市場と技術革新の場で決着がつくことになるだろう。",
+    "collected_at": "2026-05-19T05:32:36.079193+09:00",
+    "market_impact": "OpenAIの事業継続性と経営安定性が司法によって確認されたことで、同社への投資家心理は好転し、AI関連株全般にポジティブな影響を与える可能性がある。マイクロソフトなどOpenAIと深く連携する企業の株価にも好影響が及ぶとみられる。一方、マスク率いるxAI（Grok開発元）との競争構図は続くため、AI業界全体の競争激化による不確実性は依然として残る。"
+  },
+  {
+    "title": "NPR trims jobs in newsroom overhaul as it confronts era without public funding",
+    "japanese_title": "NPR、公的資金なき時代に備えてニュースルームを大規模再編―記者へのバイアウト提示と人員削減の危機",
+    "url": "https://www.npr.org/2026/05/18/nx-s1-5821622/npr-buyouts-layoffs-reorganization",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国公共ラジオ局NPRは、ニュースルームの大規模改革の一環としてジャーナリストへの早期退職優遇制度（バイアウト）を提示し、応募者が不足した場合はレイオフ（強制解雇）も辞さない姿勢を示した。",
+      "2. 公的資金への依存が困難になりつつある時代に対応するため、組織の財務構造と運営体制の抜本的な見直しを迫られている。",
+      "3. 一方で合計1億1,300万ドルに上る2件の寄付を受けたが、その資金は主にジャーナリズム部門ではなく技術インフラの整備に充てられる予定である。"
+    ],
+    "points": [
+      "・ 公的資金（連邦政府補助金）の削減・廃止を前提とした経営戦略への転換が鮮明になっている",
+      "・ 1億1,300万ドルの寄付がジャーナリズムではなくテック基盤に優先配分されており、NPRの将来像がデジタル・テクノロジー主導型へシフトしていることを示唆している",
+      "・ バイアウト未達成時のレイオフ示唆は、公共メディアにおける雇用の不安定化という新たな局面を象徴している"
+    ],
+    "prediction": "トランプ政権下での公共放送予算削減の動きが継続すれば、NPRのような公共メディア機関は民間資金・寄付・デジタル収益化に活路を求める構造転換が世界的に加速するだろう。この流れは米国内にとどまらず、BBCやNHKなど各国の公共メディアの財政モデルに対する政治的・社会的議論を再燃させる可能性がある。また、ジャーナリスト人材の流出はフリーランス市場やデジタルメディア新興企業への供給増につながり、独立系メディアエコシステムの再編を促すことも予想される。",
+    "ai_interpretation": "このニュースの本質は、「公共の知る権利を支えるインフラ」の財政的持続可能性が根底から問い直されているという点にある。技術インフラへの優先投資は、報道機能よりもプラットフォーム化・デジタル化を生き残り戦略の核心に置くという経営判断を映しており、ジャーナリズムの公共性と経済合理性の間の深刻なジレンマを象徴している。グローバル経済的には、情報の信頼性・多様性を担保してきた公共メディアの弱体化は、情報格差や偽情報リスクの拡大を通じて、長期的な民主主義の安定性や市場の透明性にも影響を及ぼし得る重大な構造変化と解釈すべきである。",
+    "collected_at": "2026-05-19T05:32:58.832268+09:00",
+    "market_impact": "公共メディアへの政府補助金削減という潮流は、メディア・広告業界全体における収益モデルの転換を加速させる可能性があり、民間メディアや広告テクノロジー企業にとっては市場シェア拡大の機会となり得る。デジタルメディアやポッドキャスト、ストリーミング分野への投資が一層促進されるとみられ、関連テック企業の株価にポジティブな影響を与える可能性がある。為替や直接的なグローバル市場への即時影響は限定的だが、米国のメディア産業再編の先行指標として注視すべきである。"
+  },
+  {
+    "title": "Musk loses OpenAI court battle after jury finds he waited too long to sue",
+    "japanese_title": "マスク氏がOpenAI訴訟で敗訴——陪審員「提訴が遅すぎた」と判断、AI覇権争いに新局面",
+    "url": "https://www.bbc.com/news/articles/cewpyv79pw1o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. イーロン・マスク氏がOpenAIおよびサム・アルトマンCEOを相手取った訴訟で、陪審員は「提訴までに時間がかかりすぎた」として訴えを退けた。",
+      "2. マスク氏はアルトマン氏がOpenAIという「慈善団体を私物化・横領した」と主張し、数週間にわたる審理が行われた。",
+      "3. この敗訴により、マスク氏によるOpenAIへの法的牽制という戦略は大きな打撃を受けた形となった。"
+    ],
+    "points": [
+      "・「慈善団体から営利企業への転換」というOpenAIのガバナンス問題が改めて社会的注目を集めた点",
+      "・陪審員が実体的な主張ではなく「提訴の遅延（出訴期限）」を理由に棄却したという手続き的判断の特殊性",
+      "・マスク氏が今後、同様の主張を別の法的手段や規制当局への働きかけで継続する可能性"
+    ],
+    "prediction": "マスク氏は別途の訴訟や規制ロビー活動を通じてOpenAIへの圧力を継続するとみられ、AI業界における法的・政治的競争はむしろ激化する可能性が高い。OpenAIは訴訟リスクの低下を追い風に、IPO準備や大型資金調達をさらに加速させる戦略的余裕を得た。米国AI覇権をめぐる企業間の主導権争いは、今後は法廷外での技術開発・資本獲得競争へと主軸が移行するだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる個人間の法廷闘争を超え、「AI技術の公共財的管理vs.営利的活用」という根本的な価値観の対立が司法の場で問われた点にある。陪審員が内容の是非ではなく手続き論で判断したことは、問題の本質的解決を先送りしたに過ぎず、AIガバナンスをめぐる社会的議論はむしろ深まるだろう。グローバル経済的には、OpenAIの「非営利から営利へ」というモデルチェンジが法的に黙認された形となり、他のAI企業にとっても類似の組織変革を正当化する先例となりうる点が最も重要な示唆である。",
+    "collected_at": "2026-05-19T05:33:19.283648+09:00",
+    "market_impact": "OpenAIへの法的リスクが一定程度払拭されたことで、同社への投資家心理は好転し、関連するAIスタートアップやベンチャー投資市場にも追い風となる可能性がある。一方、マスク氏が率いるxAI（グロック開発元）はOpenAIとの競争において法廷という別戦線を失い、純粋な技術・市場競争に集中せざるを得なくなる。テスラやXの株価への直接的な影響は限定的とみられるが、マスク氏のブランドイメージへの影響は軽視できない。"
+  },
+  {
+    "title": "Elon Musk just lost another lawsuit. Will he keep fighting?",
+    "japanese_title": "イーロン・マスク、OpenAI訴訟でまた敗訴――法廷闘争は続くのか？",
+    "url": "https://www.bbc.com/news/articles/cqlpz4w6v13o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. イーロン・マスクがOpenAIに対して起こした訴訟で敗訴し、一連の法廷での敗北がさらに積み重なった。",
+      "2. マスクはOpenAIの創設に関わった人物であり、同社の方向性や契約上の問題をめぐって法的争いを続けてきた。",
+      "3. 今後もマスクが訴訟を継続するかどうかが注目されており、AI業界全体の法的・倫理的枠組みにも影響を与えうる。"
+    ],
+    "points": [
+      "・マスクがOpenAIに対して抱く「非営利の理念からの逸脱」という主張の法的有効性が問われた",
+      "・マスクの連敗が、彼自身の法的戦略や今後の訴訟継続意欲にどう影響するかが焦点",
+      "・OpenAIのMicrosoft・大手投資家との関係強化が、法廷外での交渉力を高めている可能性"
+    ],
+    "prediction": "マスクがxAIをさらに強化し、法廷外での競争（製品・人材・資金調達）に戦略をシフトする可能性が高まっている。AI覇権をめぐる米国内の企業間競争は激化しており、規制当局や議会による介入の議論が加速する可能性もある。長期的には、AI企業の企業統治（ガバナンス）や非営利・営利の境界線に関する法的整備が世界的に求められるようになるだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる個人間の法的争いではなく、**AI産業の支配権・倫理的方向性をめぐる権力闘争**である。OpenAIが商業化・巨大化する中で、その創設理念と現実のビジネスモデルの乖離が問われており、これはシリコンバレー全体のスタートアップ文化と資本主義的拡大の矛盾を象徴している。グローバル経済においては、AI企業のガバナンス不在が将来的なシステミックリスクとなりうることを、この訴訟は改めて示唆している。",
+    "collected_at": "2026-05-19T05:33:37.838170+09:00",
+    "market_impact": "OpenAIへの信頼性・安定性が法的リスクの後退によって高まり、同社の企業価値や投資家心理にプラスの影響を与える可能性がある。一方、マスク傘下のxAI（Grok開発元）との競争構図が続くことで、AI関連株全体のボラティリティが高まる懸念もある。為替や広範なマクロ市場への直接的な影響は限定的だが、テック株・AI関連セクターへの投資家の注目度は引き続き高い。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-05-19",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-05-19.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-05-19.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-05-18",
+    "href": "2026-05-18.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
