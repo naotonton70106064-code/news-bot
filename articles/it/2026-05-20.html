@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Elon Musk said Sam Altman “stole” a non-profit — but the trial showed he had similar aims",
+    "japanese_title": "イーロン・マスクが「非営利団体を盗んだ」とサム・アルトマンを告発——しかし裁判で両者の類似した意図が明らかに",
+    "url": "https://techcrunch.com/2026/05/19/elon-musk-said-sam-altman-stole-a-non-profit-but-the-trial-showed-he-had-similar-aims/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. イーロン・マスクはOpenAIのサム・アルトマンCEOが非営利団体を「盗んだ」と主張し、法的争いを繰り広げた。",
+      "2. しかし裁判の過程で、マスク自身も当初からOpenAIに対して類似した商業的・支配的な意図を持っていたことが示された。",
+      "3. 「今週末までにあなたとサムはアメリカで最も嫌われた男になる」という発言が象徴するように、両者の確執は個人的かつ深刻なレベルに達している。"
+    ],
+    "points": [
+      "・ 裁判の証拠提出により、マスク自身もOpenAIの方向性や支配権について商業的な野心を持っていたことが浮き彫りになった",
+      "・ 「非営利団体を守る」というマスクの主張の道徳的正当性が大きく揺らいだ",
+      "・ AI業界のトップ同士の法廷闘争が、業界全体のガバナンスや倫理規範に関する議論を呼び起こしている"
+    ],
+    "prediction": "この裁判はOpenAIの非営利から営利への転換プロセスに直接影響を与える可能性があり、法的決着まで長期化することが予想される。マスクのxAIとOpenAIの競争はビジネス・法廷・世論の三つの戦線で続き、AI規制論議とも絡み合っていくだろう。最終的にはAI企業のガバナンス構造に関する業界標準や規制整備を促すきっかけになる可能性がある。",
+    "ai_interpretation": "このニュースの本質は、「AI開発における使命（人類の利益）」と「商業的利益・支配欲」の矛盾を、創業者たち自身が体現しているという皮肉にある。マスクの告発は相手への批判であると同時に、自分自身の鏡でもあり、AI業界全体が抱える「崇高な理念と現実のビジネス」の乖離を象徴している。この対立は個人の確執を超え、AGI時代における企業倫理と権力集中のあり方を問う重要な問題提起となっている。",
+    "collected_at": "2026-05-20T05:46:45.855818+09:00",
+    "background": "OpenAIはもともとマスクとアルトマンらが共同設立した非営利のAI研究機関だったが、後にマスクは取締役を離脱した。その後OpenAIが営利部門を拡大・強化する方針を打ち出したことで、マスクは「非営利の使命を裏切った」として法的手段に訴えた。両者のAI覇権をめぐる競争（マスクはxAIを設立）も、この対立の激化に拍車をかけている。"
+  },
+  {
+    "title": "Google takes a page out of Meta’s book, announces new audio-powered smart glasses",
+    "japanese_title": "Googleがメタに対抗——音声AI搭載スマートグラス「オーディオグラス」を発表",
+    "url": "https://techcrunch.com/2026/05/19/google-takes-a-page-out-of-metas-book-announces-new-audio-powered-smart-glasses/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Googleは音声操作に特化した新型スマートグラス「オーディオグラス」を発表した。",
+      "2. ユーザーは音声コマンドでGoogleのアプリやサービスを操作できる。",
+      "3. AI「Gemini」との連携により、高度な音声アシスタント機能を実現する。"
+    ],
+    "points": [
+      "・MetaのスマートグラスをベンチマークとしたGoogleの明確な対抗姿勢",
+      "・GeminiというGoogleの最先端AIをウェアラブルに組み込む点",
+      "・「音声」に特化したシンプルなコンセプトで普及のハードルを下げている点"
+    ],
+    "prediction": "GoogleとMetaの競争激化により、スマートグラス市場全体が急速に拡大する可能性が高い。各社がAIアシスタントをウェアラブルに統合する動きが加速し、AppleやSamsungなど他の大手テック企業の参入も促されるだろう。一方で、プライバシーや常時音声監視への懸念が社会的議論を呼ぶことも予想される。",
+    "ai_interpretation": "このニュースの本質は、「スマートフォンの次のプラットフォーム争い」がついにウェアラブルへと本格的にシフトしてきたことを示している。音声＋AIという組み合わせは、画面を持たないデバイスでも豊かな体験を提供できることを証明しようとするものであり、UIパラダイムそのものの転換点を意味する。Googleにとっては過去のGoogle Glassの失敗を乗り越え、AI時代における新たなエコシステムの入口を確保するための戦略的な一手といえる。",
+    "collected_at": "2026-05-20T05:47:00.620250+09:00",
+    "background": "MetaがRay-Banとのコラボによるスマートグラスで市場での存在感を高める中、Googleも同分野への本格参入を決断した。音声AIの急速な進化により、ウェアラブルデバイスとの組み合わせが現実的かつ実用的になってきた。かつてGoogle Glassで先行しながらも普及に失敗したGoogleが、AIの力を背景に再挑戦する形となる。"
+  },
+  {
+    "title": "Google’s Genie world model can now simulate real streets with Street View",
+    "japanese_title": "GoogleのGenieワールドモデルがストリートビューと統合——リアルな街並みをインタラクティブにシミュレート",
+    "url": "https://techcrunch.com/2026/05/19/googles-genie-world-model-can-now-simulate-real-streets-with-street-view/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Google DeepMindがストリートビューとProject Genieを統合し、現実の街並みをインタラクティブにシミュレートできる世界モデルを開発した。",
+      "2. ロボット工学・ゲーム・旅行など多様な分野への応用を想定しており、天候変化や稀なシナリオの再現も可能。",
+      "3. ユーザーが仮想環境を自由に探索できる没入型の体験を提供することを目指している。"
+    ],
+    "points": [
+      "・ 現実のストリートビューデータを活用することで、完全な仮想空間ではなく「現実に根ざしたシミュレーション」が可能になる点",
+      "・ ロボット訓練用の環境生成や、ゲームの世界構築への応用など、産業横断的な活用可能性の広さ",
+      "・ 天候・時間帯・稀なシナリオ（事故や災害など）の再現により、AIや自動運転の訓練データ不足を補える点"
+    ],
+    "prediction": "ロボティクス分野では、実環境を模したシミュレーションによってAIエージェントの訓練コストが大幅に削減される可能性がある。ゲームや観光・不動産業界においても、よりリアルな没入体験を提供するサービスへの応用が急速に進むと考えられる。また、競合他社（MetaやMicrosoftなど）も同様のリアルワールドシミュレーション技術の開発を加速させ、業界全体の競争が激化するだろう。",
+    "ai_interpretation": "このニュースの本質は、「現実世界のデータ」と「生成AIの世界モデル」を融合させることで、デジタルと物理の境界を溶かす新たなインフラが誕生しつつあるという点にある。単なるゲームや観光体験にとどまらず、AIが現実世界を理解・予測・操作するための基盤技術として極めて重要な意味を持つ。Googleが膨大なストリートビュー資産をAI時代の競争優位に転換しようとしている戦略的意図も、このプロジェクトの背後に透けて見える。",
+    "collected_at": "2026-05-20T05:47:17.429574+09:00",
+    "background": "GoogleはDeepMindを通じてAIによる世界モデル（World Model）の研究を加速させており、Project Genieはその中核プロジェクトとして位置づけられている。一方、Googleのストリートビューは10年以上にわたって世界中の実際の街並みデータを蓄積してきた膨大なリソースである。これらを組み合わせることで、現実世界に基づいたリアルなインタラクティブシミュレーションを実現しようとする動きが本格化した。"
+  },
+  {
+    "title": "現実世界を基に\"動き回れる\"仮想空間を生成　Googleの世界生成AI「Project Genie」にストリートビュー連携機能",
+    "japanese_title": "GoogleのAI「Project Genie」がストリートビューと連携——現実の街並みをもとに歩き回れる仮想空間を自動生成",
+    "url": "https://www.itmedia.co.jp/news/articles/2605/20/news065.html",
+    "source": "ITmedia NEWS 最新記事一覧",
+    "category": "it",
+    "summary_lines": [
+      "1. GoogleがワールドモデルAI「Project Genie」にGoogleストリートビューの位置情報を組み合わせた新機能を2025年5月19日に発表した。",
+      "2. 実在する場所の画像をベースにAIがインタラクティブな仮想世界を生成し、ユーザーがその空間内を自由に動き回ることができる。",
+      "3. 本機能はGoogle AI Ultraプラン（月額200ドル）の加入者を対象にグローバル展開が開始された。"
+    ],
+    "points": [
+      "・ **現実データとAI生成の融合**：実在する場所の画像を入力とすることで、完全な\"架空\"ではなくリアリティのある仮想空間が生成される点が従来の生成AIと一線を画す",
+      "・ **インタラクティブ性**：静止画や動画の生成にとどまらず、ユーザーが空間内を能動的に「動き回れる」体験型コンテンツである点が技術的なブレークスルーを示す",
+      "・ **高額プランへの組み込み**：月額200ドルのUlterプラン限定という価格設定により、ビジネス・クリエイター向けの差別化機能として戦略的に位置づけられている"
+    ],
+    "prediction": "技術の成熟とコスト低下に伴い、より安価なプランへの展開や一般公開が段階的に進む可能性が高い。不動産内覧・観光・教育・ゲーム開発など多様な産業への応用が期待され、Googleのエコシステム内でのキラーコンテンツになり得る。一方、MetaやApple（Vision Pro）、Nianticなどリアルワールドとバーチャルを融合する競合他社との競争がさらに激化することが予想される。",
+    "ai_interpretation": "このニュースの本質は、「AIが現実世界を理解し、再構築できる段階に入った」というパラダイムシフトの宣言にある。ストリートビューという膨大な現実データ資産をAI生成エンジンと掛け合わせることで、GoogleはARやメタバースの文脈を超えた「現実延長型の仮想空間」という新カテゴリを定義しようとしている。これは単なる機能追加ではなく、デジタルツイン・空間コンピューティング時代における覇権争いへの本格参戦を意味すると言えるだろう。",
+    "collected_at": "2026-05-20T05:47:36.309582+09:00",
+    "background": "Googleは大規模言語モデルに留まらず、物理世界を理解・再現する「ワールドモデル」の研究開発を加速させており、Project Genieはその中核プロジェクトとして位置づけられている。一方、ストリートビューは20年近く世界中の街並みデータを蓄積してきており、このビッグデータをAI生成の基盤として活用する動きが進んでいた。生成AIブームを背景に、テキストや画像生成に次ぐ「空間・世界生成」という新たな競争領域が本格化したことが今回の機能追加の直接的な契機となっている。"
+  },
+  {
+    "title": "Google、AIグラス発売へ　オーディオグラスは26年秋、ディスプレイ内蔵タイプも投入予定",
+    "japanese_title": "Google、AIスマートグラス「Intelligent eyeware」を発表――オーディオ型は2026年秋発売、ディスプレイ内蔵型も順次展開へ",
+    "url": "https://www.itmedia.co.jp/news/articles/2605/20/news064.html",
+    "source": "ITmedia NEWS 最新記事一覧",
+    "category": "it",
+    "summary_lines": [
+      "1. GoogleがAndroid XR対応のAIスマートグラスを2種類発表し、まずオーディオグラスを2026年秋に発売する。",
+      "2. AIアシスタント「Gemini」と連携し、音声を中心とした情報提供とハンズフリー体験を実現する。",
+      "3. 視界に直接情報を表示するディスプレイ内蔵タイプも別途投入予定で、段階的な市場展開を図る。"
+    ],
+    "points": [
+      "・ 段階的な製品投入戦略：技術的難易度が低いオーディオ型を先行させ、市場の反応を見ながらディスプレイ型へ展開するリスクヘッジ型アプローチを採用している点",
+      "・ Geminiとの深い統合：単なるウェアラブルデバイスではなく、AIエージェント機能を日常的なアイウェアに組み込む点が差別化要素となる",
+      "・ Android XRという共通基盤：スマートフォン・タブレットと同様のエコシステムをXRデバイスに展開し、開発者を巻き込む戦略が鍵を握る"
+    ],
+    "prediction": "2026年秋のオーディオグラス発売後、ユーザーの使用データやフィードバックをもとにGeminiの精度向上が図られ、ディスプレイ内蔵タイプの完成度に反映されると考えられる。MetaやApple、さらにはSamsungなど競合他社との競争が激化し、価格・デザイン・AI性能が差別化の主戦場となるだろう。スマートグラスが「第二のスマートフォン」として普及するかどうかの試金石となる重要な製品サイクルになる可能性が高い。",
+    "ai_interpretation": "このニュースの本質は、GoogleがAIを「画面の中」から「現実世界のレイヤー」へと解放しようとする戦略的転換を意味している。Geminiをクラウドサービスやスマートフォンに留めず、人間の視界・聴覚に直接介入するデバイスに統合することで、AIの「環境化（アンビエント化）」を目指していると解釈できる。つまり、スマートグラスはデバイス単体の話ではなく、AIが人間の知覚に常時接続される新たな時代への入口であり、プライバシーや情報格差など社会的議論も同時に呼び起こす象徴的な製品となるだろう。",
+    "collected_at": "2026-05-20T05:47:56.747628+09:00",
+    "background": "MetaのRay-Ban Smartグラスが市場で一定の成功を収めたことで、スマートグラス市場への注目が再び高まっている。GoogleはかつてGoogle Glassで先駆けたものの商業的に失敗した経緯があり、今回はAIの進化とAndroid XRプラットフォームを武器に再参入を図る形となった。また、Apple Vision Proの登場によってXRデバイス全体への関心が高まっていることも、各社の開発競争を加速させている。"
+  },
+  {
+    "title": "独シェフラー、人型ロボットにシフト　部品供給と工場導入の好循環で覇権へ",
+    "japanese_title": "独シェフラーが人型ロボット市場で覇権狙い――部品供給×工場導入の「二刀流戦略」で競合を圧倒",
+    "url": "https://xtech.nikkei.com/atcl/nxt/column/18/03584/050800008/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. ドイツの精密部品メーカー・シェフラーが、人型ロボットの基幹部品製造にとどまらず、自社工場への実機導入まで踏み込んだ垂直統合戦略を展開している。",
+      "2. フィジカルAIの進化を追い風に、実際の製造現場で得たデータや知見を部品設計にフィードバックする「学習ループ」を構築している。",
+      "3. 部品サプライヤーとエンドユーザーの両側面を持つことで、競合他社にはない独自の競争優位性を確立しようとしている。"
+    ],
+    "points": [
+      "・ **「作る×使う」の好循環モデル**：自社工場での導入実績が部品改良に直結する垂直統合型エコシステムは、純粋な部品メーカーや純粋なロボットメーカーにはない強みとなる。",
+      "・ **フィジカルAIとの親和性**：ロボット制御の高度化を担うフィジカルAI（現実空間での物理的なAI制御）の進展が、高精度部品へのニーズをさらに押し上げる構造的追い風になっている。",
+      "・ **データ資産の蓄積**：実運用環境から得られる動作データや故障データは、部品設計の最適化において他社が模倣困難な参入障壁となりうる。"
+    ],
+    "prediction": "シェフラーは自社工場での導入規模を段階的に拡大しながら、設計改良サイクルを加速させ、人型ロボット向け基幹部品市場でのデファクトスタンダード獲得を目指すとみられる。また、蓄積した知見をもとにロボットメーカーへのOEM供給やライセンス展開を強化し、部品サプライヤーとしての収益基盤を厚くする動きも予想される。一方で、中国メーカーなどによる低コスト競合の台頭や、ロボットメーカー自身による内製化の動きが、シェフラーの戦略に対するリスク要因となる可能性がある。",
+    "ai_interpretation": "このニュースの本質は、「製造業の老舗が自らを実証フィールドにすることで、単なる部品サプライヤーからロボット産業のインフラプレイヤーへと脱皮しようとしている」点にある。部品を売るだけでなく使うことで得られるリアルワールドデータは、AI時代において最も価値ある資産のひとつであり、シェフラーはその構造的優位を意図的に設計している。これは自動車産業がEVシフトで迎えた「既存プレイヤーの危機」を、逆にロボット時代の「先行者利益」へと転換しようとする、非常に示唆に富んだ産業構造転換の事例といえる。",
+    "collected_at": "2026-05-20T05:48:18.986767+09:00",
+    "background": "近年、Tesla「Optimus」やFigure AIなど人型ロボット（ヒューマノイド）開発競争が世界的に激化しており、アクチュエーターや精密減速機などの基幹部品の重要性が急速に高まっている。シェフラーはもともと自動車向け精密軸受・駆動部品で世界トップクラスの実績を持ち、その技術基盤をロボット分野に転用できる立場にある。自動車産業のEVシフトによる既存事業の縮小懸念を背景に、人型ロボット市場を次の成長柱として位置づけた戦略転換が加速している。"
+  },
+  {
+    "title": "5つの吐水モードを備えたシャワーヘッド",
+    "japanese_title": "LIXIL、全5モードでウルトラファインバブル対応の高機能シャワーヘッド「SPA U」を2026年4月に発売",
+    "url": "https://xtech.nikkei.com/atcl/nxt/column/18/00120/01022/",
+    "source": "全記事新着 - 日経クロステック",
+    "category": "it",
+    "summary_lines": [
+      "1. LIXILが5つの吐水モードを搭載したシャワーヘッド「SPA U」を2026年4月に発売した。",
+      "2. 全ての吐水モードでウルトラファインバブル（UFB）を生成できる点が最大の特徴である。",
+      "3. 入浴体験の質向上と美容・健康意識の高まりに応える製品として注目される。"
+    ],
+    "points": [
+      "・ 5つの吐水モード全てでウルトラファインバブルを生成できるという業界でも希少な仕様",
+      "・ 大手住宅設備メーカーLIXILが手がけることで、品質・信頼性・普及力への期待が高い",
+      "・ 美容・健康・節水などの複合的な価値を一台で提供する「多機能化」の潮流を体現している"
+    ],
+    "prediction": "「SPA U」の発売を機に、他の住宅設備メーカーや家電メーカーもウルトラファインバブル搭載製品の開発・強化に乗り出す可能性が高い。また、新築住宅やリフォーム市場における標準仕様としての採用が進むことで、UFBシャワーヘッドの一般普及が加速することが予想される。価格帯や施工のしやすさ次第では、マンションや賃貸市場への浸透も期待される。",
+    "ai_interpretation": "このニュースの本質は、「シャワー」という日常行為が単なる「洗浄」から「美容・健康ケア」へとアップグレードされるパラダイムシフトを象徴している点にある。LIXILがウルトラファインバブルを全モードに搭載したことは、高機能をオプションではなくスタンダードとして提供するという製品哲学の転換を示している。住宅設備が「生活インフラ」から「ウェルネスインフラ」へと進化しつつある大きな流れの一端を、この製品は体現していると言えるだろう。",
+    "collected_at": "2026-05-20T05:48:35.278304+09:00",
+    "background": "近年、消費者の健康・美容意識の高まりとともに、シャワータイムの「質」を重視するトレンドが拡大している。ウルトラファインバブルは毛穴の汚れを落とす効果や肌への浸透性が注目されており、バスルーム製品への搭載ニーズが高まっていた。LIXILはこうした市場ニーズを捉え、機能性と使い心地を両立した製品開発を進めてきた。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-05-20",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-05-19",
+    "href": "2026-05-19.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
