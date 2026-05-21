@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Spotify and Universal Music strike deal allowing fan-made AI covers and remixes",
+    "japanese_title": "SpotifyとUniversal Music Groupが提携——プレミアム会員がAIカバー・リミックスを作成可能に、アーティストにも収益還元",
+    "url": "https://techcrunch.com/2026/05/21/spotify-and-universal-music-strike-deal-allowing-fan-made-ai-covers-and-remixes/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. SpotifyはUniversal Music Group（UMG）と提携し、プレミアム会員がAIを使って楽曲のカバーやリミックスを作成できる新機能を導入する。",
+      "2. 生成されたコンテンツから得られる収益は、参加アーティストにも分配される仕組みが設けられる。",
+      "3. 音楽業界とAI技術の共存に向けた、初の大規模な商業モデルの一つとして注目される。"
+    ],
+    "points": [
+      "・ファンによるAI創作活動を「公認」することで、これまでグレーゾーンだったカバー・リミックス文化が正式に制度化される",
+      "・アーティストへの収益還元モデルを設けることで、クリエイターの権利保護と技術活用を両立しようとしている点",
+      "・参加は「participating artists（参加アーティスト）」に限定されており、全アーティストが対象ではなくオプトイン方式である可能性が高い点"
+    ],
+    "prediction": "この提携モデルが成功すれば、Sony MusicやWarner Musicなど他のメジャーレーベルも同様の枠組みに参加する動きが加速するとみられる。また、AI生成コンテンツの収益分配モデルが業界標準となり、著作権法の整備や国際的なガイドラインの策定にも影響を与える可能性がある。一方で、収益配分の透明性や参加条件を巡るアーティストとレーベルの間の摩擦も今後浮上してくるだろう。",
+    "ai_interpretation": "このニュースの本質は、「AIと音楽業界の対立」から「AIを活用した新たな収益エコシステムの構築」へのパラダイムシフトを象徴している点にある。技術の普及を止めることが困難と判断した業界が、規制よりも「取り込みと収益化」という戦略を選択したとも読み取れる。ファンのクリエイティビティを収益源として組み込むこのモデルは、音楽消費のあり方そのものを「受動的鑑賞」から「能動的参加」へと再定義する可能性を秘めている。",
+    "collected_at": "2026-05-22T05:58:43.082323+09:00",
+    "background": "近年、AIによる楽曲生成技術の急速な発展により、著作権侵害や無断学習・無断使用を巡る音楽業界とテクノロジー企業の対立が深まっていた。UMGはこれまでAI生成コンテンツに対して強硬な姿勢を取り、SpotifyなどのプラットフォームにAI楽曲の削除を求めてきた経緯がある。こうした対立を乗り越え、収益共有という形で合意に至ったことは、業界全体のAI活用ルール策定に向けた大きな転換点を示している。"
+  },
+  {
+    "title": "Forget ‘TechnoKing’: Elon Musk will really be king at SpaceX",
+    "japanese_title": "イーロン・マスク、SpaceX上場後も50%超の議決権で「絶対的支配者」に君臨へ",
+    "url": "https://techcrunch.com/2026/05/21/forget-technoking-elon-musk-will-really-be-king-at-spacex/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. イーロン・マスクはSpaceXの株式公開後も50%を超える議決権を保持し、他のテック創業者をはるかに凌ぐ支配力を握る見通し。",
+      "2. その支配構造はまさに「君主制」とも呼べるもので、会社の意思決定においてマスク氏の意向が絶対的な影響力を持つ。",
+      "3. かつてテスラで自称した「テクノキング」の称号を超え、SpaceXでは文字通りの「王」として君臨することになる。"
+    ],
+    "points": [
+      "・ 議決権50%超という支配率は、Meta（ザッカーバーグ）やGoogle（創業者ら）の構造と比較しても異例の強さ",
+      "・ 一般株主や機関投資家の影響力が極めて限定的になる可能性がある",
+      "・ 「テクノキング」（テスラでの肩書）を超えた「真の王」という表現が示す、マスク氏の権力集中への懸念"
+    ],
+    "prediction": "SpaceXが上場した場合、マスク氏の独裁的ともいえる経営スタイルが投資家や規制当局との摩擦を生む可能性がある。一方で、強力なリーダーシップが宇宙開発や防衛関連事業における迅速な意思決定を可能にするとして、支持する投資家も一定数存在するだろう。コーポレートガバナンスの観点から、証券規制当局や機関投資家からの批判や改善要求が高まることも予想される。",
+    "ai_interpretation": "このニュースの本質は、現代の巨大テック企業における「創業者支配」の極致を示している点にある。民主的なガバナンスよりもビジョンある個人の意思決定を優先するこの構造は、短期的には革新を加速させる一方、チェック機能の欠如という深刻なリスクをはらむ。マスク氏個人の判断が宇宙開発・安全保障・民間産業に直結する時代において、一個人への権力集中がもたらす社会的影響について、改めて問い直す必要性を示唆している。",
+    "collected_at": "2026-05-22T05:59:03.524862+09:00",
+    "background": "SpaceXは民間宇宙開発企業として急成長を遂げており、株式公開（IPO）に向けた動きが注目されている。マスク氏はテスラやXなど複数企業を経営する中、SpaceXにおいては創業当初から強力なリーダーシップを維持してきた。近年、テック大手の創業者が上場後に支配権を失うケースが相次ぐ中、マスク氏はその流れに逆らう形で議決権構造の設計を進めているとみられる。"
+  },
+  {
+    "title": "Law enforcement shuts down VPN service used by two dozen ransomware gangs",
+    "japanese_title": "欧州警察が24のランサムウェア組織に悪用されたVPNサービスを摘発・閉鎖",
+    "url": "https://techcrunch.com/2026/05/21/law-enforcement-shuts-down-vpn-service-used-by-two-dozen-ransomware-gangs/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Europolを中心とした法執行機関が、複数のランサムウェア組織に利用されていたVPNサービスを摘発・閉鎖した。",
+      "2. 当該VPNサービスはハッカーに対して完全な匿名性を約束していたが、当局はその利用者の特定に成功した。",
+      "3. Europolは特定した利用者に対し「あなたは既に身元が割れている」と通知する異例の警告措置を実施した。"
+    ],
+    "points": [
+      "・「完全匿名」を謳ったVPNサービスでも当局による追跡・特定が可能であったという事実が示された",
+      "・24もの異なるランサムウェア組織が同一のインフラを共有していたという犯罪エコシステムの実態が明るみに",
+      "・利用者への「警告通知」という手法は、起訴・逮捕だけでなく心理的プレッシャーを与える新たな法執行戦略として注目される"
+    ],
+    "prediction": "警告通知を受けたサイバー犯罪者の一部は摘発を恐れて活動を停止・縮小する可能性があり、ランサムウェア攻撃件数の短期的な減少が期待される。一方で、犯罪者たちはより高度な匿名化技術や分散型インフラへ移行することも予想され、いたちごっこが続く恐れがある。また、今回得られた情報をもとに、今後さらなる逮捕や関連組織の摘発に発展する可能性も高い。",
+    "ai_interpretation": "このニュースの本質は、「完全な匿名性など存在しない」というサイバーセキュリティ上の根本的なメッセージにある。法執行機関が技術的追跡能力を高めるだけでなく、犯罪者への心理的抑止という新たなアプローチを採用していることは、現代のサイバー犯罪対策が単なる技術戦争から情報戦・心理戦へと進化していることを示唆している。さらに、複数の組織が共通インフラを使っていたという事実は、ランサムウェア産業の「サービス化（RaaS）」が進む中で、インフラ層への攻略が犯罪ネットワーク全体を一網打尽にする最も効果的な戦略であることを改めて証明した。",
+    "collected_at": "2026-05-22T05:59:23.770009+09:00",
+    "background": "近年、ランサムウェア攻撃は世界中の企業・政府機関を標的にした深刻なサイバー脅威となっており、攻撃者はVPNなどの匿名化ツールを駆使して身元隠蔽を図ってきた。このVPNサービスはサイバー犯罪者向けに「完全匿名」を売り文句にしており、24もの異なるランサムウェアグループが活動の隠れ蓑として悪用していたとされる。こうした犯罪インフラの撲滅を目的に、Europolが主導する国際的な合同捜査が展開された。"
+  },
+  {
+    "title": "Meta Is in Crisis, Google Search’s Makeover, and AI Gets Booed by Graduates",
+    "japanese_title": "Meta大規模レイオフ・Google I/O発表・AI卒業式ブーイング――テック業界激震の最新動向",
+    "url": "https://www.wired.com/story/uncanny-valley-podcast-meta-in-crisis-google-search-makeover-ai-booed-by-graduates/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. Metaが大規模なレイオフ（人員削減）を実施し、同社が深刻な経営危機に直面していることが明らかになった。",
+      "2. GoogleはGoogle I/Oにおいて検索機能の大幅刷新をはじめとする複数の重要発表を行い、AI統合を加速させている。",
+      "3. 卒業式のスピーチにAIが使用されたことに対し学生からブーイングが起きるなど、AI活用への社会的反発が広がっている。"
+    ],
+    "points": [
+      "・Metaのレイオフはビジネスモデルの行き詰まりとAIシフトへの戦略的な人員再配置を同時に示唆している",
+      "・Google I/OでのAI検索刷新は、従来の「リンク提示型」検索の終焉を象徴する歴史的転換点となりうる",
+      "・卒業式でのAIへのブーイングは、若い世代でさえもAIの無批判な導入には拒否反応を示すことを示す重要なシグナルである"
+    ],
+    "prediction": "MetaはAIおよびメタバース関連事業への集中投資を継続する一方、収益性の低い部門のさらなる縮小が予想される。GoogleのAI検索は広告モデルへの影響が避けられず、収益構造の変革を迫られる局面が来るだろう。AI活用への反発は今後も各所で顕在化し、企業や教育機関にはAI利用の倫理的ガイドライン整備が急務となる。",
+    "ai_interpretation": "このニュースが示す本質は、AIが「夢の技術」から「現実の社会的摩擦を生む存在」へと移行しつつあるという転換点にある。テック大手が人員削減とAI投資を同時に進める構図は、AIが人間の雇用・役割を代替し始めているという経済的現実を如実に映し出している。卒業式でのブーイングは単なる感情的反応ではなく、「人間性・真正性」の価値をAI時代においても守ろうとする社会的意思表示として読み取るべきだろう。",
+    "collected_at": "2026-05-22T05:59:43.538157+09:00",
+    "background": "テック業界全体がコロナ禍の過剰採用の反動と景気減速により、コスト削減圧力を強めており、Metaもその波に飲み込まれている。一方、ChatGPTの台頭以降、GoogleはAI競争で遅れを取ったとの批判を受け、検索を中心とした製品の抜本的な刷新を迫られてきた。AI技術の急速な普及により、教育・就職・創作など生活の様々な場面でその影響が及ぶようになり、社会的な摩擦も生じ始めている。"
+  },
+  {
+    "title": "SpaceX Is Spending $2.8 Billion to Buy Gas Turbines for Its AI Data Centers",
+    "japanese_title": "SpaceXがAIデータセンター向けにガスタービン28億ドル分を調達――クラウド市場参入へ本格始動",
+    "url": "https://www.wired.com/story/elon-musk-spacex-spending-gas-turbines-grok/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. SpaceXはAIデータセンターの電力供給のため、28億ドル（約4,200億円）規模のガスタービン購入に踏み切った。",
+      "2. イーロン・マスク傘下のAI部門（xAI）はCO2排出を伴うガスタービンの使用について環境面からの批判を受けている。",
+      "3. SpaceX／xAIはクラウドコンピューティング市場での大手プレイヤーとなることを目指している。"
+    ],
+    "points": [
+      "・ 28億ドルという巨額投資は、xAIがAI・クラウドインフラへいかに本気で取り組んでいるかを示す規模感",
+      "・ 化石燃料由来のガスタービン採用は、ESG（環境・社会・ガバナンス）の観点から批判を招きやすく、ブランドリスクになり得る",
+      "・ クラウドコンピューティング市場への参入は、AWS・Azure・Google Cloudという「3強」への直接的な挑戦を意味する"
+    ],
+    "prediction": "環境団体や規制当局からの圧力が強まる可能性があり、将来的には再生可能エネルギーへの移行計画の策定が求められるかもしれない。一方でxAIのクラウドサービスが本格稼働すれば、既存のビッグテック各社との競争が激化し、AIインフラ市場の勢力図が塗り替えられる可能性がある。マスク氏の政治的影響力と事業展開が絡み合う形で、規制面での動向も注目される。",
+    "ai_interpretation": "このニュースの本質は「AIの電力問題」と「ビジネス覇権争い」という二つの構造的課題を象徴している点にある。持続可能性よりもスピードと規模を優先するという判断は、AI産業全体が抱えるトレードオフ（技術革新vs環境負荷）を凝縮して示している。また、SpaceX／xAIがロケット・AI・クラウドを垂直統合しようとする動きは、マスク帝国の「インフラ支配」戦略の一環であり、単なる企業投資を超えた地政学的・産業的意味合いを持つ。",
+    "collected_at": "2026-05-22T06:00:02.010959+09:00",
+    "background": "生成AIブームにより、データセンターの電力需要が爆発的に増加しており、既存の電力グリッドだけでは需要を賄いきれない状況が続いている。イーロン・マスクはOpenAIから独立する形でxAIを設立し、大規模なAIインフラ構築を急ピッチで進めている。電力の安定供給を最優先とした結果、環境負荷の高いガスタービンという選択肢が取られた。"
+  },
+  {
+    "title": "US government takes $2 billion equity stake in nine quantum computing firms",
+    "japanese_title": "米政府、量子コンピューティング9社に総額20億ドルの株式投資——トランプ家関連企業も受益",
+    "url": "https://arstechnica.com/gadgets/2026/05/us-government-takes-2-billion-equity-stake-in-nine-quantum-computing-firms/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. 米国政府が量子コンピューティング分野の9つの企業に対し、総額20億ドル（約3,000億円）の株式出資を行うことを発表した。",
+      "2. 受益企業の中には、トランプ一家と関係を持つ企業が支援するスタートアップが含まれており、利益相反の懸念が浮上している。",
+      "3. この投資は、中国などとの量子技術覇権争いにおいて米国の競争力を強化する戦略的措置と位置づけられている。"
+    ],
+    "points": [
+      "・ 政府が「株式（エクイティ）」を取得するという異例の関与形態で、民間企業への直接的な影響力を持つ可能性がある",
+      "・ トランプ一家と関連する企業が支援するスタートアップが受益者に含まれており、政治的な利益誘導・癒着の疑惑が生じる",
+      "・ 20億ドルという大規模投資は、量子技術を国家安全保障の核心インフラと位置づける米国の強い意志を示している"
+    ],
+    "prediction": "議会や監査機関がトランプ家関連企業への資金流入について調査・批判を強める可能性が高く、政治的論争に発展するリスクがある。一方で、政府の後ろ盾を得た量子コンピューティング企業は資金・信用力が高まり、技術開発の加速や人材獲得競争での優位性を得るだろう。中国の量子技術投資への対抗措置として、同盟国（日本・欧州）にも同様の国家主導投資を促す動きが広がる可能性がある。",
+    "ai_interpretation": "このニュースの本質は、**技術覇権争いと政治的利権が交差する現代の産業政策の縮図**である。政府が株式を取得するという形式は、単なる支援を超えて「国家と民間の境界線の曖昧化」を意味し、長期的には民間イノベーションの自律性に影響を与えかねない。また、特定の政治的関係者に恩恵が集中する構造は、米国の技術政策への国際的な信頼性を損なうリスクも内包しており、技術・資本・権力の三角関係に対する透明性確保が急務となっている。",
+    "collected_at": "2026-05-22T06:00:21.459124+09:00",
+    "background": "量子コンピューティングは次世代の安全保障・暗号・医療・金融などに革命をもたらす技術として、米中両国が激しい開発競争を繰り広げている。バイデン政権時代から量子技術への国家投資が進められてきたが、トランプ政権下でもその流れは継続・拡大している。政府による直接株式取得という形式は、従来の補助金モデルとは異なる新たな産業政策の形を示している。"
+  },
+  {
+    "title": "\"Ryzen 5800X3D 10th Anniversary Edition\" may help you avoid paying for a new PC",
+    "japanese_title": "Ryzen 5800X3D 10周年記念エディション登場か――新PCを買わずに旧型PCを高性能GPUに対応させる救世主となるか",
+    "url": "https://arstechnica.com/gadgets/2026/05/amd-reportedly-plans-ryzen-5800x3d-re-release-for-upgraders-on-a-budget/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. 「Ryzen 5800X3D 10th Anniversary Edition」と呼ばれる新CPUが登場する可能性が浮上し、旧世代PCユーザーに注目されている。",
+      "2. このプロセッサは、古いプラットフォームのPCでもハイエンドGPUとのパフォーマンスバランスを改善できる手段となり得る。",
+      "3. 新PCへの買い替えコストを抑えつつ、ゲーミングや高負荷作業のボトルネックを解消する選択肢として期待されている。"
+    ],
+    "points": [
+      "・ AM4ソケット対応のため、既存のマザーボードやDDR4メモリをそのまま流用でき、アップグレードコストを大幅に抑えられる点",
+      "・ 3D V-Cache技術によりゲーミング性能が向上し、ハイエンドGPUの性能を最大限に引き出せる可能性がある点",
+      "・ 新プラットフォーム（AM5）への完全移行を迫られないため、コストパフォーマンスを重視するユーザーに現実的な選択肢を提供する点"
+    ],
+    "prediction": "正式発表・発売が確認されれば、AM4プラットフォームの需要が再燃し、中古市場も含めて関連パーツの価格が変動する可能性がある。AMDにとってもAM4エコシステムの延命をアピールする戦略的な意味を持ち、AM5移行を急がないユーザー層の支持を集めることが予想される。ただし、供給数量や価格帯によっては入手困難となるリスクもあり、市場動向を注視する必要がある。",
+    "ai_interpretation": "このニュースの本質は、「高性能化のコストをいかに下げるか」というユーザーの現実的な悩みに応えようとする動きである。最新世代への完全移行を求めるメーカー戦略に対し、既存資産を活かすアップグレードパスを提供することは、経済的に余裕のないユーザー層を取り込む賢明なアプローチといえる。また、これはPC業界全体における「性能の民主化」という潮流を象徴しており、ハイエンド体験をより広い層に届けるための一つの解答として注目に値する。",
+    "collected_at": "2026-05-22T06:00:41.750327+09:00",
+    "background": "AMD Ryzen 5800X3Dは、3D V-Cacheテクノロジーを搭載したゲーミング向けCPUとして高い評価を受けてきたが、AM4プラットフォームという旧世代ソケット対応であるため、現行の最新CPUへの移行には新マザーボードや新メモリが必要となる。一方で、RTX 5000シリーズなどのハイエンドGPUが登場する中、CPU性能がボトルネックとなるケースが増えており、コストを抑えた性能向上策への需要が高まっている。こうした背景から、既存のAM4環境を活かしつつ性能を引き上げられる記念エディションの登場が注目されている。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-05-22",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-05-21",
+    "href": "2026-05-21.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
