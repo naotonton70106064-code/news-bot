@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -8,14 +9,32 @@ import feedparser
 JST = ZoneInfo("Asia/Tokyo")
 COLLECTED_URLS_FILE = Path("collected_urls.json")
 
+# ITカテゴリのキーワードフィルタ（タイトル/概要のいずれかに含まれればOK）
+# Wired/Ars Technicaなど汎用フィードからIT関連記事のみを抽出するために使う。
+# 英語キーワードは単語境界でマッチ（"ai"が"again"にマッチしないようにするため）。
+# 日本語キーワードは部分一致（単語境界の概念がないため）。
+IT_KEYWORDS_EN = [
+    "ai", "ml", "tech", "software", "hardware", "app", "startup",
+    "cloud", "data", "cyber", "robot", "chip", "gpu", "api",
+]
+IT_KEYWORDS_JA = [
+    "テクノロジー", "スタートアップ", "ソフトウェア", "クラウド",
+    "データ", "サイバー", "ロボット", "半導体",
+]
+_IT_KEYWORD_RE = re.compile(
+    r"\b(?:" + "|".join(re.escape(k) for k in IT_KEYWORDS_EN) + r")\b",
+    re.IGNORECASE,
+)
+
 # カテゴリ別RSSフィード（各ソースに新規取得件数 limit を指定）
+# filter=True のソースは IT_KEYWORDS によるキーワードフィルタを適用する。
 FEEDS = {
     "it": {
         "name": "IT・テクノロジー",
         "sources": [
-            {"url": "https://techcrunch.com/feed/", "limit": 3},
-            {"url": "https://www.wired.com/feed/rss", "limit": 2},
-            {"url": "https://feeds.arstechnica.com/arstechnica/index", "limit": 2},
+            {"url": "https://techcrunch.com/feed/", "limit": 3, "filter": False},
+            {"url": "https://www.wired.com/feed/category/business/latest/rss", "limit": 2, "filter": True},
+            {"url": "https://feeds.arstechnica.com/arstechnica/index", "limit": 2, "filter": True},
         ],
     },
     "japan_economy": {
@@ -59,6 +78,14 @@ def save_collected_urls(collected_urls):
         json.dump(collected_urls, f, ensure_ascii=False, indent=2)
 
 
+def _matches_it_keywords(title, summary):
+    """タイトルまたは概要にITキーワードのいずれかが含まれていれば True。"""
+    text = f"{title} {summary}"
+    if _IT_KEYWORD_RE.search(text):
+        return True
+    return any(keyword in text for keyword in IT_KEYWORDS_JA)
+
+
 def collect_articles(category="it", collected_urls=None):
     """指定カテゴリの記事を収集する。collected_urlsに含まれるURLはスキップ。"""
     if category not in FEEDS:
@@ -73,10 +100,12 @@ def collect_articles(category="it", collected_urls=None):
     for source in feed_config["sources"]:
         feed_url = source["url"]
         limit = source["limit"]
+        apply_filter = source.get("filter", False)
         try:
             feed = feedparser.parse(feed_url)
             picked = 0
             skipped = 0
+            filtered = 0
             for entry in feed.entries:
                 if picked >= limit:
                     break
@@ -84,10 +113,15 @@ def collect_articles(category="it", collected_urls=None):
                 if url in collected_urls:
                     skipped += 1
                     continue
+                title = entry.title
+                summary = entry.get("summary", "")
+                if apply_filter and not _matches_it_keywords(title, summary):
+                    filtered += 1
+                    continue
                 article = {
-                    "title": entry.title,
+                    "title": title,
                     "url": url,
-                    "summary": entry.get("summary", ""),
+                    "summary": summary,
                     "source": feed.feed.get("title", feed_url),
                     "category": category,
                 }
@@ -95,6 +129,8 @@ def collect_articles(category="it", collected_urls=None):
                 picked += 1
             if skipped:
                 print(f"  [情報] {feed_url}: 取得済み{skipped}件をスキップ")
+            if filtered:
+                print(f"  [情報] {feed_url}: キーワード不一致{filtered}件をスキップ")
         except Exception as e:
             print(f"  [警告] {feed_url} の取得に失敗: {e}")
             continue
