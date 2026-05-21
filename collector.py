@@ -14,16 +14,14 @@ FEEDS = {
         "name": "IT・テクノロジー",
         "sources": [
             {"url": "https://techcrunch.com/feed/", "limit": 3},
-            {"url": "https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml", "limit": 2},
-            {"url": "https://xtech.nikkei.com/rss/index.rdf", "limit": 2},
+            {"url": "https://www.wired.com/feed/rss", "limit": 2},
+            {"url": "https://feeds.arstechnica.com/arstechnica/index", "limit": 2},
         ],
     },
     "japan_economy": {
         "name": "日本経済",
         "sources": [
-            {"url": "https://www.nhk.or.jp/rss/news/cat4.xml", "limit": 3},
-            {"url": "https://business.nikkei.com/rss/sns/nb.rdf", "limit": 2},
-            {"url": "https://toyokeizai.net/list/feed/rss", "limit": 2},
+            {"url": "https://www.nhk.or.jp/rss/news/cat4.xml", "limit": 7},
         ],
     },
     "world_economy": {
