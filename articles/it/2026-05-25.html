@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Xreal, Google’s smartglasses partner, thinks it has finally mastered this notoriously tricky industry",
+    "japanese_title": "Googleのスマートグラス提携企業XREALのCEOが語る「スマートグラス産業がついに転換点を迎えた」理由",
+    "url": "https://techcrunch.com/2026/05/24/xreal-googles-smartglasses-partner-thinks-it-has-finally-mastered-this-notoriously-tricky-industry/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. XREALの創業者兼CEOであるChi Xu氏は、スマートグラス市場がついに重要な転換点に達したと確信している。",
+      "2. XREALはGoogleのスマートグラス事業のパートナー企業として注目を集めており、業界内での存在感を高めている。",
+      "3. これまで「難攻不落」とされてきたスマートグラス市場において、同社は成功への手応えを掴んだと主張している。"
+    ],
+    "points": [
+      "・ Googleという巨大テック企業との提携が、XREALのブランド信頼性と技術力を大きく後押ししている点",
+      "・ CEOが「転換点」と明言するほど、市場環境・技術・消費者意識が成熟してきた可能性がある点",
+      "・ スマートグラスが「難しい産業」と長く言われてきた中で、中国発スタートアップが最前線に立つ構図"
+    ],
+    "prediction": "XREALはGoogleとの協業をテコに、コンシューマー向けスマートグラス市場でのシェア拡大を積極的に図っていくと予想される。2025年以降はハードウェアの洗練とAI機能の統合が加速し、日常使用に耐えうるデバイスへの進化が本格化するだろう。一方で、MetaやAppleなど資金力のある競合との競争は依然として厳しく、差別化戦略が鍵を握る。",
+    "ai_interpretation": "このニュースの本質は、スマートグラス市場が「技術的なガジェット」から「実用的な日常デバイス」へと移行しつつある臨界点に差し掛かっていることを示唆している。XREALのようなニッチプレイヤーがGoogleと提携できるという事実は、大手が独自開発よりもエコシステム構築を重視し始めたことを意味しており、業界構造の変化を象徴している。つまりスマートグラスの覇権争いは、単なるハードウェア競争ではなく、プラットフォームとパートナーシップの戦いへと本格的にシフトしていると言える。",
+    "collected_at": "2026-05-25T05:08:32.045180+09:00",
+    "background": "スマートグラス市場はGoogleグラスの失敗を筆頭に、長年にわたり商業的成功が難しい分野とされてきた。しかしAppleのVision ProやMetaのRay-Ban Smartglassesなど大手各社の参入により、ウェアラブルARデバイスへの注目が再燃している。XREALはそうした流れの中で、Googleとの提携を通じて市場での競争力を強化してきた。"
+  },
+  {
+    "title": "6 kitchen gadgets that make adulting feel easier",
+    "japanese_title": "大人の生活をラクにする！おすすめキッチンガジェット6選で料理が変わる",
+    "url": "https://techcrunch.com/2026/05/24/6-kitchen-gadgets-that-make-adulting-feel-easier/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. スープを自動でかき混ぜるロボットやパン生地をこねるブレッドマシンなど、6つのキッチンガジェットが紹介されている。",
+      "2. これらのアイテムは、日常の料理作業を自動化・効率化し、「大人としての生活」をより快適にすることを目的としている。",
+      "3. 忙しい現代人が「料理をこなせている」という達成感・充実感を得られるツールとして提案されている。"
+    ],
+    "points": [
+      "・「adulting（アダルティング）」というキーワードが示すように、自立した生活への憧れと現実のギャップを埋めるツールとしてガジェットが位置づけられている",
+      "・自動撹拌ロボットやブレッドマシンなど、これまで技術や時間が必要だった作業を機械に委ねる流れが加速している",
+      "・単なる時短グッズではなく、「料理できている自分」という心理的満足感・自己効力感を高める商品として訴求されている点が特徴的"
+    ],
+    "prediction": "AIや IoTと連携したスマートキッチン家電はさらに進化し、レシピの自動提案から調理完了まで一括管理できるデバイスが普及していくと予想される。特に単身世帯や共働き家庭をターゲットにした小型・多機能なキッチンガジェット市場は今後も拡大傾向が続くだろう。一方で、「手作り・本物志向」との価値観の対立も生まれ、用途や場面によってガジェットと手作業を使い分けるハイブリッドな料理スタイルが定着していく可能性が高い。",
+    "ai_interpretation": "このニュースの本質は、単なる「便利グッズ紹介」ではなく、現代社会における「大人であること」の定義の変化を反映している点にある。かつては手間暇かけた料理が「一人前の大人の証」とされていたが、今やテクノロジーをうまく活用して生活を管理できることが新たな「大人力」として再定義されつつある。これはキッチン領域に留まらず、テクノロジーと人間の役割分担が日常生活全般で再編されていく大きなトレンドの一側面を示している。",
+    "collected_at": "2026-05-25T05:08:51.584326+09:00",
+    "background": "コロナ禍以降、自炊需要が高まる一方で、忙しいライフスタイルを持つ人々が料理の手間を省きたいというニーズが拡大している。特にミレニアル世代やZ世代を中心に、「adulting（大人らしく生活すること）」への関心が高まっており、家事・料理を効率よくこなすためのスマートキッチン家電市場が急成長している。テクノロジーの進化により、かつては高価だった自動調理器具が一般家庭でも手の届く価格帯になってきた。"
+  },
+  {
+    "title": "TechCrunch Mobility: Robotaxi reality check",
+    "japanese_title": "ロボタクシーの現実：自動運転タクシー産業の実態と課題を徹底検証",
+    "url": "https://techcrunch.com/2026/05/24/techcrunch-mobility-robotaxi-reality-check/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. TechCrunch Mobilityが自動運転タクシー（ロボタクシー）の現状について現実的な視点から総括・分析を行った。",
+      "2. 交通・モビリティ分野の最新ニュースと知見を提供するハブとして、業界の動向を包括的に伝えている。",
+      "3. 過熱気味だったロボタクシーへの期待に対し、「現実確認（Reality Check）」という形で冷静な評価を促している。"
+    ],
+    "points": [
+      "・ロボタクシー技術の実用化スケジュールが当初予測より大幅に遅れている可能性",
+      "・規制・安全基準の厳格化が商業展開の大きな障壁となっている現状",
+      "・投資家やユーザーの期待値と技術的現実のギャップが拡大していること"
+    ],
+    "prediction": "ロボタクシー市場は一部プレーヤーへの集約が進み、資金力のある企業のみが生き残る淘汰の時代に入ると予想される。規制整備が進む都市から段階的に商業展開が拡大する一方、完全な普及には2030年代以降までかかる可能性が高い。短期的には限定エリアでの実証実験と収益化の模索が続くだろう。",
+    "ai_interpretation": "このニュースの本質は、テクノロジー業界特有の「誇大宣伝サイクル（Hype Cycle）」からの脱却と成熟化を示している点にある。ロボタクシーは技術的可能性として否定されるわけではなく、現実的なタイムラインと課題の再設定が求められている段階に来ている。これは自動運転産業が「夢」から「事業」へと移行する重要な転換点を示唆しており、健全な産業発展に向けた必要なプロセスとも言える。",
+    "collected_at": "2026-05-25T05:09:08.104465+09:00",
+    "background": "近年、WaymoやCruise、Teslaなど多くの企業がロボタクシー事業に多額の投資を行い、業界全体で自動運転の商業化への期待が高まっていた。しかし、事故や規制当局との摩擦、コスト超過などの問題が相次ぎ、当初の楽観的な見通しが修正を迫られている。こうした状況を受け、TechCrunch Mobilityが業界の「現実」を改めて問い直す特集を組んだと見られる。"
+  },
+  {
+    "title": "I Gave My OpenClaw Agent a Physical Body",
+    "japanese_title": "AIエージェント「OpenClaw」がついに物理的な体を持つロボットへ――AIのコーディング能力がロボット開発を革新する",
+    "url": "https://www.wired.com/story/i-gave-my-openclaw-agent-physical-body-robot/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. AIエージェント「OpenClaw」に物理的なボディ（ロボット本体）を与える実験的な取り組みが行われた。",
+      "2. AIモデルのコーディング能力の向上が、ロボットの構築・展開を従来より大幅に容易にしつつある。",
+      "3. ソフトウェア上のAIエージェントと物理的なロボット工学の融合という新たな潮流が加速している。"
+    ],
+    "points": [
+      "・AIエージェントがデジタル空間を超えて「物理世界」へと進出するという概念的・技術的ブレークスルー",
+      "・AIのコーディング能力がロボット制御ソフトウェアの開発コストと時間を劇的に削減する可能性",
+      "・専門エンジニア不在でも、AIを活用してロボットを構築・展開できる民主化の流れ"
+    ],
+    "prediction": "AIのコーディング支援によりロボット開発の参入障壁が下がり、スタートアップや個人開発者によるロボティクス分野への参入が急増すると予想される。また、AIエージェントと物理ロボットの統合は、製造業・物流・介護など幅広い産業に実用的なインパクトをもたらすだろう。一方で、物理世界での安全性や倫理的な制御に関する規制整備も急務となってくる。",
+    "ai_interpretation": "このニュースが示す本質は、「知性（AI）」と「身体（ロボット）」の統合という、人工知能の進化における重大なフェーズ転換である。これまでAIはスクリーンの中の存在だったが、物理世界への介入能力を持つことで、その社会的・経済的影響力は次元が異なるレベルへと跳躍する。AIがロボットを「設計・制御・改善」まで自律的に行う未来が現実味を帯びており、人間の労働や産業構造に対する根本的な問い直しが始まっていると言える。",
+    "collected_at": "2026-05-25T05:09:25.411912+09:00",
+    "background": "近年、ChatGPTやClaude等に代表される大規模言語モデル（LLM）のコーディング能力が飛躍的に向上し、ソフトウェア開発の自動化が進んでいる。これまでロボット開発は専門的なハードウェア知識と複雑なプログラミングを必要としていたが、AIの支援によりその障壁が急速に低下しつつある。こうした流れの中で、純粋にデジタル空間で動作していたAIエージェントに物理的な身体を与えようという試みが登場した。"
+  },
+  {
+    "title": "Demis Hassabis Thinks AI Job Cuts Are Dumb",
+    "japanese_title": "Google DeepMind CEO「AIによるリストラは愚かだ」─生産性向上は雇用維持に活用すべき",
+    "url": "https://www.wired.com/story/demis-hassabis-ai-layoffs-deepmind-google-io/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. Google DeepMindのCEOであるデミス・ハサビス氏は、AI導入を理由とした人員削減を「愚かな判断」と批判した。",
+      "2. 同氏はAIがもたらす生産性向上の恩恵を、解雇ではなくより多くの事業・価値創出に活用すべきだと主張している。",
+      "3. WIREDのインタビューで語られたこの発言は、AI時代の雇用問題に対する業界リーダーの見解として注目を集めている。"
+    ],
+    "points": [
+      "・AI業界を牽引するリーダー自身が、AI活用による人員削減に明確に反対している点が異例",
+      "・「生産性向上＝コスト削減・解雇」という短絡的な発想を否定し、「成長への再投資」という代替モデルを提示",
+      "・AI開発者側の倫理的・社会的責任への意識が高まっていることを示す発言"
+    ],
+    "prediction": "ハサビス氏の発言は企業経営者やAI政策立案者に一定の影響を与え、AI導入と雇用維持を両立する経営モデルの議論が活発化する可能性がある。一方で、短期的な利益を優先する企業はAIを口実とした人員削減を続けるとみられ、発言の実効性には限界もあるだろう。長期的には、AIによる生産性向上を人的資本の拡充に充てる企業とそうでない企業との間で、競争力や人材獲得力に差が生じてくる可能性がある。",
+    "ai_interpretation": "このニュースの本質は、AI技術の「使い道」をめぐる価値観の対立にある。AIを「人間の代替コスト削減ツール」と見るか、「人間の能力を拡張し新たな価値を生み出す協働ツール」と見るかで、企業の未来は大きく変わる。ハサビス氏の発言は技術開発者としての倫理観の表明であると同時に、AI時代における人間と技術の関係性をどう設計すべきかという、社会全体への問いかけでもある。",
+    "collected_at": "2026-05-25T05:09:43.496086+09:00",
+    "background": "近年、企業がAI技術の導入を加速させる中、コスト削減を名目とした大規模なレイオフが相次いでいる。特にテック業界ではAI活用による業務効率化を理由に人員整理を正当化するケースが増えており、雇用不安が社会問題化しつつある。こうした流れに対し、AI研究の最前線に立つDeepMindのトップが公に異議を唱えた形となった。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-05-25",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-05-24",
+    "href": "2026-05-24.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
