@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "皇位継承 衆参議長らが会談 6月上旬にかけて調整続く見通し",
+    "japanese_title": "皇位継承問題で衆参議長が協議継続―6月上旬まで各党調整へ、安定的皇統維持に向けた合意形成の行方",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015133401000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 衆参両院の議長・副議長が安定的な皇位継承に関するとりまとめ案の作成に向け、幅広い賛同を得るための協議を進めている。",
+      "2. 来月（6月）上旬にかけて、各党・各会派とのすり合わせを含む調整作業が継続される見通しである。",
+      "3. 議長・副議長主導のもと、超党派的な合意形成を目指す慎重なプロセスが続いている。"
+    ],
+    "points": [
+      "・ 衆参議長・副議長という立法府トップが主導する超党派的な合意形成プロセスの透明性",
+      "・ 各党間の意見の相違（特に女系・女性天皇容認の是非など）がどこまで調整されるか",
+      "・ 6月上旬という具体的な期限設定が、政治日程（国会会期末など）と連動しているかどうか"
+    ],
+    "prediction": "6月上旬を目途にとりまとめ案が提示された場合、国会での議論や決議へと進む可能性があり、政府・与党の政策優先順位にも影響を与えることが予想される。合意形成が難航した場合は議論が次期国会以降に持ち越される可能性もあり、政治的な不確実性が一時的に高まる局面も考えられる。経済政策との直接的な連動は薄いものの、政治的安定の観点から国内外の投資家心理に対して間接的な影響を及ぼし得る。",
+    "ai_interpretation": "このニュースの本質は、経済問題というよりも日本の国家制度・統治の根幹に関わる「制度的安定性の確保」という政治的課題である。しかし経済的視点から見れば、国家の象徴的安定性は対外的な国家信用力や「ジャパンブランド」の維持に直結しており、長期的な外資誘致や観光立国戦略とも無縁ではない。超党派での合意形成プロセスが成熟した民主主義の機能として機能するかどうかが、日本の政治的ガバナンスへの信頼性を測る一つの指標となり得る点に注目すべきである。",
+    "collected_at": "2026-05-28T06:04:46.670892+09:00",
+    "market_impact": "このニュースは直接的な経済指標や企業業績に影響を与えるものではなく、株式市場や為替市場への短期的な影響はほぼ限定的と考えられる。ただし、皇室制度の安定は日本の国家的信頼性・ブランドイメージの根幹に関わるため、中長期的には外国人投資家の対日信頼感や観光・文化産業への間接的なポジティブ効果が期待できる。国内産業、特に皇室関連の伝統産業や観光セクターは、制度の安定化が確定すれば好影響を受ける可能性がある。"
+  },
+  {
+    "title": "「国家情報局」設置法成立 「対外情報庁」など検討加速 政府",
+    "japanese_title": "国家情報局設置法が成立——対外情報庁創設へ向け政府が検討加速、安全保障体制の抜本強化へ",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015133391000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 政府は「国家情報局」設置法の成立を受け、治安・安全保障に関する情報収集・分析能力の強化を本格化させる方針を示した。",
+      "2. 海外での情報収集活動を専門に担う「対外情報庁」の創設に向けた検討が加速される見通しで、日本版CIAとも呼ばれる組織の実現が現実味を帯びてきた。",
+      "3. 近年の地政学リスクの高まり（北朝鮮・中国・ロシア情勢など）を背景に、日本のインテリジェンス体制の抜本的な再編が政策課題として浮上している。"
+    ],
+    "points": [
+      "・「対外情報庁」の組織規模・予算・権限がどの程度になるか（米CIAや英MI6との比較における日本のキャパシティ）",
+      "・既存の内閣情報調査室や公安調査庁、防衛省情報本部との役割分担・統合のあり方",
+      "・情報収集活動に伴うプライバシー・人権保護と安全保障のバランスをめぐる国内議論の行方"
+    ],
+    "prediction": "対外情報庁の創設が実現すれば、関連する人材育成・システム投資・施設整備などで一定の財政支出増が見込まれ、防衛費増額の流れとも相まって政府の歳出拡大圧力が強まる可能性がある。また、同盟国（特に米国・英国・オーストラリアなど「ファイブアイズ」諸国）との情報共有・連携が深化することで、日本の外交・安全保障政策の選択肢が広がると同時に、中国・ロシアとの外交摩擦リスクも高まることが予想される。国内では法整備や監視機構のあり方をめぐる議論が活発化し、政治的な焦点となるとみられる。",
+    "ai_interpretation": "このニュースの本質は、日本が長年「情報後進国」と指摘されてきたインテリジェンス能力の構造的な弱点を、制度面から抜本的に是正しようとする歴史的な転換点を示している点にある。安全保障と経済は不可分であり、情報収集・分析能力の強化は経済安全保障（半導体・重要技術・サプライチェーン防衛）の実効性向上にも直結するため、単なる「諜報機関の新設」にとどまらない広範な政策的意義を持つ。日本経済への示唆としては、防衛・セキュリティ分野への投資拡大が新たな成長領域を生む一方、財政規律への影響と国際関係の変化を慎重に見極める必要があると言えよう。",
+    "collected_at": "2026-05-28T06:05:10.071209+09:00",
+    "market_impact": "防衛・セキュリティ関連企業（防衛産業、サイバーセキュリティ、情報通信）への政府需要が拡大する可能性があり、関連銘柄への投資家の注目度が高まることが予想される。為替面では、安全保障強化を背景とした財政支出拡大への懸念が中長期的に円相場の不安定要因となりうる一方、地政学リスクへの対応強化が評価されてリスク回避的な円買いにつながる場面も考えられる。国内産業では、IT・通信インフラ企業が情報システム整備の受注先として恩恵を受ける可能性がある。"
+  },
+  {
+    "title": "皇位継承 衆参議長・副議長が会談 “幅広い賛同を”認識共有",
+    "japanese_title": "皇位継承問題で衆参議長が協議―幅広い賛同形成へ向け与野党合意模索",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015133481000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 衆参両院の議長・副議長が安定的な皇位継承に関するとりまとめ案の作成に向けて会談を実施した。",
+      "2. 各党・各会派からできるだけ幅広い賛同を得ることが必要との認識を議長・副議長間で共有した。",
+      "3. 近く改めて協議を行う方針で、今後の議論の進展が注目される。"
+    ],
+    "points": [
+      "・ 衆参の議長・副議長という超党派の枠組みで協議が進められており、政治的合意形成の手法として注目に値する",
+      "・ 「幅広い賛同」という表現が示すように、与野党を超えたコンセンサス形成が優先されており、議論が慎重かつ長期化する可能性がある",
+      "・ とりまとめ案の具体的な内容（女性天皇・女系天皇の容認可否など）が今後の政治日程や国民的議論に大きく影響する"
+    ],
+    "prediction": "皇位継承問題は憲法・皇室典範の改正にも波及し得る重大テーマであるため、政治的センシティビティが高く、短期間での結論は難しい見通しである。与野党間の意見調整が続く中、政府・国会の立法リソースが一定程度割かれることで、他の経済政策や財政議論のスケジュールに影響を及ぼす可能性もある。一方で合意形成が進めば、政治的安定の象徴として長期的な国家ガバナンスへの信頼向上につながる。",
+    "ai_interpretation": "このニュースの本質は、経済問題というよりも「国家の制度的持続可能性」を巡る議論であり、日本の政治システムが超党派で長期的課題に向き合う能力を示す試金石となっている。経済的観点からは、制度的安定性は外国直接投資（FDI）や格付け評価における「政治リスク」の低減要因となり得るため、間接的ながら日本経済の信頼基盤を支える要素として捉えることができる。また、この問題への対応姿勢は、少子化・人口減少問題と並行して「日本の将来設計」に真剣に取り組む政治的意志の表れとも読み取れる。",
+    "collected_at": "2026-05-28T06:05:28.574655+09:00",
+    "market_impact": "このニュースは直接的な経済指標や企業業績に影響を与えるものではなく、株式市場や為替市場への即時的なインパクトはほぼ皆無と考えられる。ただし、皇室制度の安定は長期的な国家の制度的信頼性に寄与するものであり、日本の政治的安定性を示すシグナルとして海外投資家に間接的なポジティブ印象を与える可能性がある。国内産業への直接的な影響は現時点では見受けられない。"
+  },
+  {
+    "title": "フィリピン大統領夫妻歓迎の宮中晩さん会 悠仁さまが初出席",
+    "japanese_title": "フィリピン・マルコス大統領国賓来日：宮中晩さん会に悠仁さまが初出席、日比首脳外交が本格始動",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015133381000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. フィリピンのマルコス大統領夫妻が国賓として来日し、皇居にて宮中晩さん会が開催された。",
+      "2. 悠仁さまが宮中晩さん会に初めて出席し、皇室外交における新たな一歩を踏み出した。",
+      "3. 日本とフィリピン間の外交関係強化を象徴する公式行事として注目を集めている。"
+    ],
+    "points": [
+      "・ 南シナ海問題を背景とした日比安全保障協力の深化と、関連防衛産業への経済的波及効果",
+      "・ フィリピンへのインフラ整備支援（港湾・鉄道・電力）における日本企業の受注拡大の可能性",
+      "・ 悠仁さまの初出席という皇室の世代交代を象徴する出来事が持つ外交的・象徴的意義"
+    ],
+    "prediction": "今回の国賓訪問を契機に、日比間での経済連携協定（EPA）のさらなる活用や、半導体・重要鉱物のサプライチェーン構築に向けた協議が加速する見通しである。フィリピンは中国との領土問題を抱えており、日本との安全保障・経済両面での連携強化は今後も継続的なテーマとなる。エネルギー転換分野では、フィリピンへの日本製水素・アンモニア技術の輸出拡大も期待される。",
+    "ai_interpretation": "このニュースの本質は、単なる儀礼的外交行事を超え、中国の海洋進出に対峙する「価値観を共有する民主主義国家」同士の戦略的連携強化にある。日本にとってフィリピンはASEAN外交の重要な橋頭堡であり、経済・安全保障の両輪でその関係を深めることは、日本経済の地政学的リスク分散にも直結する。悠仁さまの初出席は皇室外交の継続性を国際社会に示すものであり、日本の対外的な信頼性・安定性を長期的に担保するソフトパワーとしての意義も持つ。",
+    "collected_at": "2026-05-28T06:05:47.384647+09:00",
+    "market_impact": "日比間の外交強化により、フィリピン向けインフラ投資やODA関連銘柄（建設・商社・エネルギー）への期待感が高まる可能性がある。為替面では直接的な影響は限定的だが、対ASEAN経済連携の深化は中長期的な円の安定的需要を支える要因となりうる。国内では防衛・海洋安全保障関連産業や再生可能エネルギー分野での二国間協力拡大が見込まれる。"
+  },
+  {
+    "title": "自民 ストーカー対策で首相に提言 加害者にGPS機器装着も",
+    "japanese_title": "自民党がストーカー対策でGPS装着義務化を提言｜高市首相に緊急提言を手渡し",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015133241000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 自民党調査会は、ストーカー規制法の「禁止命令」対象者へのGPS機器装着制度の調査・研究を求める緊急提言をまとめた。",
+      "2. 被害者に加害者が近づいた際にリアルタイムで通知する仕組みの導入も提言に盛り込まれた。",
+      "3. 提言は高市総理大臣に直接手渡され、今後の法整備・政策立案に向けた具体的な動きが始まった。"
+    ],
+    "points": [
+      "・ GPS装着制度は海外（英国・米国など）では既に導入実績があり、日本での法制化議論が本格化する契機となる",
+      "・ プライバシー権・人権保護とのバランスをどう担保するか、法整備上の課題が焦点となる",
+      "・ 「調査・研究を求める」段階であり、実際の法改正・予算措置には一定の時間を要する見通し"
+    ],
+    "prediction": "今後、法務省・警察庁を中心に制度設計の具体的な検討が進むと見られ、ストーカー規制法改正に向けた議論が活発化する可能性が高い。GPS機器の調達・運用に関する入札や関連予算の計上が実現すれば、セキュリティ・通信関連企業に新たな公共需要が生まれる。一方で、与野党間のプライバシー議論や司法との調整が政策実現のスピードを左右する重要な変数となる。",
+    "ai_interpretation": "このニュースの本質は、経済政策というよりも「公共の安全投資」という観点から捉えるべきであり、テクノロジーを活用した社会課題解決に国家が本腰を入れ始めたシグナルとして読み取れる。日本では少子化・治安維持コストの増大が課題となる中、民間のセキュリティ技術を公的制度に組み込む動きは、GovTech市場の拡大という経済的波及効果をもたらす可能性がある。長期的には、安全・安心な社会環境の整備が生産性向上や生活の質の改善につながり、間接的に経済活力の底上げに寄与するという視点も重要である。",
+    "collected_at": "2026-05-28T06:06:05.856540+09:00",
+    "market_impact": "本ニュースは直接的な株式市場・為替への影響は限定的であるが、GPS追跡技術や監視システムを手がけるセキュリティ関連企業・IT企業には中長期的な需要拡大の期待が生じる可能性がある。国内の防犯・セキュリティ産業や位置情報サービス市場にとっては、制度化が実現した場合に新たなビジネス機会となり得る。また、関連するデータ管理・プライバシー保護技術の需要も高まる可能性がある。"
+  },
+  {
+    "title": "自民・中道国対委員長 補正予算案の審議日程 折り合わず",
+    "japanese_title": "補正予算審議めぐり自民・中道が対立―国会対策委員長会談で折り合いつかず、予算成立に遅延リスク",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015133251000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 今年度補正予算案の審議日程について、自民党が衆参各1日の審議を新提案したが、中道改革連合は衆参各2日の審議を引き続き要求し、双方の主張は平行線をたどった。",
+      "2. 中道改革連合は26日の会談に続き今回も2日ずつの審議を譲らず、野党側が予算内容の十分な精査を求める姿勢を鮮明にしている。",
+      "3. 与野党間の合意形成が難航しており、補正予算案の成立スケジュールが不透明な状況となっている。"
+    ],
+    "points": [
+      "・自民党が当初案から譲歩し「衆参各1日」を新提案した背景にある政治的思惑（早期成立を急ぐ理由）",
+      "・中道改革連合が「各2日」にこだわる理由―予算内容の透明性確保か、政治的存在感のアピールか",
+      "・今後の折衝で公明党や他の野党がどのような調整役を果たすか"
+    ],
+    "prediction": "与野党の協議は継続される見通しだが、双方の立場の隔たりが大きく、第三者を交えた仲介や、審議日数の間をとった妥協案（例：衆参各1.5日相当の実質審議）が模索される可能性がある。補正予算の成立が年度内に間に合わない場合、予定されていた経済対策の執行が翌年度にずれ込み、景気刺激効果が大幅に減衰するリスクがある。政局の不安定化は日銀の金融政策判断にも間接的に影響し、追加利上げ時期の見極めをさらに難しくする要因になり得る。",
+    "ai_interpretation": "このニュースの本質は、単なる「審議日数の争い」ではなく、少数与党化した自民党が野党の協力なしに予算を通せなくなった**日本の政治構造の変化**を象徴している点にある。与党が数の論理で予算を押し通せない状況は、財政運営の予見可能性を低下させ、中長期的な経済政策の信頼性にも影響を与えかねない。日本経済にとっての示唆は、政治的安定なき財政出動は市場の信認を得にくく、真の景気回復効果を引き出すためには与野党の建設的な合意形成プロセスの確立が急務であるという点である。",
+    "collected_at": "2026-05-28T06:06:27.230737+09:00",
+    "market_impact": "補正予算の成立が遅れた場合、財政出動による景気下支え効果の発現が後ずれし、内需関連銘柄や公共投資関連株に短期的な下押し圧力がかかる可能性がある。為替市場においては、財政政策の不確実性が高まることで円相場がやや不安定になるリスクがあるが、影響は限定的とみられる。国内建設・インフラ産業などは補正予算の執行遅延に直接影響を受けるため、事業計画の見直しを迫られる場面も想定される。"
+  },
+  {
+    "title": "給付付き税額控除 制度設計のイメージ案示される 支援対象は？",
+    "japanese_title": "給付付き税額控除の制度設計案が明らかに｜超党派「国民会議」が「給付一本化」方針を提示",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015133211000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 超党派の「国民会議」実務者会議において、給付付き税額控除の具体的な制度設計イメージ案が初めて示された。",
+      "2. 制度の早期かつ円滑な実施を優先するため、税額控除と給付を統合し「給付に一本化する」仕組みが核心として盛り込まれた。",
+      "3. 出席者からは概ね理解を示す意見が上がっており、超党派での合意形成に向けた議論が前進している。"
+    ],
+    "points": [
+      "・「給付に一本化」という方針が、所得捕捉の精度やマイナンバー活用の徹底を前提としている点",
+      "・支援対象（低所得者・子育て世帯・高齢者など）の範囲と給付水準の設定が制度の実効性を左右する重要課題である点",
+      "・超党派合意という政治的枠組みが、制度の持続可能性と立法化スピードに直結している点"
+    ],
+    "prediction": "制度設計の詳細（対象者・給付額・財源）が固まるにつれ、国会審議や与野党間の調整が本格化し、早ければ次期通常国会での法案提出が視野に入ってくる。財源については消費税や社会保険料との連動が議論される可能性が高く、国民負担率をめぐる議論が再燃する可能性がある。実施時期や給付水準が明確になった段階で、家計の可処分所得改善への期待感から個人消費関連指標に先行反応が出ることも予想される。",
+    "ai_interpretation": "給付付き税額控除は「働いても貧しい」ワーキングプアや低所得層を直接支援する仕組みとして、欧米では既に定着しており、日本の格差是正政策における構造的な「空白」を埋める制度として本質的な意義を持つ。「給付一本化」という選択は行政の簡素化を優先する現実路線であり、複雑な税制改正を避けることで早期実現を狙う戦略的判断と読み取れる。ただし、所得把握の精度向上や給付の公平性確保が伴わなければ、制度への信頼と効果の両面で限界が生じるため、デジタル基盤整備との一体的推進が日本経済の包摂性向上の鍵となる。",
+    "collected_at": "2026-05-28T06:06:47.279253+09:00",
+    "market_impact": "低〜中所得者層への直接給付が実現すれば、個人消費の底上げ効果が期待され、内需関連株（小売・食品・外食セクター）にとって中長期的なプラス材料となり得る。一方、財源確保の方法次第では財政悪化懸念が意識され、円安圧力や国債金利の上昇リスクにつながる可能性もある。また、給付事務を担うデジタルインフラ（マイナンバー活用等）の整備需要が高まれば、IT・行政DX関連企業にも恩恵が及ぶ可能性がある。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-05-28",
+  "currentCategory": "japan_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-05-28.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-05-27",
+    "href": "2026-05-27.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
