@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Slate Auto will announce pricing and take preorders for its EV on June 24",
+    "japanese_title": "ベゾス出資のEVスタートアップ「Slate Auto」、6月24日に価格発表と予約受付を開始",
+    "url": "https://techcrunch.com/2026/05/28/slate-auto-will-announce-pricing-and-take-preorders-for-its-ev-on-june-24/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Bezos（ベゾス）が出資するEVスタートアップ「Slate Auto」が、2025年6月24日に車両の最終価格を発表し、予約受付を開始する予定。",
+      "2. 同社の電気自動車は今年末までに出荷開始を目指しており、価格発表はその重要なマイルストーンとなる。",
+      "3. これまで最終的な価格は未公表であり、今回の発表が市場からの注目を集めている。"
+    ],
+    "points": [
+      "・ジェフ・ベゾスという著名投資家が後ろ盾となっており、資金力・信頼性において市場の関心が高い",
+      "・最終価格がまだ未公表という点で、発表内容が競争力を左右する重要な要素となる",
+      "・2025年末出荷という強気なスケジュールを掲げており、製造・供給体制の実現可能性が問われる"
+    ],
+    "prediction": "6月24日の価格発表後、消費者や投資家からの反応によってSlate Autoへの評価が大きく変わる可能性がある。価格が競合他社（テスラなど）と比較して魅力的であれば、予約が急増し注目度が一気に高まるだろう。一方、年末出荷という目標に対して製造面での課題が表面化した場合、スタートアップならではの信頼性リスクが問われることになる。",
+    "ai_interpretation": "このニュースの本質は、単なる価格発表にとどまらず、「ベゾス系EVスタートアップが市場に本格参入できるか否か」の試金石となる点にある。EV市場全体が普及期から競争激化フェーズに入る中、新規参入者が価格と納期の両面で信頼を勝ち取れるかが問われている。Slate Autoの成否は、今後のEVスタートアップ全体への投資家心理や市場構造にも影響を与えうる重要な事例となるだろう。",
+    "collected_at": "2026-05-29T06:09:36.797607+09:00",
+    "background": "Slate Autoは、Amazonの創業者ジェフ・ベゾスが支援するEVスタートアップとして注目を集めており、シンプルで手頃な価格帯の電気自動車市場への参入を目指している。テスラやRivianなど競合他社がひしめくEV市場において、低価格路線での差別化が期待されている。今年末の出荷開始に向け、6月24日の価格発表と予約受付開始は量産・販売フェーズへの本格移行を示すタイミングとなる。"
+  },
+  {
+    "title": "Asana acquires no-code agent-builder Stack AI",
+    "japanese_title": "Asana、ノーコードAIエージェント構築ツール「Stack AI」を買収——AIワークフロー機能を強化",
+    "url": "https://techcrunch.com/2026/05/28/asana-acquires-no-code-agent-builder-stack-ai/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. プロジェクト管理SaaSのAsanaが、ノーコードでAIエージェントを構築できるStack AIを買収した。",
+      "2. AsanaはStack AIを自社のAIワークフローツール群に統合する方針を示している。",
+      "3. この買収により、Asanaはコーディング不要でAI活用できる機能を拡充し、競争力強化を図る。"
+    ],
+    "points": [
+      "・ノーコードという点が重要で、技術者でない一般ビジネスユーザーでもAIエージェントを構築・活用できる民主化の流れを加速させる",
+      "・AsanaのAIツール群（AI Studio等）との統合により、プロジェクト管理×AIエージェントという独自のポジションを確立できる可能性がある",
+      "・エンタープライズ向けSaaSにおけるM&AによるAI能力獲得という戦略トレンドを象徴する動きである"
+    ],
+    "prediction": "Asanaは買収したStack AIの技術を自社プラットフォームに深く統合し、ユーザーが業務フローに合わせたAIエージェントを独自構築できる機能を近い将来リリースすると考えられる。これにより既存顧客のエンゲージメント向上と新規エンタープライズ顧客の獲得を狙う戦略が加速するだろう。一方で、競合他社も同様のAIエージェント機能強化を進めており、差別化の維持が課題となる。",
+    "ai_interpretation": "このニュースの本質は、プロジェクト管理ツールが「タスク管理」から「AIエージェントのオーケストレーション基盤」へと進化しようとしていることを示している。「ノーコード」というキーワードが示すように、AI活用の主役が一部の技術者から一般ビジネスパーソン全体へと移行する転換点にあり、Asanaはそのゲートキーパーとなることを狙っている。SaaSにおけるAI機能競争は今後ますます「いかに素早く・簡単にAIを業務に組み込めるか」という体験設計の勝負になるといえる。",
+    "collected_at": "2026-05-29T06:09:54.004894+09:00",
+    "background": "プロジェクト管理市場ではMonday.comやNotionなどとの競争が激化しており、各社がAI機能の拡充に注力している。Asanaも「AI Studio」などのAI機能を段階的に強化してきたが、より高度なAIエージェント構築機能のニーズが高まっていた。Stack AIはノーコードでLLMを活用したワークフローやエージェントを構築できるプラットフォームとして注目を集めていた。"
+  },
+  {
+    "title": "Bluesky embraces long-form content to counter X Articles",
+    "japanese_title": "Blueskyが長文コンテンツ機能を導入——XのArticles機能に真っ向から対抗",
+    "url": "https://techcrunch.com/2026/05/28/bluesky-embraces-long-form-content-to-counter-x-articles/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. ソーシャルメディアプラットフォーム「Bluesky」が、長文コンテンツに対応する新機能を最新アップデートで追加した。",
+      "2. この動きは、X（旧Twitter）が提供する長文投稿機能「Articles」に対抗するものと位置づけられる。",
+      "3. Blueskyは短文投稿プラットフォームから、より幅広いコンテンツ形式をサポートする総合プラットフォームへと進化しつつある。"
+    ],
+    "points": [
+      "・XのArticles機能はPremium（有料）会員限定だが、Blueskyが無料で長文機能を提供する場合、差別化の大きな武器になり得る",
+      "・ブロガーやジャーナリスト、クリエイターなど「書く」ユーザー層をBlueskyに呼び込む可能性がある",
+      "・分散型プロトコル「AT Protocol」を基盤とするBlueskyが長文対応することで、オープンなコンテンツエコシステムの拡張につながる"
+    ],
+    "prediction": "Blueskyが長文機能を充実させることで、Medium・Substackなどのブログ・ニュースレタープラットフォームとも競合する可能性が出てくる。クリエイターやインフルエンサーにとってBlueskyの魅力が高まり、ユーザー数のさらなる増加が期待される。一方、Xも対抗策として機能強化や価格戦略の見直しを迫られる展開になるだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる「機能追加」ではなく、ソーシャルメディアが「短文投稿の場」から「総合コンテンツプラットフォーム」へと変容しているパラダイムシフトを象徴している点にある。プラットフォーム間の競争軸が「ユーザー数」から「コンテンツの深さと多様性」へとシフトしており、誰がクリエイターエコノミーを制するかが今後の覇権を左右する鍵となる。Blueskyの今回の動きは、分散型・オープンなインターネットの理念を守りながら商業的にも成長しようとする、難しいバランスへの挑戦でもある。",
+    "collected_at": "2026-05-29T06:10:12.858784+09:00",
+    "background": "Xがサブスクリプションサービス「X Premium」の目玉機能として長文記事投稿機能「Articles」を提供し始めたことで、ソーシャルメディア上での長文コンテンツ需要が高まっていた。Blueskyはもともと分散型SNSの代替プラットフォームとしてTwitter難民を取り込んできたが、機能面での差別化が課題となっていた。こうした競争環境の中で、Blueskyは長文対応機能の追加により、クリエイターやライターなどより多様なユーザー層の獲得を狙っている。"
+  },
+  {
+    "title": "The $6 Billion Chinese Startup Trying to Build Hands for Every Robot",
+    "japanese_title": "企業評価額6,600億円超：中国スタートアップ「LinkerBot」が全ロボット向け汎用ハンドの世界標準を狙う",
+    "url": "https://www.wired.com/story/made-in-china-the-dollar6-billion-chinese-startup-making-hands-for-humanoids/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. 中国スタートアップLinkerBotは、わずか約9万円（600ドル）から購入できる高度な巧緻性を持つロボットハンドを開発・製造している。",
+      "2. ヒューマノイドロボットや自動化工場向けの「業界標準」となることを目標に掲げ、企業評価額は60億ドル（約9,000億円）に達している。",
+      "3. 最終的には人間の労働そのものを代替することを長期ビジョンとして掲げている。"
+    ],
+    "points": [
+      "・ロボットハンドを600ドルという破格の低価格で提供し、業界のコスト構造を根本から変える可能性がある",
+      "・特定製品ではなく「プラットフォーム・標準規格」としての地位確立を狙っており、AndroidのOS戦略に近い思想を持つ",
+      "・評価額60億ドルという巨大なバリュエーションは、投資家がロボット部品市場の爆発的成長を確信していることを示す"
+    ],
+    "prediction": "ヒューマノイドロボット市場の拡大とともに、LinkerBotのハンドが業界標準として採用されれば、同社は「ロボットのインテル」的な存在になり得る。一方で、米中技術摩擦の激化により、米国や欧州市場での販売・調達に規制リスクが生じる可能性も高い。日本や欧米の競合他社が低価格化・標準化に追随するか、差別化戦略を取るかが今後の競争軸となるだろう。",
+    "ai_interpretation": "このニュースの本質は、「ロボットの身体部品の民主化」という産業的転換点を示している点にある。高価で特注品だったロボットハンドがコモディティ化することで、ロボット導入の裾野が中小製造業にまで広がり、労働市場への影響は想定より早く・広く及ぶ可能性がある。また、中国企業がハードウェアの「標準」を握ることは、単なるビジネス競争を超え、次世代製造業の主導権争いという地政学的意味合いをも帯びている。",
+    "collected_at": "2026-05-29T06:10:32.538003+09:00",
+    "background": "世界的なヒューマノイドロボットブームを背景に、Tesla（Optimus）やFigure AIなど多くのロボット企業がロボットの「手」の高度化に苦心している。ロボットハンドは従来コストが高く汎用性に乏しかったため、普及の大きな障壁となっていた。LinkerBotはその課題にコスト破壊的なアプローチで挑み、中国の製造競争力を武器に市場参入を果たした。"
+  },
+  {
+    "title": "New Moms Are Returning to Coding Jobs Radically Reshaped by AI",
+    "japanese_title": "育休明けの新米ママたちが直面するAI変革後のコーディング職場の現実",
+    "url": "https://www.wired.com/story/women-parental-leave-return-office-ai/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. 出産・育児休暇を経て職場復帰したソフトウェア開発者の新米母親たちが、AIによって劇的に変化した職場環境に戸惑いを感じている。",
+      "2. 育休中にAI技術が急速に普及し、復帰後には業務フローやツール、求められるスキルセットが大きく様変わりしている。",
+      "3. キャリアの空白期間とAI革命が重なったことで、復帰女性エンジニアは二重のハンディキャップを背負う形となっている。"
+    ],
+    "points": [
+      "・育休中にAIツールが標準化され、復帰者がまるで「別の会社」に戻ってきたように感じるギャップの深刻さ",
+      "・女性エンジニアのキャリア継続リスクが、AI変革によってさらに拡大している可能性",
+      "・企業側のオンボーディング・リスキリング支援が追いついていないという構造的問題"
+    ],
+    "prediction": "AIの進化スピードが落ちない限り、育休・介護休暇明けの復帰者が感じる技術的ギャップは今後も拡大し続けると考えられる。一方で、この問題が社会的に認知されることで、企業や政府がAI時代に対応した復職支援プログラムやリスキリング制度を整備する動きが加速する可能性がある。中長期的には、育休取得者へのAI教育機会の提供が、ダイバーシティ推進の重要指標のひとつになるかもしれない。",
+    "ai_interpretation": "このニュースの本質は、単なる「技術についていけない」という個人の問題ではなく、AI変革の速度が既存の社会制度（育児休暇・復職支援）を追い越してしまったという構造的矛盾を示している。特に育児負担が女性に偏りやすい社会では、AIリテラシーの格差がジェンダー格差を再生産・拡大するリスクをはらんでいる。技術革新を「誰もが取り残されない形で」進めるためには、人間のライフイベントに配慮した柔軟な学習・支援の仕組みづくりが急務であることを、このニュースは鋭く問いかけている。",
+    "collected_at": "2026-05-29T06:10:53.375195+09:00",
+    "background": "2023〜2024年にかけてChatGPTやGitHub Copilotなどの生成AI・AIコーディング支援ツールが爆発的に普及し、ソフトウェア開発の現場は急速に変革された。その変革期にちょうど産休・育休を取得していた女性エンジニアたちは、技術トレンドのキャッチアップの機会を失ったまま復職を迎えることになった。もともと育休復帰者は職場への再適応に課題を抱えやすいが、今回はAIという前例のない変化が加わり、その難易度が一層高まっている。"
+  },
+  {
+    "title": "FBI says Google engineer used internal search data to win $1.2M on Polymarket",
+    "japanese_title": "FBI捜査：GoogleエンジニアがPolymarketで内部検索データを悪用し12億円超を不正利益か",
+    "url": "https://arstechnica.com/tech-policy/2026/05/fbi-says-google-engineer-used-internal-search-data-to-win-1-2m-on-polymarket/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. Googleのエンジニアが社内の検索データにアクセスし、予測市場「Polymarket」の賭けの結果を事前に把握していた疑いがある。",
+      "2. FBIの調査によると、当該エンジニアはその内部情報を利用して約120万ドル（約1.8億円）の利益を得たとされる。",
+      "3. インサイダー情報を用いた予測市場での不正行為として、FBIが捜査に乗り出している。"
+    ],
+    "points": [
+      "・Google社内の検索データが、予測市場の結果を事前に知るために悪用されたという前例のない事案",
+      "・分散型・暗号資産ベースの予測市場においても、不正行為がFBIの捜査対象になり得ることが明確になった点",
+      "・テック大手の従業員による内部情報の私的利用に関するコンプライアンスおよびセキュリティ管理の脆弱性が露呈"
+    ],
+    "prediction": "当該エンジニアはコンピューター詐欺や証券詐欺に相当する罪で起訴される可能性が高く、Googleも内部データアクセス管理の見直しを迫られるだろう。また、Polymarketをはじめとする予測市場プラットフォームに対して、規制当局の監視強化や本人確認・不正検知の義務付けが議論される契機となる可能性がある。さらに、類似のインサイダー的行為が他のテック企業でも行われていないか、業界全体への波及調査も考えられる。",
+    "ai_interpretation": "このニュースの本質は、「情報の非対称性」が新たなデジタル金融市場においても深刻な不正リスクをもたらすという点にある。伝統的な株式市場におけるインサイダー取引と構造的に同一の問題が、ブロックチェーンベースの予測市場でも再現されており、「分散型＝公正」という前提が崩れる事例と言える。テクノロジーの進化に伴い、内部情報の定義と管理、そしてデジタル市場における法的規制の整備が急務であることを強く示唆している。",
+    "collected_at": "2026-05-29T06:11:11.735183+09:00",
+    "background": "Polymarketは現実の出来事に対して賭けを行う分散型予測市場プラットフォームであり、近年急速に注目を集めている。Googleは世界最大級の検索エンジンを運営しており、その内部データはトレンドや検索動向など市場予測に直結する極めて機密性の高い情報を含む。今回の件は、テクノロジー企業の内部情報へのアクセス権限を持つ従業員による「インサイダートレーディング」的行為として問題視されている。"
+  },
+  {
+    "title": "Apple working to cram massive Gemini model into iPhone to power new Siri",
+    "japanese_title": "Apple、iPhone向けにGeminiモデルを小型化──次世代Siriの大幅強化へ向けた取り組みが明らかに",
+    "url": "https://arstechnica.com/ai/2026/05/apple-reportedly-trying-to-distill-googles-multi-trillion-parameter-gemini-ai-to-run-on-iphone/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. AppleはGoogleのGemini大規模言語モデルをiPhone上で動作させるべく、モデルの小型化（軽量化）に取り組んでいる。",
+      "2. 新しいSiriの能力を大幅に向上させることが目的であり、オンデバイス処理とクラウド処理の組み合わせが有力視されている。",
+      "3. 完全なオンデバイス動作は現状の技術的制約から困難であり、クラウドコンポーネントの併用はほぼ避けられないとみられる。"
+    ],
+    "points": [
+      "・ AppleがGoogleのGeminiを採用する場合、従来のOpenAI（ChatGPT）との関係に加え、AI提携戦略が複雑化・多様化する",
+      "・ クラウド処理の利用はAppleが強調する「プライバシー重視」の姿勢と一定の緊張関係を生む可能性がある",
+      "・ オンデバイスAIの限界という業界全体の課題が改めて浮き彫りになっており、エッジとクラウドのハイブリッドモデルが業界標準になりつつある"
+    ],
+    "prediction": "AppleはGemini Nanoのような軽量版をベースに、iPhone上での動作に最適化したカスタムモデルの開発を進めると見られ、次世代iOSやiPhoneの発表時に具体的な成果が示される可能性がある。クラウド処理部分については、Appleが独自の「プライベートクラウドコンピュート」の仕組みを活用することでプライバシー問題をある程度クリアしようとするだろう。ただし、GoogleとAppleという競合関係にある企業間の深い技術提携には、ビジネス・規制両面での障壁も予想される。",
+    "ai_interpretation": "このニュースが示す本質は、「スマートフォン上のAI」という戦場において、もはや単一企業の自社技術だけでは競争力を維持できない時代に突入したという現実である。Appleのようなハードウェア・OS・AIを垂直統合してきた企業でさえ、外部の大規模モデルに依存せざるを得ない状況は、AIの開発コストと技術的複雑さが従来の産業構造を根本から変えつつあることを象徴している。また、プライバシーをブランド価値の核心に置いてきたAppleがクラウド依存を認めざるを得ない点は、「AI性能」と「プライバシー保護」のトレードオフが今後のテック業界全体の根本的な課題になることを示唆している。",
+    "collected_at": "2026-05-29T06:11:34.763769+09:00",
+    "background": "AppleはWWDC 2024で「Apple Intelligence」を発表し、独自AIとOpenAIのChatGPTを組み合わせたSiri強化を打ち出したが、競合他社と比べてAI機能の遅れが指摘されてきた。一方でGoogleのGeminiは高い性能を持つが、フルモデルは非常に大きく、スマートフォンへの搭載には大幅な圧縮・最適化が必要となる。AppleはユーザープライバシーとAI性能の両立を目指しており、GoogleとのAI分野での提携拡大が選択肢として浮上している。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-05-29",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-05-28",
+    "href": "2026-05-28.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
