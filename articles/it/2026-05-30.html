@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "So you’ve heard these AI terms and nodded along; let’s fix that",
+    "japanese_title": "今さら聞けないAI専門用語を完全解説！知っておくべき重要ワード一覧",
+    "url": "https://techcrunch.com/2026/05/29/artificial-intelligence-definition-glossary-hallucinations-guide-to-common-ai-terms/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. AIの急速な普及に伴い、専門用語や新しいスラングが爆発的に増加している。",
+      "2. 多くの人が意味を理解しないままAI関連の言葉を使っている現状がある。",
+      "3. 本記事では、AIに関する重要な用語・フレーズを整理したグロッサリー（用語集）を提供している。"
+    ],
+    "points": [
+      "・ AI用語の「なんとなく理解」問題が社会的に広がっており、正確なリテラシー教育の必要性が高まっている",
+      "・ 技術者だけでなく一般ユーザーを対象とした、わかりやすい用語解説ニーズが急増している",
+      "・ 用語の定義が標準化されていないケースも多く、メディアや教育機関による正確な情報発信が重要になっている"
+    ],
+    "prediction": "AIの進化とともに新たな専門用語はさらに増え続けると予想され、こうした「AI用語解説コンテンツ」の需要は今後も高まるだろう。学校教育やビジネス研修においても、AIリテラシー教育の一環として用語理解が必須スキルとして位置づけられる可能性がある。また、国や言語によって翻訳・解釈が異なるケースも増え、国際的な用語統一に向けた議論も活発化すると考えられる。",
+    "ai_interpretation": "このニュースが示す本質は、AI技術の「民主化」が進む一方で、理解の深さに大きな格差が生まれているという社会的課題である。用語を知っているかどうかではなく、その概念を正確に理解しているかどうかが、これからのデジタル社会における「情報リテラシーの新基準」になりつつある。つまり、AI用語の習得は単なる知識の問題ではなく、テクノロジーと社会の関係を正しく読み解くための「批判的思考力」の涵養と直結している。",
+    "collected_at": "2026-05-30T06:10:10.867576+09:00",
+    "background": "ChatGPTをはじめとする生成AIの登場により、AIテクノロジーが一般社会に急速に浸透し始めた。それに伴い、「LLM」「ハルシネーション」「プロンプト」など、従来は専門家のみが使っていた技術用語が日常会話に登場するようになった。しかし、正確な意味を理解しないまま使用するケースが多く、情報の誤解や混乱を招く問題が顕在化している。"
+  },
+  {
+    "title": "What happens when companies become too AI-pilled?",
+    "japanese_title": "AI過信が招く大量解雇の波——企業が「AIに依存しすぎる」と何が起きるのか？",
+    "url": "https://techcrunch.com/video/what-happens-when-companies-become-too-ai-pilled/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Box創業者のアーロン・レヴィ氏が、AIで仕事を代替できると判断する経営層は実際の業務内容を最も理解していない層だと警鐘を鳴らし、これを「AIサイコシス（AI精神病）」と表現した。",
+      "2. プロジェクト管理ツールのClickUpはAIエージェント導入を理由に全従業員の22%を削減するなど、AI活用を名目とした人員削減が加速している。",
+      "3. 2026年のテック業界のレイオフはすでに2025年全体に匹敵する規模に達しており、AI主導のリストラが業界全体に広がっている。"
+    ],
+    "points": [
+      "・「AIサイコシス」という概念——現場の業務実態を理解しない経営層がAIの能力を過大評価し、短絡的な人員削減に走るリスク",
+      "・ClickUpの22%削減という具体的な数字が示す、AIを口実にしたリストラの現実化と加速",
+      "・2026年のテックレイオフが2025年全体に並ぶペースという異例の速さ——AI導入による雇用破壊が統計的に可視化されつつある点"
+    ],
+    "prediction": "AI技術の進化が続く限り、同様の「AI名目リストラ」は他のテック企業にも波及する可能性が高く、短期的には雇用市場の不安定化が続くと見られる。一方で、AIが実際には代替できない業務の範囲が明らかになるにつれ、過剰なAI依存に対する反動や、雇用保護に関する規制論議が活発化することも予想される。中長期的には「人間とAIの協働」モデルへの再評価が進む可能性がある。",
+    "ai_interpretation": "このニュースの本質は、技術的な進歩そのものよりも、**「誰が・何を根拠に意思決定するか」という組織の構造的問題**にある。現場を知らない意思決定者がAIの能力を盲信することで、実際には代替困難な暗黙知や人間関係に依存した業務まで削減対象となるリスクがある。「AIサイコシス」という表現は、テクノロジー礼賛が合理的判断を歪める現代特有の組織病理を鋭く指摘しており、AI導入の成否は技術力よりも経営リテラシーに依存するという重要な示唆を含んでいる。",
+    "collected_at": "2026-05-30T06:10:31.027052+09:00",
+    "background": "ChatGPTをはじめとする生成AIの急速な進化により、多くの企業がコスト削減と効率化を目的にAI導入を加速させている。特に2024〜2025年にかけてAIエージェント技術が実用段階に入ったことで、従来人間が担っていた業務の自動化が現実味を帯び始めた。こうした流れを受け、経営判断として人員削減とAI置き換えをセットで実施する企業が急増している。"
+  },
+  {
+    "title": "After Nvidia’s $20B not-aqui-hire, AI chip startup Groq reportedly raising $650M",
+    "japanese_title": "AIチップ新興企業Groq、AI推論事業へ転換で6億5000万ドルの資金調達へ",
+    "url": "https://techcrunch.com/2026/05/29/after-nvidias-20b-not-aqui-hire-ai-chip-startup-groq-reportedly-raising-650m/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. AIチップメーカーのGroqが、社内資金調達として6億5000万ドル（約950億円）の調達を目指していることが報じられた。",
+      "2. 同社はハードウェア事業から、AIモデルの応答精度を高める「AI推論（インファレンス）」事業へのピボットを進めている。",
+      "3. このニュースはNvidiaによる約200億ドル規模の非買収型投資案件の直後に報じられており、AI半導体業界の再編が加速している。"
+    ],
+    "points": [
+      "・ ハードウェアからAIインファレンス（推論）サービスへの明確な事業ピボットが行われている点",
+      "・ 調達額6億5000万ドルという大型資金がAIインフラ競争の激しさを物語っている点",
+      "・ NvidiaのH100/H200が市場を支配する中、Groqが独自ポジションで生き残りを図っている点"
+    ],
+    "prediction": "資金調達が成功すれば、GroqはAI推論プラットフォームとしてのサービス拡充や、クラウドプロバイダーとの連携強化を進めるとみられる。一方でOpenAIやAmazon、Googleなども推論効率化に力を入れており、競争は一層激化する見込みだ。Nvidiaへの依存脱却を目指す企業からの需要を取り込めるかが、Groqの成否を左右する鍵となるだろう。",
+    "ai_interpretation": "このニュースの本質は、AIビジネスの重心が「モデル開発・学習」から「推論・運用の効率化」へシフトしつつあることを象徴している点にある。Groqのピボットは単なる一企業の戦略変更ではなく、AIインフラ産業全体が「速く・安く・効率的に動かす」フェーズに突入したことを示すシグナルと言える。今後はチップ性能よりも「推論コストをいかに下げられるか」が競争軸となり、新たなプレイヤーが台頭する可能性を示唆している。",
+    "collected_at": "2026-05-30T06:10:50.224425+09:00",
+    "background": "AIの普及に伴い、モデルのトレーニングだけでなく、実際のサービス運用に使われる「推論（インファレンス）」の需要が急増している。Groqはこれまで独自のLPU（Language Processing Unit）チップで注目を集めてきたが、ハードウェア単体での競争が激化するNvidia優位の市場において、ソフトウェア・サービス寄りの戦略転換を図っている。Nvidiaの巨大資本が市場を席巻する中、差別化のためにインファレンス特化というニッチ戦略を選んだと見られる。"
+  },
+  {
+    "title": "We Asked the ‘Future of Truth’ Author to Explain How He Used AI. It Didn’t Go Well",
+    "japanese_title": "AI時代の真実とは？『未来の真実』著者がAI生成引用を使用して炎上、信頼性に深刻な疑問",
+    "url": "https://www.wired.com/story/future-of-truth-ai-interview/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. AIが現実認識に与える影響を論じた書籍『Future of Truth』が、皮肉にもAIが生成した架空の引用を使用していたとして批判を浴びた。",
+      "2. 著者にAIの使用方法について説明を求めたところ、十分な回答が得られず問題はさらに深刻化した。",
+      "3. 引用の捏造にとどまらず、書籍全体の信頼性・学術的誠実さに関する根本的な問題が浮上している。"
+    ],
+    "points": [
+      "・ AIについて警鐘を鳴らす本がまさにAIの欠陥（ハルシネーション）の被害者になるという根本的な皮肉",
+      "・ 著者が問題を指摘された際に明確な説明責任を果たせなかった点が信頼性をさらに損なった",
+      "・ 引用の捏造という表面的問題を超え、書籍全体の事実確認プロセスそのものへの疑念が拡大している"
+    ],
+    "prediction": "出版社や著者は書籍の修正・謝罪対応を迫られる可能性が高く、最悪の場合は回収・絶版となるリスクもある。この事例は出版業界におけるAI使用ガイドラインの整備を加速させる契機となるだろう。また、AI関連書籍に対する読者・メディアの検証の目はより厳しくなることが予想される。",
+    "ai_interpretation": "このニュースの本質は、「AIのリスクを語る者がAIのリスクに無自覚だった」という構造的矛盾にある。専門家であっても生成AIの出力をそのまま信用するという過信が、情報の信頼性を根底から揺るがす現代の危険性を象徴している。AIリテラシーは知識として語るだけでなく、実践的な運用規律として内面化されなければならないことを強く示唆している。",
+    "collected_at": "2026-05-30T06:11:07.199024+09:00",
+    "background": "生成AIの普及により、フェイクニュースや情報操作の問題が社会的に注目される中、AIと真実の関係を扱う書籍への期待は高かった。しかし当の著者自身がAIツールを不適切に使用し、事実確認を怠ったことで、テーマと行動の矛盾が露呈した。こうした「AI幻覚（ハルシネーション）」による誤情報混入は、学術・出版分野でも深刻な課題となっている。"
+  },
+  {
+    "title": "The Vatican’s Man Inside Anthropic",
+    "japanese_title": "バチカンがAnthropicに影響力を持つ：ローマ教皇レオ14世とAI業界の意外な接点",
+    "url": "https://www.wired.com/story/the-vaticans-man-inside-anthropic/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. バチカン（ローマ教皇庁）がAI企業Anthropicに対して何らかの影響力・接点を持つ人物を通じて関与していることが明らかになった。",
+      "2. 新教皇レオ14世はAIの「武装解除」（規制・抑止）を完全には実現できないものの、AI業界からの注目と一定の関心を集めている。",
+      "3. 宗教的・倫理的権威とテクノロジー業界の最先端企業が交わる異例の構図が浮かび上がっている。"
+    ],
+    "points": [
+      "・ バチカンがAnthropicという最先端のAI企業内部に「関係者」を持つという異例の構図",
+      "・ 教皇がAI業界に対して倫理的・精神的な観点から影響を与えようとしている姿勢",
+      "・ AI規制において国家・政府機関だけでなく宗教的権威も主要なプレイヤーになりつつある新潮流"
+    ],
+    "prediction": "バチカンとAI企業の関係はさらに深まり、AI開発における倫理的ガイドラインの策定において宗教的視点が取り込まれる可能性がある。ただし、拘束力のある規制権限を持たないバチカンの影響力は「道義的・象徴的」なものにとどまる場面も多いと予想される。一方で、世界12億人以上のカトリック信者を背景とした「世論形成力」はAI企業も無視できない圧力となり得る。",
+    "ai_interpretation": "このニュースの本質は、AI規制・ガバナンスをめぐる主体が政府や技術者コミュニティを超え、宗教・文化的権威にまで拡大しつつあるという時代的転換を示している。Anthropicのような「安全志向」を掲げるAI企業にとって、バチカンとの関係は倫理的正当性を対外的にアピールする戦略的価値も持つ。テクノロジーと宗教・人文的価値観の融合という21世紀的テーマが、具体的な企業レベルで実践されようとしている点が最も注目すべき示唆である。",
+    "collected_at": "2026-05-30T06:11:29.559379+09:00",
+    "background": "近年、AIの急速な発展に伴い、倫理・道徳的観点からの規制や監督の必要性が世界的に議論されてきた。カトリック教会はかねてよりAI倫理に関心を示しており、バチカンは2020年に「AI倫理に関するローマの呼びかけ」を発表するなど積極的な姿勢を見せている。新教皇レオ14世の就任を機に、宗教的権威がテクノロジー業界に対して直接的な影響力を持とうとする動きが加速しているとみられる。"
+  },
+  {
+    "title": "Startup offers free home cleaning—if it can record it all for robot training",
+    "japanese_title": "ロボット訓練データ収集のため「無料で家を掃除します」──スタートアップの斬新なビジネスモデルが話題",
+    "url": "https://arstechnica.com/ai/2026/05/robot-training-startup-will-send-humans-wearing-cameras-to-clean-your-home/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. あるスタートアップが、ロボットのAI訓練用データを収集することを条件に、一般家庭に無料の清掃サービスを提供するという新たなビジネスモデルを開始した。",
+      "2. 清掃スタッフはヘッドマウントカメラを装着し、家事作業の一部始終を録画することで、ロボットが家庭環境を学習するための映像データを取得する。",
+      "3. これは人間にカメラを装着させてロボット訓練データを収集するという手法の最新事例であり、業界内で注目を集めている。"
+    ],
+    "points": [
+      "・ **データの希少価値**：家庭内という非定型かつプライベートな空間での作業データは、屋外や工場データと比べて収集が極めて困難",
+      "・ **Win-Winモデルの設計**：ユーザーは無料清掃というメリットを受け取り、企業は訓練データを取得するという経済的交換の巧みさ",
+      "・ **プライバシーリスク**：他人の自宅内を詳細に録画することで、間取り・家具・生活習慣などセンシティブな情報が収集される懸念がある"
+    ],
+    "prediction": "このモデルが成功すれば、同様の「サービス無料＋データ提供」型のスタートアップが家事代行・育児支援・介護など他の生活サービス分野にも拡大する可能性がある。一方で、個人情報保護規制（GDPRや各国のプライバシー法）との摩擦が生じ、録画内容の管理・削除ポリシーをめぐる法的議論が活発化すると予想される。長期的にはこのデータが汎用家庭用ロボットの商業化を大幅に前倒しする可能性もある。",
+    "ai_interpretation": "このニュースの本質は、**「データ収集コストをサービス提供で相殺する」という新たなデータエコノミーの形**が生活インフラ領域に侵入してきた点にある。ユーザーは「無料サービス」の対価として自宅という最もプライベートな空間のデータを提供しており、SNS時代に個人情報と引き換えに無料サービスを享受してきた構造が、今度は物理空間・身体動作へと拡張されつつあることを示唆している。AIロボット開発における「データの民主化」と「プライバシーの商品化」の緊張関係が、今後ますます社会的議論の焦点となるだろう。",
+    "collected_at": "2026-05-30T06:11:51.409450+09:00",
+    "background": "ロボット工学・AI分野では、汎用ロボットに家事などの複雑な動作を習得させるため、大量の実環境データが必要とされている。テスラのOptimuspやFigure AIなど多くの企業がこの「身体化AI（Embodied AI）」の開発を加速させており、リアルな家庭環境での動作データは特に希少で価値が高い。従来はロボット自体に学習させる方法が主流だったが、人間の動作を録画・模倣させる「行動クローニング」手法への注目が高まっている。"
+  },
+  {
+    "title": "Fed up with vibe coders, dev sneaks data-nuking prompt injection into their code",
+    "japanese_title": "「バイブコーダーに激怒した開発者、AIコーディングエージェントにデータ削除命令を密かに仕込む」",
+    "url": "https://arstechnica.com/security/2026/05/fed-up-with-vibe-coders-dev-sneaks-data-nuking-prompt-injection-into-their-code/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. Javaライブラリ「jqwik」の開発者が、AIコーディングエージェント向けに隠しプロンプトインジェクションをコードに埋め込んだ。",
+      "2. その命令はAIエージェントがアプリの出力データを削除するよう誘導するものだった。",
+      "3. 「バイブコーディング（AIに丸投げして雰囲気でコードを書く行為）」への不満が背景にあるとされる。"
+    ],
+    "points": [
+      "・ AIコーディングエージェントがサードパーティのコード・ドキュメントを盲目的に信頼する脆弱性が露呈した",
+      "・ OSSライブラリへの「プロンプトインジェクション」という新たなサプライチェーン攻撃の手口が実証された",
+      "・ バイブコーダーへの開発者コミュニティの反発が、悪意ある行動に発展しうるという前例を作った"
+    ],
+    "prediction": "AIコーディングエージェントの普及に伴い、同様のプロンプトインジェクション攻撃がOSSライブラリに仕込まれるケースが増加する可能性がある。セキュリティ研究者やAIツールベンダーは、外部コードやドキュメント内の悪意あるAI命令を検出する仕組みの構築を迫られるだろう。また、OSS利用時のAIエージェントの権限制限や、サンドボックス化の重要性が業界全体で再認識されることになる。",
+    "ai_interpretation": "このニュースは単なる「腹いせ行為」ではなく、AIコーディングエージェント時代における**新たなセキュリティパラダイムシフト**を象徴している。人間が読むコードに加え、「AIが読む命令」も攻撃対象になるという事実は、ソフトウェアサプライチェーンのリスクを根本的に拡大させる。AIへの過度な依存と理解なき開発文化が、技術的リスクだけでなくコミュニティの分断をも引き起こしている点が本質的な問題と言える。",
+    "collected_at": "2026-05-30T06:12:09.286906+09:00",
+    "background": "近年、ChatGPTやCopilotなどのAIコーディングツールを使い、コードをほぼ理解せずにAI任せで開発する「バイブコーディング」が急増している。こうした開発者はライブラリの挙動や依存関係を深く理解せずに使用するため、OSS開発者の間で不満や懸念が高まっていた。今回の開発者はその不満を行動に移し、AIエージェントが読み取るメタデータに破壊的な命令を密かに埋め込んだ。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-05-30",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-05-29",
+    "href": "2026-05-29.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
