@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Snap alums unveil Ghost Angels fund",
+    "japanese_title": "Snap元社員20名が次世代SNSを支援するエンジェルファンド「Ghost Angels」を設立",
+    "url": "https://techcrunch.com/2026/05/30/snap-alums-unveil-ghost-angels-fund/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Snap（スナップチャット運営会社）の卒業生20名が結集し、「Ghost Angels」という投資ファンドを立ち上げた。",
+      "2. 同ファンドは次世代のソーシャルメディア企業への投資・支援を目的としている。",
+      "3. テック業界出身者によるコミュニティ型エンジェル投資の新たな形として注目される。"
+    ],
+    "points": [
+      "・ 20名という大規模な元社員連合による集合知型の投資ファンドである点",
+      "・ 「Ghost（ゴースト）」というSnapのマスコットを想起させるネーミングに、Snapへのリスペクトと独自性が込められている点",
+      "・ 単なる資金提供にとどまらず、SNS業界特有のノウハウ・人脈を創業者に提供できる強みがある点"
+    ],
+    "prediction": "Ghost Angelsは、ソーシャルメディア特化のエンジェルファンドとして、ShopifyやMeta出身者による類似ファンドと競合しながら存在感を高めていくと予想される。投資先からSnapの元同僚ネットワークを活用したユニークな成長支援が生まれ、業界内で注目案件が出てくる可能性が高い。一方で、SNS市場の競争激化と広告市場の不安定さが投資リスクとして課題になるだろう。",
+    "ai_interpretation": "このニュースの本質は「業界特化型の集合知投資」というトレンドの台頭にある。単独のエンジェル投資家ではなく、同じ企業文化・課題を共有した元同僚たちが組織化することで、資金だけでなく「実体験に基づくメンタリング」という差別化された価値を提供できる。これはテック業界において、企業を「卒業した人材」が次世代エコシステムの構築者として機能し始めていることを示す象徴的な動きといえる。",
+    "collected_at": "2026-05-31T05:10:54.372636+09:00",
+    "background": "Snapは独自のAR機能やストーリーズ形式など、ソーシャルメディアの革新を牽引してきた企業であり、その出身者たちは業界に深い知見を持つ。近年、TikTokやBeRealなど新興SNSの台頭により、次世代プラットフォームへの投資熱が高まっている。Snap社自体が成長の踊り場を迎える中、元社員たちが蓄積した経験とネットワークを活かして起業家支援へと転身する流れが生まれた。"
+  },
+  {
+    "title": "‘What a joke’: Github Copilot’s new token-based billing spurs consternation among devs",
+    "japanese_title": "「冗談じゃない」GitHub Copilotのトークン課金制移行に開発者が猛反発──黄金時代の終焉か",
+    "url": "https://techcrunch.com/2026/05/30/what-a-joke-github-copilots-new-token-based-billing-spurs-consternation-among-devs/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. MicrosoftのGitHub Copilotが新たにトークンベースの課金モデルへ移行し、開発者コミュニティから強い不満が噴出している。",
+      "2. 従来の定額制から使用量ベースの課金体系への変更は、コスト予測の困難さや費用増大への懸念を招いている。",
+      "3. この変更はGitHub Copilotの「黄金時代の終わり」と評され、開発者の信頼低下につながる可能性がある。"
+    ],
+    "points": [
+      "・ 定額制から従量課金制への移行により、ヘビーユーザーほど月々のコストが大幅に増加する可能性がある",
+      "・ 「What a joke（冗談じゃない）」という反応に象徴されるように、開発者コミュニティの感情的反発が非常に強い",
+      "・ 競合するAIコーディングツール（Cursor、Windsurf等）への乗り換えを検討するユーザーが増える可能性がある"
+    ],
+    "prediction": "開発者の反発が続けば、MicrosoftはGitHub Copilotの課金モデルを修正・調整せざるを得ない状況に追い込まれる可能性がある。一方、競合他社はこの混乱を好機と捉え、より透明性の高い料金体系をアピールしてシェア奪取を狙うだろう。GitHubが開発者コミュニティの信頼を取り戻せるかどうかが、今後の市場での地位を大きく左右する。",
+    "ai_interpretation": "このニュースの本質は、AIツールの「普及フェーズ」から「収益化フェーズ」への転換点における摩擦を示している。無料・低価格での囲い込みから収益最大化へのシフトは、ユーザーが「依存してしまった後」に行われるという構造的問題を浮き彫りにしている。AI企業が持続可能なビジネスモデルを模索する中、開発者との信頼関係をいかに維持するかが、AIツール市場全体の今後を占う重要な試金石となるだろう。",
+    "collected_at": "2026-05-31T05:11:11.360067+09:00",
+    "background": "GitHub CopilotはMicrosoftがOpenAIと連携して提供するAIコーディング支援ツールで、定額サブスクリプションモデルにより多くの開発者に普及してきた。しかし、AI処理コストの増大やビジネスモデルの見直しを背景に、トークン消費量に応じた従量課金制への移行が発表された。この変更はAIサービス全体でコスト回収圧力が高まる中での決断とみられる。"
+  },
+  {
+    "title": "Meta is reportedly developing an AI pendant",
+    "japanese_title": "Meta、AI搭載ペンダント型デバイスを開発中か――ウェアラブルAIハードウェアへの大型投資戦略が明らかに",
+    "url": "https://techcrunch.com/2026/05/30/meta-is-reportedly-developing-an-ai-pendant/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. MetaがAI機能を搭載したペンダント型ウェアラブルデバイスを開発しているとの報道が浮上した。",
+      "2. Metaはすでにレイバン・スマートグラスなどAI搭載ハードウェアへの積極的な投資を続けている。",
+      "3. 同社がAIをハードウェア領域の中核戦略として位置づけていることが改めて示された形だ。"
+    ],
+    "points": [
+      "・ スマートグラスに続く「ペンダント」という新しいフォームファクターの採用が革新的",
+      "・ AppleのVision ProやHumane AI Pinなど競合するウェアラブルAI市場との競争激化が予想される",
+      "・ Meta AIアシスタントとの連携により、常時接続型のAI体験を日常生活に溶け込ませる狙いがある"
+    ],
+    "prediction": "Metaは今後もAIハードウェアのラインナップを多様化させ、スマートグラス・ペンダント・将来的なARグラスと複数のデバイスを組み合わせたエコシステム構築を目指すと考えられる。ペンダント型デバイスは音声・センサー機能を中心に、ハンズフリーでのAI活用を訴求する製品になる可能性が高い。ただし、Humane AI Pinの苦戦が示すように、ユーザーへの価値提案の明確化が成功の鍵を握るだろう。",
+    "ai_interpretation": "このニュースが示す本質は、AIの戦場が「クラウド・アプリ」から「身体に寄り添うハードウェア」へと移行しつつあるという大きなパラダイムシフトである。Metaはスマートフォンに依存しない独自のAIアクセスポイントを人々の生活に組み込むことで、Google・Appleのプラットフォーム支配から脱却しようとしている。ペンダントというシンプルかつファッション性のあるデバイス選択は、テクノロジーへの心理的障壁を下げ、AI普及の入り口を広げる戦略的に巧みなアプローチと言える。",
+    "collected_at": "2026-05-31T05:11:30.611958+09:00",
+    "background": "MetaはMark Zuckerberg CEOの指揮のもと、メタバース投資の縮小・再編を経て、AIを次の中核事業として据える戦略転換を進めている。すでにRay-Banとの協業によるAIスマートグラスが市場で一定の注目を集めており、ウェアラブル分野での存在感を高めている。こうした流れの中で、ペンダント型という新たなフォームファクターへの参入は、同社のAIハードウェア展開の幅を広げる次の一手と見られる。"
+  },
+  {
+    "title": "Amazon Thinks the Future of Data Centers Depends on a Technical Problem It Just Solved",
+    "japanese_title": "Amazonが解決したデータセンターネットワーキングの技術的突破口がクラウドの未来を変える",
+    "url": "https://www.wired.com/story/amazon-thinks-the-future-of-data-centers-depends-on-a-technical-problem-it-just-solved/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. Amazonはデータセンターのネットワーキングに関する技術的な重大問題を解決したと発表した。",
+      "2. この革新により、同社の巨大なクラウドインフラ内における情報の流通速度が劇的に向上した。",
+      "3. Amazonはこのブレークスルーが将来のデータセンターの在り方を左右する鍵になると位置づけている。"
+    ],
+    "points": [
+      "・データセンター内のネットワーク速度の「劇的な加速」という表現が示す技術的インパクトの大きさ",
+      "・自社クラウドインフラ（AWS）への直接的な競争優位性への貢献",
+      "・業界全体のデータセンター設計に影響を与える可能性のある汎用的な技術革新である点"
+    ],
+    "prediction": "この技術はAWSのサービス品質向上に直結し、AI・大規模言語モデルのトレーニングや推論処理の高速化に活用される可能性が高い。GoogleやMicrosoftなど競合クラウド企業も追随する形で類似技術の開発を加速させるとみられる。また、Amazonが特許取得や技術のオープン化を通じてどう展開するかが、業界標準の形成に大きな影響を与えるだろう。",
+    "ai_interpretation": "このニュースの本質は、クラウドインフラの競争が「計算能力（CPU・GPU）」から「データ転送・ネットワーク効率」という新たな次元に移行しつつあることを示している。AIワークロードの増大により、演算チップ単体の性能より、チップ間・サーバー間をいかに高速・低遅延で結ぶかが競争の核心になってきた。Amazonの今回の発表は、インフラ層での技術革新がAIサービスの質を左右する時代の到来を象徴している。",
+    "collected_at": "2026-05-31T05:11:48.200999+09:00",
+    "background": "AI・機械学習の急速な普及により、データセンターに求められる処理能力と通信速度は飛躍的に増大しており、従来のネットワーキング技術はボトルネックになりつつあった。AWSをはじめとするクラウド大手は、膨大なデータを低遅延で処理するインフラ競争を激化させている。こうした需要の急増を背景に、Amazonは独自のネットワーキング技術の研究開発に多大な投資を行ってきた。"
+  },
+  {
+    "title": "Illinois Lawmakers Just Passed America’s Strongest AI Safety Bill",
+    "japanese_title": "イリノイ州、米国史上最強のAI安全法案を可決｜OpenAI・Googleに第三者審査を義務化",
+    "url": "https://www.wired.com/story/illinois-pass-major-ai-safety-law-pritzker/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. イリノイ州議会が、アメリカで最も厳格とされるAI安全法案を可決した。",
+      "2. OpenAI・Anthropic・Googleなどの大手AI企業に対し、第三者機関による安全基準の遵守確認を義務付ける内容。",
+      "3. JBプリツカー知事は署名する意向を表明しており、法制化が確実視されている。"
+    ],
+    "points": [
+      "・ 第三者機関による安全基準の遵守確認という「監査義務」が核心であり、企業の自己申告に頼らない点が画期的",
+      "・ OpenAI・Anthropic・Googleという業界最大手を直接対象とした具体的な規制である点",
+      "・ 州レベルでの立法としてはアメリカ最強と評価されており、他州や連邦規制への波及効果が期待される"
+    ],
+    "prediction": "知事の署名後に法律として発効すれば、対象企業は第三者審査体制の整備を迫られ、コスト・運営面での対応が急務となる。また、この法律が先例となり、カリフォルニア州など他の主要州でも同様の規制強化の動きが加速する可能性が高い。一方で、AI企業側が法的異議申し立てや州外への機能移転といった対抗手段に出るリスクも否定できない。",
+    "ai_interpretation": "このニュースの本質は、AI規制の主導権が「業界の自主性」から「公的な外部監査」へと移行しつつあるという構造的な転換点を示している点にある。連邦政府の規制整備が遅れる中、州政府が実質的なAIガバナンスの担い手となりつつあり、アメリカのAI規制が「分散型・州主導モデル」へ向かう可能性を示唆している。これはEUのAI法とは異なるアプローチながら、グローバルなAI規制の多様化と厳格化という大きな潮流の一部と見ることができる。",
+    "collected_at": "2026-05-31T05:12:06.160013+09:00",
+    "background": "近年、生成AIの急速な普及に伴い、AIシステムの安全性・透明性に対する社会的懸念が高まっている。連邦レベルでのAI規制が遅々として進まない中、各州が独自の規制立法に乗り出す動きが活発化している。イリノイ州は今回、第三者監査という具体的な仕組みを導入することで、業界の自主規制に依存しない実効性のある規制モデルを構築しようとしている。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-05-31",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-05-30",
+    "href": "2026-05-30.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
