@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "McDonald's unveils new global growth strategy to win over diners as competition rises",
+    "japanese_title": "マクドナルド、競争激化と消費者争奪戦に挑む新グローバル成長戦略を発表",
+    "url": "https://www.cnbc.com/2026/06/01/mcdonalds-mcd-unveils-growth-strategy.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. マクドナルドは、外食産業における競争激化を背景に、顧客獲得を目的とした新たなグローバル成長戦略を打ち出した。",
+      "2. インフレの高止まりと高騰するガソリン価格により、消費者の可処分所得が圧迫され、外食市場全体のパイが縮小している。",
+      "3. 限られた顧客を奪い合う構図の中、マクドナルドはブランド力と規模の優位性を活かして市場シェアの維持・拡大を狙う。"
+    ],
+    "points": [
+      "・ インフレと燃料費高騰による「消費者の財布の紐の締まり」が外食市場全体の縮小を招いている点",
+      "・ 縮小市場における競合他社（バーガーキング・ウェンディーズ・チポトレ等）との顧客争奪戦の激化",
+      "・ マクドナルドがバリュー戦略（価格訴求）とデジタル・デリバリー強化のどちらに重点を置くかという戦略の方向性"
+    ],
+    "prediction": "インフレが長期化する局面では、消費者は外食から内食へのシフトをさらに進める可能性があり、外食産業全体として客数回復には時間を要すると予想される。マクドナルドのような巨大チェーンはスケールメリットを活かした価格競争力で生き残りやすい一方、中小外食チェーンの淘汰・再編が世界各地で進む可能性が高い。地政学的リスク（ウクライナ情勢・中東不安定化）による食材・エネルギーコストの上昇も、グローバル展開する外食企業の収益を継続的に圧迫する懸念材料となる。",
+    "ai_interpretation": "このニュースの本質は、単なる一企業の経営戦略発表ではなく、**グローバルなインフレ経済が消費行動の構造的変化を引き起こしている**ことを象徴する出来事である。世界最強のブランド力を持つマクドナルドでさえ「成長戦略の見直し」を迫られているという事実は、先進国・新興国を問わず中間層の購買力低下が深刻であることを示唆している。グローバル経済への示唆として、企業は「成長前提」から「縮小市場でのシェア争い」へとパラダイムシフトする局面に入っており、イノベーションよりも**コスト効率とロイヤルカスタマーの囲い込み**が競争優位の核心となる時代が到来しつつある。",
+    "collected_at": "2026-06-02T07:17:14.062523+09:00",
+    "market_impact": "マクドナルドの戦略転換は、世界最大級のファストフード企業が「需要縮小局面」への対応を本格化させたシグナルとして、外食・消費関連株全体に影響を与える可能性がある。ドル高が続く為替環境下では、グローバル展開するマクドナルドの海外収益が目減りするリスクもあり、同社の戦略はコスト管理と現地価格設定の両立が鍵となる。また、フードデリバリーやファストカジュアル業態との競争激化は、外食産業全体のバリューチェーン再編を加速させる可能性がある。"
+  },
+  {
+    "title": "UAW union strike threatens General Motors truck production",
+    "japanese_title": "UAW組合がゼネラルモーターズのトラック生産を脅かすストライキ突入｜ミシガン州サプライヤー工場で約1,000人が参加",
+    "url": "https://www.cnbc.com/2026/06/01/uaw-strike-union-work-stoppage-threatens-gm-truck-production.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米ミシガン州のGM向けサプライヤー工場において、約1,000人のUAW（全米自動車労働組合）組合員が新労働契約合意に至らず、月曜日にストライキに突入した。",
+      "2. 当該工場はGMのピックアップトラック向け部品を製造しており、GMの主力収益源であるトラック・SUV生産ラインへの直接的な供給停止リスクが生じている。",
+      "3. サプライチェーンの一部が遮断されることで、GMの生産・出荷スケジュールに遅延が発生する可能性がある。"
+    ],
+    "points": [
+      "・ GMのピックアップトラック（シボレー・シルバラード等）は同社の営業利益の最大の柱であり、生産停止の影響は財務的に極めて大きい",
+      "・ UAWは近年、賃上げ・労働条件改善を強く求めており、今回のストライキは業界全体の労使交渉の「前哨戦」となる可能性がある",
+      "・ ストライキが長期化した場合、在庫不足によるトラック価格の上昇や納期遅延が消費者・法人顧客に波及するリスクがある"
+    ],
+    "prediction": "短期的にはGMとUAWの交渉が加速する見込みだが、合意に至らなければストライキ参加者数・対象工場の拡大という「拡大戦術」が取られる可能性が高い。中長期的には、EV（電気自動車）シフトを推進する中での人件費上昇圧力が米国自動車産業の競争力に影響し、メキシコや海外への生産移管議論が再燃する恐れもある。また、米国の製造業全体における「労働コスト上昇トレンド」が定着しつつあることを示す事例として、インフレ再燃懸念とFRBの金融政策判断にも間接的な影響を与え得る。",
+    "ai_interpretation": "このニュースの本質は、単なる一工場のストライキではなく、**コロナ後の労働力再評価・インフレ時代における米国製造業労働者の交渉力回復**という構造的変化を象徴している点にある。GMにとってピックアップトラックは「ドル箱」事業であるがゆえに、UAWはその急所を突く戦略的判断をしており、交渉力の非対称性を巧みに利用している。グローバル経済的には、米国の労働コスト上昇が自動車の輸出競争力を左右し、日本・韓国・欧州の自動車メーカーにとっては相対的な競争優位の機会となる可能性も示唆している。",
+    "collected_at": "2026-06-02T07:17:37.123951+09:00",
+    "market_impact": "GM株（NYSE: GM）への売り圧力が強まる可能性があり、特にピックアップトラックは同社の利益の大部分を占めるため、投資家心理の悪化が懸念される。また、自動車部品セクター全体にも警戒感が広がり、フォードやステランティスなど競合他社のサプライチェーンリスクへの再評価につながる可能性がある。ドル相場への直接的な影響は限定的だが、製造業景況感指数（PMI）への下押し圧力となり得る。"
+  },
+  {
+    "title": "Berkshire's bet on Taylor Morrison suggests the housing market may have bottomed",
+    "japanese_title": "バークシャー・ハサウェイがテイラー・モリソンに出資——米住宅市場が底打ちか？",
+    "url": "https://www.cnbc.com/2026/06/01/berkshire-taylor-morrison-bet-housing-market-bottom.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ウォーレン・バフェット率いるバークシャー・ハサウェイが、米住宅建設大手テイラー・モリソンとの取引を実施した。",
+      "2. アナリストはこの動きを、米国住宅市場が底打ちしたことを示すシグナルと解釈している。",
+      "3. 「投資の神様」バフェットの判断が、低迷していた住宅セクターへの信頼回復を促す可能性がある。"
+    ],
+    "points": [
+      "・バフェットの「逆張り投資」哲学——悲観ムードの底で動く伝統的戦略の再現",
+      "・高金利局面でも住宅需要が一定の底堅さを維持しているという市場シグナル",
+      "・テイラー・モリソン単独ではなく、住宅セクター全体への機関投資家の再評価を誘発する可能性"
+    ],
+    "prediction": "FRBの利下げ期待と相まって、住宅ローン金利の低下が現実化すれば、住宅市場の本格回復が2025年以降に加速するシナリオが現実味を帯びてくる。バークシャーの動きに追随する機関投資家が増えれば、住宅関連セクターへの資金流入が拡大し、グローバルな建材・資源需要（木材・鉄鋼・銅など）にも好影響が及ぶ可能性がある。一方、地政学的リスクやインフレ再燃による金利高止まりが続く場合は、回復ペースが緩やかにとどまるリスクも残る。",
+    "ai_interpretation": "このニュースの本質は、単なる一企業への投資を超えた「市場センチメントの転換点」の宣言である。バフェットという絶大な信頼性を持つ投資家が動いたという事実そのものが、自己実現的に市場の底打ち認識を形成する「シグナリング効果」を持つ。グローバル経済的には、米国住宅市場の回復は消費・雇用・製造業の連鎖的改善を示す先行指標であり、世界経済の軟着陸（ソフトランディング）シナリオを支持する重要な根拠となりうる。",
+    "collected_at": "2026-06-02T07:17:58.407926+09:00",
+    "market_impact": "バークシャーの参入は住宅建設株全体への投資家心理を改善させ、米国内の住宅関連銘柄（建材・不動産・住宅ローン関連）に上昇圧力をかける可能性がある。住宅市場の回復期待は米国債利回りや連邦準備制度（FRB）の金融政策見通しとも連動し、為替市場ではドル強含みに寄与する可能性もある。また、住宅需要の回復は個人消費を通じてGDP全体にもポジティブな波及効果をもたらしうる。"
+  },
+  {
+    "title": "AI giant Anthropic prepares to sell stock to the public; files preliminary IPO paperwork",
+    "japanese_title": "AI大手アンソロピックがIPO申請──OpenAIと並び米国史上最大規模の株式公開へ",
+    "url": "https://www.npr.org/2026/06/01/nx-s1-5843199/anthropic-ipo-filing-ai-large",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. AI企業アンソロピック（Anthropic）が株式公開（IPO）に向けた予備的な書類を提出し、上場準備を本格化させた。",
+      "2. OpenAIなど他のAI関連企業のIPOとともに、米国史上最大規模の新規上場案件になる可能性がある。",
+      "3. AI産業への投資家需要の高まりを背景に、巨額の資金調達が見込まれている。"
+    ],
+    "points": [
+      "・アンソロピックの企業評価額は直近で約600億ドル規模とされており、IPO時の時価総額がさらに拡大する可能性がある",
+      "・GoogleやAmazonなど大手テック企業が主要出資者であり、IPO後の株主構造と支配権の行方が注目される",
+      "・OpenAIの上場計画と時期が重なる可能性があり、AI企業間のIPO競争・資金争奪戦が激化する局面となる"
+    ],
+    "prediction": "AIスタートアップの相次ぐ上場は、グローバルなAI投資ブームをさらに加速させると同時に、バリュエーション（企業価値評価）の過熱に対する警戒感も高まるとみられる。地政学的観点では、米国がAI産業の資本市場における主導権を確立することで、中国との技術覇権競争においても優位性を強化する戦略的意味合いを持つ。一方で、規制当局によるAI企業への監視強化や独占禁止法上の審査が今後の焦点となるだろう。",
+    "ai_interpretation": "このニュースの本質は、「AIの技術革命」が「資本市場の革命」へと転換する歴史的局面を象徴している点にある。アンソロピックのIPOは単なる一企業の上場ではなく、AI産業が成熟期に向かい、広く一般投資家にも開放されるエコシステムの転換点を意味する。グローバル経済へのより深い示唆として、AI企業への資本集中が今後10年間の産業構造・雇用・国家競争力を根本から再編成する「資本と技術の融合」が本格化したと読み取れる。",
+    "collected_at": "2026-06-02T07:18:17.304139+09:00",
+    "market_impact": "アンソロピックのIPOは、AI・テクノロジーセクター全体への投資マネーの流入を加速させ、ナスダックを中心に株式市場の上昇圧力を高める可能性がある。また、大型IPOによるドル建て資産への需要増加は米ドル相場を支える要因となり得る。半導体・クラウドインフラ・データセンター関連産業にも波及効果をもたらすことが予想される。"
+  },
+  {
+    "title": "Remote work -- not AI -- has sidelined recent college graduates, research finds",
+    "japanese_title": "リモートワークが若手大卒者の就職を直撃――AIではなく在宅勤務が雇用格差の主因と判明",
+    "url": "https://www.npr.org/2026/06/01/nx-s1-5843076/remote-work-college-graduates-unemployment-ai",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ニューヨーク連邦準備銀行の調査により、近年の若手大卒者の就職難の主因はAIではなくリモートワークの普及であることが明らかになった。",
+      "2. 企業はトレーニングやメンタリングが必要な新卒者をリモート環境下では採用しにくいと判断し、採用を抑制している傾向がある。",
+      "3. 若年層の労働市場への参入が困難になっており、世代間の雇用格差が拡大しつつある。"
+    ],
+    "points": [
+      "・ 就職難の「犯人」がAIではなくリモートワークという点は、政策立案者や企業の対策の方向性を根本から変える可能性がある",
+      "・ メンタリングや実地指導が困難なリモート環境が、特に経験の浅い若年層に不利に働くという構造的問題を示している",
+      "・ ニューヨーク連邦準備銀行という権威ある機関による調査であり、今後の雇用政策・金融政策議論に影響を与える可能性が高い"
+    ],
+    "prediction": "リモートワーク文化が定着した企業では、新卒採用の回復には時間がかかると予想され、若年層の失業率や不完全就業率が高止まりするリスクがある。一方、この問題が広く認識されることで、ハイブリッド勤務の導入促進や、リモート環境に対応した新卒育成プログラムの整備が企業・政府レベルで加速する可能性がある。また、若年雇用の停滞が続けば、所得格差の拡大や社会的不満の蓄積が政治・経済の不安定要因となりうる。",
+    "ai_interpretation": "このニュースの本質は、「技術革新（AI）」への過剰な恐怖が議論を誤った方向に向けてきた可能性を示している点にある――実際には、働き方の構造変化（リモートワーク）という、より地味だが深刻な問題が世代間格差を生み出している。グローバル経済への示唆として、デジタル化・リモート化は生産性向上の一方で、知識・スキルの世代間継承を阻害するという副作用を持つことが改めて浮き彫りになった。企業・政府が「いかに次世代の人材を育成・統合するか」という課題に真剣に向き合わなければ、長期的な人的資本の劣化が経済成長の足かせとなるリスクを示している。",
+    "collected_at": "2026-06-02T07:18:38.093152+09:00",
+    "market_impact": "若年労働者の雇用機会減少は、消費支出の低迷を通じて内需に下押し圧力をかける可能性があり、特に米国の個人消費主導の経済成長にとってリスク要因となる。労働市場の二極化（経験者優遇・新卒者冷遇）は生産性向上の遅れにつながり、長期的には人材育成コストの上昇として企業収益にも影響しうる。教育・採用関連産業やHRテック分野では、リモート対応の研修・オンボーディングサービスへの需要が高まる可能性がある。"
+  },
+  {
+    "title": "AI giant Anthropic says it plans to list on US stock market",
+    "japanese_title": "AI大手アンソロピック、2025年中に米国株式市場への上場計画を発表｜Claude開発企業がIPOへ",
+    "url": "https://www.bbc.com/news/articles/c0k203kzp10o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. Claude（クロード）を開発するAI企業アンソロピック（Anthropic）が、2025年中に米国株式市場への新規株式公開（IPO）を計画していることを明らかにした。",
+      "2. 同社は一般投資家向けに株式を公開する予定であり、AI業界における大型上場案件として注目を集めている。",
+      "3. OpenAIやGoogleと並ぶ主要AI企業の株式市場参入は、AI投資熱をさらに加速させる可能性がある。"
+    ],
+    "points": [
+      "・ アンソロピックはAmazonやGoogleから巨額の出資を受けており、上場時の企業評価額（バリュエーション）が注目される",
+      "・ AIバブル懸念が根強い中でのIPOであり、投資家の需要と市場の受け止め方が試金石となる",
+      "・ OpenAIも非公開ながら上場を視野に入れているとされており、AI企業のIPO競争が本格化する可能性がある"
+    ],
+    "prediction": "アンソロピックの上場成功は、他のAIスタートアップにとってのIPOの道を開くモデルケースとなり、2025年後半にかけてAI関連企業の株式公開が相次ぐ「AIIPOラッシュ」を引き起こす可能性がある。地政学的観点では、米国がAI産業の資本市場をリードすることで、中国との技術・資本覇権競争においてさらなる優位性を確立する戦略的意義も持つ。一方、規制当局によるAI企業への監視強化が上場後のリスク要因となる点には注意が必要だ。",
+    "ai_interpretation": "このニュースの本質は、「AIの民主化」と「資本の大衆化」が交差する歴史的転換点を示している点にある。これまで一部の機関投資家や大企業にしかアクセスできなかったフロンティアAIへの投資機会が、一般投資家にも開放されることで、AI産業の成長果実が広く社会に還元される構造が生まれようとしている。グローバル経済的には、AIインフラへの資本供給が加速し、生産性革命の速度をさらに高める一方、AI企業の市場支配力集中という新たなリスクの管理が国際的な課題として浮上するだろう。",
+    "collected_at": "2026-06-02T07:18:58.911531+09:00",
+    "market_impact": "アンソロピックのIPOは、AI関連株全体への投資マインドを高め、NASDAQを中心とした米国テック株市場に強気ムードをもたらす可能性がある。また、競合他社であるOpenAIやGoogle（Gemini）との競争激化が半導体・クラウドインフラ需要をさらに押し上げ、NVIDIAやAWSなどの関連銘柄にも波及効果が期待される。為替面では、米国テック株への資金流入がドル高圧力を生む一因となり得る。"
+  },
+  {
+    "title": "Wise under investigation over money laundering control concerns",
+    "japanese_title": "Wise（ワイズ）がマネーロンダリング対策違反の疑いで捜査対象に―ブリュッセル検察が調査",
+    "url": "https://www.bbc.com/news/articles/cy42x8ye02vo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 国際送金フィンテック大手のWise（ワイズ）が、マネーロンダリング管理体制に関する懸念から、ベルギーのブリュッセル検察当局による調査を受けていることが明らかになった。",
+      "2. Wise社は当局と協力して対応中であることを認めたものの、「現時点で具体的な調査結果は共有されていない」と声明を発表し、詳細は不明のまま。",
+      "3. フィンテック業界における規制当局の監視強化が改めて浮き彫りとなり、同社の信頼性やブランドイメージへの影響が懸念される。"
+    ],
+    "points": [
+      "・ 調査主体がEUの主要金融ハブであるベルギー・ブリュッセルの検察であり、EU全域での規制波及リスクがある点",
+      "・ Wise側が「具体的な指摘内容を受け取っていない」と述べており、捜査の初期段階であることを示唆している点",
+      "・ フィンテック企業に対するAML（アンチ・マネーロンダリング）規制の国際的強化トレンドの中での今回の事案である点"
+    ],
+    "prediction": "EU当局によるフィンテック企業へのAML・KYC（顧客確認）規制の締め付けは今後さらに強化される見通しであり、Wiseのみならず業界全体が規制対応コストの増大を迫られる局面に入るだろう。地政学的観点からは、国際送金の透明性確保を巡る各国当局間の協調が進む一方で、新興市場向けの低コスト送金サービスが萎縮するリスクもある。Wiseが制裁や業務制限を受けた場合、グローバルな個人・中小企業の国際決済インフラに実質的な打撃を与える可能性がある。",
+    "ai_interpretation": "このニュースの本質は、フィンテック業界の急成長と金融規制の整合性を巡る構造的な緊張関係を象徴している点にある。従来の銀行が重い規制コストを負担してきた一方で、スピードとコスト効率を武器に急拡大したフィンテック企業に対し、規制当局が「同等の責任」を求める流れが本格化していることを示している。グローバル経済への示唆としては、フィンテックが担ってきた「金融包摂（Financial Inclusion）」の役割が規制強化によって縮小するリスクと、健全な金融システム維持のための透明性確保というトレードオフをいかに解決するかが、今後の国際金融政策の重要課題となるという点だ。",
+    "collected_at": "2026-06-02T07:19:22.203339+09:00",
+    "market_impact": "Wiseの株価（ロンドン証券取引所上場）は調査報道を受けて下落圧力がかかる可能性が高く、フィンテックセクター全体への投資家センチメントにも悪影響を及ぼしかねない。国際送金・決済市場における規制リスクが再評価されることで、競合他社（Revolut、PayPalなど）の株価・評価額にも波及する恐れがある。また、EU域内での金融コンプライアンス要件が一段と厳格化される可能性があり、欧州展開を図る金融テクノロジー企業全般にとってコスト増要因となり得る。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-02",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-06-02.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-06-02.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-06-01",
+    "href": "2026-06-01.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
