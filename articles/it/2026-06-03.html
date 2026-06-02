@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Cyberdecks are having a moment, rejecting big tech surveillance with style and substance",
+    "japanese_title": "DIYサイバーデッキが急増中——ビッグテックの監視に抗うスタイリッシュな自作ガジェット革命",
+    "url": "https://techcrunch.com/2026/06/02/cyberdeck-tiktok-trend-reject-big-tech/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 自作ハードウェアコミュニティ「サイバーデッキ」がここ数ヶ月でSNSを中心に爆発的な人気を集めている。",
+      "2. 太陽光発電式ゲームエミュレーターや携帯電子書籍リーダー、クラムシェル型パースコンピューターなど多彩なDIYデバイスが登場している。",
+      "3. これらの動きは、大企業による監視やデータ収集に対する反発を、創造性とテクノロジーで表現するものとなっている。"
+    ],
+    "points": [
+      "・単なる趣味にとどまらず、「ビッグテックの監視への抵抗」という明確な思想・哲学を持った運動である点",
+      "・太陽光発電など環境配慮型の電源設計を取り入れるなど、サステナビリティ意識とも融合している点",
+      "・SNSというビッグテックのプラットフォームを逆手に取り、反ビッグテック文化を拡散している皮肉な構図"
+    ],
+    "prediction": "自作ハードウェアコミュニティはさらに拡大し、初心者向けのキットやチュートリアルが充実することで参入障壁が下がり、より多くの人々が参加するようになると予想される。また、プライバシー規制の強化やAI監視技術の進化に伴い、こうしたDIYデバイスへの需要は思想的・実用的両面からさらに高まる可能性がある。一方で、商業化が進むことでムーブメントの「反体制的」な本質が薄れるリスクも考えられる。",
+    "ai_interpretation": "このニュースの本質は、テクノロジーの「民主化」と「自律性の回復」という現代的な欲求の表れである。人々は利便性と引き換えにプライバシーや自由を差し出す既存のビジネスモデルに疑問を抱き始めており、サイバーデッキはその不満を創造的なかたちで昇華させた文化現象と言える。これは単なるガジェット趣味を超え、デジタル社会における「自分のテクノロジーを自分でコントロールする権利」を問い直す、より大きな社会的議論の縮図となっている。",
+    "collected_at": "2026-06-03T06:50:44.867734+09:00",
+    "background": "近年、GAFAに代表される大手テクノロジー企業によるユーザーデータの収集・監視への懸念が世界的に高まっている。こうした状況を受け、自分のデバイスを自ら設計・制作することで、企業依存から脱却しようとするムーブメントがオープンソースハードウェアコミュニティを中心に広がってきた。SNSの普及により、個人の自作作品が広く拡散されやすくなったことも、このトレンドの加速に寄与している。"
+  },
+  {
+    "title": "Uber caps employee AI spending after blowing through budget in 4 months",
+    "japanese_title": "Uberが従業員のAI利用費を上限設定——4ヶ月で年間予算を使い切る異常事態",
+    "url": "https://techcrunch.com/2026/06/02/uber-caps-employee-ai-spending-after-blowing-through-budget-in-four-months/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Uberは従業員によるAIツールの利用費が4ヶ月で年間予算を超過したため、一人当たりの利用上限を設けた。",
+      "2. 同社はもともと従業員に対してAIをできる限り積極的に活用するよう奨励していた。",
+      "3. AI推進方針と予算管理の矛盾が露呈し、企業のAI投資戦略の難しさが浮き彫りになった。"
+    ],
+    "points": [
+      "・AI活用の「やりすぎ」が企業財務に与える実害が初めて明確に表面化した事例",
+      "・「使って良い」から「使いすぎるな」への方針転換が、現場の混乱を招く可能性",
+      "・ChatGPTやCopilotなど従量課金型AIツールのコスト管理が企業課題として急浮上"
+    ],
+    "prediction": "UberのようなAI費用の急騰は他の大手企業でも同様に発生している可能性が高く、業界全体でAI利用ポリシーの整備・見直しが加速するとみられる。各社はAIツールの費用対効果（ROI）を厳格に測定する仕組みの導入を迫られるだろう。一方で過度な制限は従業員のモチベーションや業務効率の低下を招くリスクもあり、バランスの取り方が経営課題となる。",
+    "ai_interpretation": "このニュースの本質は、「AIの民主化」がもたらすコスト管理の複雑さを象徴している点にある。AI活用を推進することと、そのコストをコントロールすることは相反する側面を持ち、企業はその両立という新たな経営課題に直面しつつある。単なるUberの予算超過問題にとどまらず、AI時代における「ガバナンスとイノベーションの共存」をいかに設計するかという、普遍的な問いを投げかけている。",
+    "collected_at": "2026-06-03T06:51:01.724348+09:00",
+    "background": "Uberは業務効率化と生産性向上を目的に、社内でのAIツール活用を積極的に推進してきた。従業員への利用奨励が功を奏した一方で、想定を大幅に上回るコストが発生し、わずか4ヶ月で年間予算を使い果たす事態となった。こうした状況を受け、会社側は方針を転換し、個人ごとの利用上限という形でコスト管理に乗り出した。"
+  },
+  {
+    "title": "New Microsoft tool lets devs spin up AI behavior tests using text descriptions",
+    "japanese_title": "MicrosoftがテキストでAIの動作テストを自動生成できるオープンソースフレームワークを公開",
+    "url": "https://techcrunch.com/2026/06/02/new-microsoft-tool-lets-devs-spin-up-ai-behavior-tests-using-text-descriptions/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Microsoftは「Adaptive Spec-driven Scoring for Evaluation and Regression Testing」というAI評価用オープンソースフレームワークを発表した。",
+      "2. このツールはテキストによる説明文を使ってAIの動作テストを簡単に作成・実行できる仕組みを提供する。",
+      "3. 開発者がAIシステムの品質評価や回帰テストをより効率的に行えるようにすることを目的としている。"
+    ],
+    "points": [
+      "・テキスト（自然言語）でテスト仕様を記述できるため、非専門家でも評価設計に参加しやすい",
+      "・オープンソースとして公開されることで、広いコミュニティによる改善・拡張が期待できる",
+      "・回帰テスト機能を備えており、AIモデルの更新による性能劣化を継続的に検知できる"
+    ],
+    "prediction": "AIシステムの信頼性・安全性への要求が高まる中、このようなテスト自動化ツールの重要性はさらに増すと考えられる。オープンソース化により、サードパーティによるプラグインや他フレームワークとの統合が進み、AI評価のデファクトスタンダードとなる可能性がある。またこの動きが業界全体に波及し、競合他社からも同様のツールが登場することが予想される。",
+    "ai_interpretation": "このニュースの本質は、AI開発における「評価・テスト工程の民主化」にある。コードではなく自然言語でテスト仕様を定義できることは、開発者・プロダクトマネージャー・品質担当者の垣根を下げる重要な一歩だ。Microsoftがこれをオープンソースとしてリリースしたことは、AI品質管理の標準化を業界全体として推進しようという意図を示しており、責任あるAI開発（Responsible AI）への取り組みを具体的なツールレベルで加速させる動きと見ることができる。",
+    "collected_at": "2026-06-03T06:51:17.927747+09:00",
+    "background": "AI開発の急速な拡大に伴い、AIモデルの動作が意図通りであるかを継続的に検証・評価することが開発現場の大きな課題となっている。従来のテスト手法ではAIの複雑な振る舞いを網羅的に評価することが難しく、専門知識を持つエンジニアでなければ評価基準の設定が困難だった。Microsoftはこうした課題を解消するため、自然言語による仕様記述をテストに変換するアプローチを採用した。"
+  },
+  {
+    "title": "I Spent a Week Recording Myself Doing Chores for Money. Who's the Robot Now?",
+    "japanese_title": "家事データで稼ぐ1週間体験レポート――人間がロボットの「教師」になる時代の到来",
+    "url": "https://www.wired.com/story/household-chores-training-robots/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. 筆者は1週間にわたり料理・洗濯・片付けなどの家事行動を録画・記録し、ヒューマノイドロボット訓練用のデータとして販売する体験を行った。",
+      "2. 日常の家事動作がAI・ロボット開発における貴重な学習データとなり、報酬を得るビジネスモデルが現実のものとなっている。",
+      "3. しかし、その行為には個人の行動パターンや生活空間を企業に提供するというプライバシー上のリスクも伴う。"
+    ],
+    "points": [
+      "・ 家事という最もプライベートな行動がデータ商品として「価値化」される新たな経済圏の出現",
+      "・ 人間がロボットを訓練する側に立つという役割逆転——「誰がロボットなのか」という哲学的問いの提示",
+      "・ データ提供の対価（報酬）と引き換えに失われるプライバシー・行動履歴の管理権というトレードオフ"
+    ],
+    "prediction": "ヒューマノイドロボット市場の拡大に伴い、家事データの収集・売買はより組織化・産業化され、専業の「データ提供者」という職業が確立される可能性がある。一方で、収集データの二次利用や個人識別リスクへの懸念から、各国で規制整備の議論が活発化することが予想される。長期的には、提供したデータによって訓練されたロボットが自分の仕事を代替するという逆説的な状況も現実となりうる。",
+    "ai_interpretation": "このニュースの本質は、**人間の身体動作・生活行動そのものが資本になる「身体データ経済」の幕開け**を示している点にある。かつて肉体労働や知的労働が商品化されたように、今度は「人間らしい動き」という無意識の能力がAI産業の原材料として切り出されつつある。タイトルの「Who's the Robot Now?（今やロボットはどっちだ？）」という問いは、人間がシステムの歯車として機能させられるという現代的疎外の新局面を鋭く突いており、テクノロジーと人間性の境界線が問い直される時代を象徴している。",
+    "collected_at": "2026-06-03T06:51:39.021243+09:00",
+    "background": "ヒューマノイドロボット（人型ロボット）の開発競争が加速する中、Tesla・Figure・1X Technologiesなどの企業が家庭環境での動作学習データを大量に必要としている。人間の自然な動作データは従来のセンサーや合成データでは再現が難しく、実際の生活シーンを収録した「リアルデータ」への需要が急増している。そのため、一般人がクラウドソーシング的にデータ提供者となる新たなギグワークの形態が生まれつつある。"
+  },
+  {
+    "title": "Quiz: Will AI Destroy Your Career?",
+    "japanese_title": "AIはあなたの仕事を奪うのか？キャリア消滅リスクを診断するクイズが話題",
+    "url": "https://www.wired.com/story/quiz-will-ai-destroy-your-career/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. AIの台頭により、消滅・存続する職業が明確に分かれつつあることを示すインタラクティブなクイズ記事が公開された。",
+      "2. ユーザーが自分の職種や業務内容を選択することで、AIに代替されるリスクを可視化できる仕組みになっている。",
+      "3. 「全滅する仕事」と「生き残る仕事」の二極化が進むという現実を、エンタメ形式で伝えている。"
+    ],
+    "points": [
+      "・ 難しいデータや統計を「クイズ形式」に落とし込むことで、幅広い層にAIリスクを身近に感じさせる工夫がされている",
+      "・ 「全滅（toast）」という強い表現を使うことで、問題の深刻さをセンセーショナルに伝えている",
+      "・ 職業によってリスクが大きく異なることを示し、一律な「AIが仕事を奪う」論への過度な恐怖を整理する役割も果たしている"
+    ],
+    "prediction": "AI代替リスクへの関心はさらに高まり、このようなセルフ診断コンテンツや職業別リスクランキングの需要は増加し続けるだろう。一方で、企業や教育機関がAIリテラシー教育を強化し、「AIと共存するスキル」の習得が個人のキャリア戦略の中心課題になると予想される。長期的には、AIに代替されにくい創造性・対人スキル・倫理的判断力を持つ人材の価値が相対的に上昇していく可能性が高い。",
+    "ai_interpretation": "このクイズ記事の本質は、単なる娯楽コンテンツではなく、「AI不安」を社会に可視化・民主化しようとする試みである。専門家や経営層だけでなく、一般の労働者が自分のキャリアリスクを主体的に考えるきっかけを提供している点に大きな意義がある。また、「AIに破壊される」という受け身の視点から「どう適応するか」という能動的な思考へと読者を誘導する構造は、メディアがAI時代における社会教育の一翼を担い始めていることを示唆している。",
+    "collected_at": "2026-06-03T06:51:59.192224+09:00",
+    "background": "ChatGPTをはじめとする生成AIの急速な普及により、ホワイトカラー職を中心に「AIによる職業代替」への不安が世界的に高まっている。マッキンゼーやゴールドマン・サックスなどの調査機関が「数億人規模の雇用がAIに代替される可能性がある」と相次いで警告を発しており、社会的関心が急上昇している。こうした背景から、自分ごととして捉えやすいクイズ形式のコンテンツが注目を集めている。"
+  },
+  {
+    "title": "Google announces deepfake call detection for Android, new AirDrop device support",
+    "japanese_title": "GoogleがAndroidにディープフェイク通話検出機能を追加——AirDrop対応拡充やAI強化も発表",
+    "url": "https://arstechnica.com/gadgets/2026/06/google-announces-deepfake-call-detection-for-android-new-airdrop-device-support/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. GoogleはAndroidの6月アップデートで、ディープフェイクを利用した詐欺電話を検出する新機能を発表した。",
+      "2. AppleのAirDropに相当するファイル共有機能の対応デバイス拡充も併せて発表された。",
+      "3. 今回のアップデートはスキャム（詐欺）対策、デバイス連携、AIの3分野を中心とした機能強化となっている。"
+    ],
+    "points": [
+      "・ディープフェイク通話をリアルタイムで検出するという、業界初レベルのセキュリティ機能の実装",
+      "・AirDrop類似機能の対応デバイス拡大により、AndroidエコシステムのAppleへの対抗力が強化",
+      "・AIを活用した詐欺対策という、「AIによる脅威をAIで防ぐ」という新たなアプローチの採用"
+    ],
+    "prediction": "ディープフェイク検出技術は精度向上とともに段階的に展開される見込みであり、まず英語圏から始まり他言語・地域へ拡大する可能性が高い。AirDrop対応の拡充はAndroidデバイス間のシームレスな連携を促進し、Appleエコシステムへの乗り換え障壁を下げる狙いもあると考えられる。またこうした動きに追随し、他のOSベンダーや通信キャリアも類似の詐欺対策機能を競うように投入してくるだろう。",
+    "ai_interpretation": "このニュースの本質は、**AIが「攻撃の道具」から「防御の盾」へと役割を拡張しつつある**という技術的転換点を示している。ディープフェイクという生成AIの負の側面に対し、同じくAIを用いて対抗するという構図は、今後のサイバーセキュリティの主戦場がAI同士の戦いになることを示唆している。Googleがこの機能をAndroidというプラットフォームレベルで組み込んだことは、セキュリティをアプリ任せにせず、OSが主体的に担う時代への移行を象徴していると言える。",
+    "collected_at": "2026-06-03T06:52:17.539204+09:00",
+    "background": "近年、AI技術の進化により、人物の声や映像を精巧に偽装するディープフェイク技術を悪用した電話詐欺が世界的に急増している。Googleはこれまでもスパム・詐欺対策をAndroidに組み込んできたが、AI生成コンテンツの脅威が高度化したことで、より踏み込んだリアルタイム検出機能の必要性が高まっていた。また、AppleのAirDropに対抗するクロスデバイス共有機能の整備も、Android陣営の長年の課題となっていた。"
+  },
+  {
+    "title": "AI costs how much? GitHub Copilot users react to new usage-based pricing system.",
+    "japanese_title": "GitHub Copilotの従量課金制導入にユーザー衝撃——1日でAIクレジットを使い切る事例も続出",
+    "url": "https://arstechnica.com/ai/2026/06/ai-costs-how-much-github-copilot-users-react-to-new-usage-based-pricing-system/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. GitHubがCopilotの料金体系を従来の定額制から使用量ベースの「AIクレジット制」に変更した。",
+      "2. 一部のユーザーは月間に割り当てられたAIクレジットをわずか1日で消費してしまうケースが報告されている。",
+      "3. 新料金体系に対してユーザーから驚きや不満の声が上がっており、コスト管理の難しさが浮き彫りになっている。"
+    ],
+    "points": [
+      "・ 月間クレジットの上限設定が実際の開発業務に対して不十分な可能性があり、ヘビーユーザーほど不利になる構造",
+      "・ AIツールの「見えないコスト」問題が顕在化し、企業の開発部門における予算管理の複雑化を招くリスク",
+      "・ 競合製品（Cursor、Windsurf等）との差別化・価格競争に影響を与える可能性"
+    ],
+    "prediction": "ユーザーの反発を受け、GitHubがクレジット上限の引き上げやプラン体系の見直しを余儀なくされる可能性がある。一方、コスト意識の高まりからCursorやWindsurfなどの競合AIコーディングツールへの乗り換えが加速するかもしれない。また、企業ユーザーを中心にAI利用量の監視・制御ツールへのニーズが高まることも予想される。",
+    "ai_interpretation": "このニュースの本質は、「AIの民主化」と「AIのコスト現実」の衝突である。これまで定額制という\"バッファ\"によって隠されていたAI利用の実コストが、従量課金制の導入によって可視化され、ユーザーに初めてその重さが突きつけられた形だ。AIツールが開発ワークフローに深く組み込まれた今、料金モデルの設計はユーザーの採用意欲と生産性に直結する極めて戦略的な問題であり、AI企業にとって「使いやすさ」と「収益性」のバランスをどう取るかが今後の競争軸になると示唆している。",
+    "collected_at": "2026-06-03T06:52:36.596182+09:00",
+    "background": "GitHubのAIコーディング支援ツール「Copilot」はこれまで月額固定料金で利用できるサブスクリプションモデルを採用していた。しかし、AIの利用量が増加・多様化するにつれ、GitHubは重度利用ユーザーと軽度利用ユーザーの間のコスト不均衡を解消するため、従量課金制への移行を決断したとみられる。この動きはOpenAIやAnthropic等のAIプロバイダーが採用するAPIコスト構造とも連動している。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-03",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-06-02",
+    "href": "2026-06-02.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
