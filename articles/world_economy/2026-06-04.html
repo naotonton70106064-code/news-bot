@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "As Honeywell Aerospace readies for its standalone debut, its CEO is forecasting big growth",
+    "japanese_title": "ハネウェル・エアロスペース、独立上場へ始動——2030年に利益65億ドル・フリーキャッシュフロー40億ドルを目標",
+    "url": "https://www.cnbc.com/2026/06/03/honeywell-aerospace-ceo-earnings-growth.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ハネウェルは航空宇宙部門（Honeywell Aerospace）を独立した上場企業として分離・独立させる準備を進めている。",
+      "2. 同社CEOは2030年までに年間利益65億ドル以上、フリーキャッシュフロー40億ドル以上という野心的な成長目標を掲げている。",
+      "3. 事業分離により、航空宇宙特化型の戦略的集中と資本効率の向上を狙う構造改革の一環とみられる。"
+    ],
+    "points": [
+      "・ 2030年目標：年間利益65億ドル以上・フリーキャッシュフロー40億ドル以上という具体的数値目標の明示",
+      "・ コングロマリット解体トレンド：大企業の事業分離・選択と集中の加速という近年の潮流に合致",
+      "・ 航空宇宙市場の成長性：コロナ禍後の航空需要回復・防衛費増大・宇宙ビジネス拡大が業績を後押し"
+    ],
+    "prediction": "ハネウェル・エアロスペースの独立上場は、航空宇宙セクター全体の評価基準（バリュエーション）の見直しを促し、同業他社にも事業再編圧力を与える可能性がある。地政学的緊張の高まりを背景に防衛・安全保障関連の航空技術需要は増加傾向にあり、独立企業としての意思決定スピード向上が競争優位につながると見込まれる。一方、金利環境や世界的な景気減速リスクが2030年目標達成の不確実要因として残る。",
+    "ai_interpretation": "このニュースの本質は、単なる企業分割ではなく「複合企業モデルの終焉と専門特化型資本主義への移行」という大きな潮流を象徴している点にある。GEやジョンソン＆ジョンソンなど名だたる大企業がコングロマリット解体を進める中、ハネウェルも同様の構造転換を選択しており、投資家が多角化より純粋なセクター集中を好む市場心理の変化を如実に反映している。グローバル経済的には、航空宇宙・防衛産業への資本集中が加速することで、技術革新（SAF・次世代航法・無人機等）のペースが上がり、産業競争地図が大きく塗り替えられる可能性を示唆している。",
+    "collected_at": "2026-06-04T06:56:51.607036+09:00",
+    "market_impact": "航空宇宙・防衛セクターへの投資家注目度が高まり、関連銘柄（航空機部品・アビオニクス等）の株価上昇圧力が生じる可能性がある。独立上場により資本市場からの資金調達力が強化され、競合するRTX（レイセオン）やGEアビエーションとの競争が一層激化すると予想される。また、航空需要の回復基調が続く中、機関投資家によるセクター再評価が進む可能性がある。"
+  },
+  {
+    "title": "Sellers are pulling homes off the market at the fastest pace since 2020",
+    "japanese_title": "2020年以来最速ペース——売り手が住宅を市場から引き揚げる動きが加速、米国不動産市場に異変",
+    "url": "https://www.cnbc.com/2026/06/03/sellers-delisting-homes-redfin.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 需要の低迷と入札競争（ビディングウォー）の沈静化を背景に、売り手が住宅を市場から取り下げるペースが2020年以来最も速いペースで加速している。",
+      "2. 高金利環境が購買意欲を著しく減退させており、売り手が希望価格での売却を断念するケースが急増している。",
+      "3. 住宅市場全体の流動性が低下しており、売り手・買い手双方が「動けない」状態に陥るロック効果（Lock-in Effect）が深刻化している。"
+    ],
+    "points": [
+      "・ 売り手の「市場撤退」は実質的な住宅供給の縮小を意味し、価格の下落を一定程度下支えする逆説的効果をもたらす可能性がある",
+      "・ FRBの高金利政策が住宅市場に与えるダメージが、2020年コロナ禍の混乱期に匹敵する規模に達しつつある点は重大なシグナルである",
+      "・ 買い手不在・売り手撤退という「両方向の冷え込み」が同時進行しており、市場の正常化には相当の時間を要する可能性がある"
+    ],
+    "prediction": "FRBが利下げに転じない限り、住宅市場の低迷は長期化し、米国GDPの約15〜18%を占める不動産・建設関連セクターの停滞が景気全体の下押し要因となる公算が大きい。世界的に見ても、米国の住宅不況は消費マインドの悪化を通じてアジア・欧州向け輸出需要にも影響を及ぼし、グローバルな景気減速懸念を強める可能性がある。地政学的観点では、米国内の経済的不満の高まりが政治的不安定要素となり、2024年以降の政策方針にも影響を与えうる。",
+    "ai_interpretation": "このニュースの本質は、「金利という一つの政策ツールが実体経済のど真ん中にある住宅市場を機能不全に陥らせている」という現代金融政策の構造的矛盾を露わにしている点にある。売り手の撤退は表面上は供給減に見えるが、実態は「市場が価格発見機能を失いつつある」ことを示す危険なシグナルである。グローバル経済への示唆としては、米国の住宅市場の健全性が世界の資本フローや消費動向の先行指標となっており、この停滞が長引けば、世界経済の「ソフトランディング」シナリオそのものが揺らぐリスクを内包している。",
+    "collected_at": "2026-06-04T06:57:14.225018+09:00",
+    "market_impact": "米国住宅市場の停滞は、建材・家具・家電などの関連産業の需要減退を通じてサプライチェーン全体に波及するリスクがある。為替市場においては、米国経済の減速懸念がドル売り圧力につながる可能性があり、新興国通貨や円などに間接的な影響を与え得る。また、住宅ローン関連金融機関の収益悪化懸念から、金融セクター株への売り圧力が高まる場面も想定される。"
+  },
+  {
+    "title": "Morgan Stanley will soon open its trillion-dollar wealth management funnel to AI agents",
+    "japanese_title": "モルガン・スタンレー、兆ドル規模の富裕層向け資産管理にAIエージェント解放──ウォール街に新時代",
+    "url": "https://www.cnbc.com/2026/06/03/ai-agents-morgan-stanley-wealth-management-funnel.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. モルガン・スタンレーは、同社の富裕層向け資産管理プラットフォームを外部AIエージェントに開放する計画を進めており、大手ウォール街銀行の中でも最も早い事例の一つとなる。",
+      "2. 同社の資産管理部門は数兆ドル規模の資産を扱っており、AIエージェントの導入により顧客サービスや投資アドバイスの自動化・高度化が期待される。",
+      "3. 外部AIツールへのプラットフォーム開放は、金融業界におけるAIエコシステム統合の先駆的な取り組みとして業界全体に波及する可能性がある。"
+    ],
+    "points": [
+      "・ウォール街大手銀行が「外部AI」に自社プラットフォームを開放するという前例のない決断",
+      "・兆ドル規模の富裕層資産データがAI学習・活用の対象となることで生じるデータセキュリティ・規制リスク",
+      "・AIエージェントによる投資アドバイス自動化が、従来のファイナンシャルアドバイザー職に与える雇用構造的インパクト"
+    ],
+    "prediction": "モルガン・スタンレーの動きに追随し、ゴールドマン・サックスやJPモルガンなど他の大手金融機関も外部AIとの連携を急速に進めるとみられ、金融AIサービス市場は2025〜2026年にかけて爆発的に拡大するだろう。一方、各国の金融規制当局（SEC・FRBなど）はAIエージェントによる資産運用への監督強化に動き、国際的なAI金融規制の枠組み整備が地政学的課題として浮上する可能性が高い。",
+    "ai_interpretation": "このニュースの本質は、単なる「金融×AI」の技術採用ではなく、**金融プラットフォームの「インフラ化」と「開放化」という構造転換**を意味する。モルガン・スタンレーが外部AIに扉を開くことで、金融機関は「サービス提供者」から「AIが動作するプラットフォーム基盤」へと役割を変えつつあり、これはかつてのApple App Store登場に匹敵するパラダイムシフトといえる。グローバル経済への示唆として、富裕層資産管理の民主化・自動化が進む一方、AIを活用できる金融機関と出遅れた機関との間で競争力格差が急速に拡大し、金融業界の再編を加速させることが予測される。",
+    "collected_at": "2026-06-04T06:57:35.214048+09:00",
+    "market_impact": "フィンテック・AI関連銘柄（特にOpenAI提携企業やエンタープライズAI企業）への投資家の関心が高まり、株価押し上げ要因となり得る。資産管理・プライベートバンキング業界全体でAI導入競争が加速し、人件費削減や運用効率化による収益構造の変化が見込まれる。また、ドル建て金融サービスのデジタル化進展により、米国金融機関のグローバル競争力がさらに強化される可能性がある。"
+  },
+  {
+    "title": "As Strait of Hormuz stays shut, companies seek new routes for trade",
+    "japanese_title": "ホルムズ海峡封鎖長期化——世界の海運企業が代替ルート模索、物流危機が深刻化",
+    "url": "https://www.npr.org/2026/06/03/nx-s1-5828377/as-strait-of-hormuz-stays-shut-companies-seek-new-routes-for-trade",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ホルムズ海峡の封鎖が長引く中、世界の海運会社が代替輸送ルートの確保に奔走している。",
+      "2. 同海峡は世界の石油・LNG輸送の約20〜30%が通過する戦略的要衝であり、封鎖の影響は甚大。",
+      "3. 迂回ルートへの切り替えにより、輸送コストの急騰と納期遅延が世界規模で発生しつつある。"
+    ],
+    "points": [
+      "・ 代替ルート（喜望峰回りや陸上パイプライン等）への切り替えによる輸送日数・コストの大幅増加",
+      "・ 中東産原油への依存度が高いアジア諸国（日本・中国・韓国・インド）への影響が特に深刻",
+      "・ 紛争長期化による保険料（戦争リスク保険）の急騰と、海運会社の経営圧迫リスク"
+    ],
+    "prediction": "封鎖が数週間以上継続した場合、世界的なエネルギー供給不足が現実化し、各国政府は戦略石油備蓄（SPR）の放出を余儀なくされる可能性が高い。地政学的緊張の高まりはOPECプラスの生産政策にも影響を与え、産油国間の利害対立が新たな局面を迎えるリスクがある。また、サプライチェーンの脆弱性が再び露呈することで、脱炭素・エネルギー多様化への政策的圧力が各国で一段と強まるだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる「海運の迂回問題」ではなく、**グローバル経済の地政学的脆弱性**が再びあらわになった点にある。ホルムズ海峡という一点の封鎖が、エネルギー・物流・金融市場を連鎖的に揺さぶる構造は、世界経済がいかに地理的リスクに依存しているかを示している。長期的には、この危機がエネルギー安全保障の多様化（再生可能エネルギー拡大・調達先分散）を加速させるカタリストとなり得る点で、歴史的転換点となる可能性をはらんでいる。",
+    "collected_at": "2026-06-04T06:57:55.437364+09:00",
+    "market_impact": "原油・天然ガスの供給不安から、エネルギー価格が大幅に上昇し、インフレ再燃リスクが高まっている。為替市場では、産油国通貨や資源国通貨（カナダドル・ノルウェークローネ等）が上昇する一方、エネルギー輸入依存度の高い日本円や韓国ウォンへの下落圧力が強まる可能性がある。海運・物流業界のコスト増は、製造業・化学・航空業界など幅広いセクターのサプライチェーンにも波及する見通しだ。"
+  },
+  {
+    "title": "A former GEO Group executive now runs ICE. The company's government ties run deep",
+    "japanese_title": "元GEOグループ幹部がICE長官代行に就任——民間刑務所企業と移民拘束政策の深い癒着が浮き彫りに",
+    "url": "https://www.npr.org/2026/06/03/nx-s1-5836625/a-former-geo-group-executive-now-runs-ice-the-companys-government-ties-run-deep",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. トランプ政権下でICE（移民・関税執行局）の新たな長官代行が就任し、同氏は民間刑務所大手「GEOグループ」の元幹部である。",
+      "2. トランプ政権による移民拘束強化政策の加速に伴い、GEOグループは政府契約から莫大な財務的恩恵を受けている。",
+      "3. 規制当局と民間企業の間の「回転ドア」人事が、移民政策と民間企業利益の利益相反問題として注目を集めている。"
+    ],
+    "points": [
+      "・ 民間刑務所企業の元幹部が規制・執行機関のトップに就くという「回転ドア」問題の深刻化",
+      "・ GEOグループの株価・収益が政権の移民政策と直結しており、政策変更リスクが企業価値に直接影響",
+      "・ 移民拘束の拡大が収容施設の需要増をもたらし、民間企業への公的資金流入が加速している構造的問題"
+    ],
+    "prediction": "移民拘束政策がさらに強化される場合、GEOグループ等の民間拘束施設企業は短期的に業績拡大が見込まれる一方、政策の持続可能性や法的訴訟リスクが中長期的な経営不確実性をもたらす。地政学的には、米国の強硬な移民政策が中南米諸国との外交摩擦を深め、貿易・安全保障における二国間関係に悪影響を与える可能性がある。また、国際社会からの人権批判が高まることで、米国のソフトパワーや外交的影響力の低下も懸念される。",
+    "ai_interpretation": "このニュースの本質は、「官民の利益相反」と「政策の商業化」という現代民主主義が抱える構造的問題を象徴している。移民拘束という公共政策が、特定民間企業の収益拡大と直結する仕組みは、政策判断の中立性・公正性を根本から損なうリスクを持つ。グローバル経済への示唆として、政府調達・規制分野における民間企業の影響力拡大は、ESG投資やコーポレートガバナンスの観点からも注視すべき新たなリスクファクターとなりつつある。",
+    "collected_at": "2026-06-04T06:58:16.124086+09:00",
+    "market_impact": "GEOグループやCorecivicなどの民間矯正・拘束施設関連株は、移民拘束強化政策を背景に上昇トレンドが継続する可能性が高い。一方、移民労働力の減少が見込まれる農業・建設・サービス業などの労働集約型産業では、人件費上昇や人手不足が米国内のコスト増圧力となりインフレ要因になり得る。ドル相場への直接的影響は限定的だが、米国の移民政策リスクが新興国からの送金フローや労働市場見通しに影響する可能性がある。"
+  },
+  {
+    "title": "US announces new tariffs over forced labour concerns",
+    "japanese_title": "米国、強制労働懸念を理由に新たな関税を発表｜トランプ政権の貿易規制が再始動",
+    "url": "https://www.bbc.com/news/articles/cq6pe7nvldmo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国政府は強制労働への懸念を根拠として、新たな関税措置を発表した。",
+      "2. 背景には、2025年2月に米国最高裁がトランプ大統領の従来の関税措置の多くを違憲・無効と判断したという経緯がある。",
+      "3. 最高裁の判決を受け、政権は法的根拠を変えた新たなアプローチで関税政策の再構築を図っている。"
+    ],
+    "points": [
+      "・ 最高裁による関税無効判決後も、トランプ政権が「強制労働」という人権的根拠を活用して関税政策を継続しようとしている点",
+      "・ 法的迂回ルートとして機能する可能性があり、今後も同様の手法が多用されるかどうかが焦点",
+      "・ 対象国・対象品目の範囲次第では、中国のみならず東南アジア諸国やインドにも波及する可能性"
+    ],
+    "prediction": "米国の「強制労働」を根拠にした関税は、WTO（世界貿易機関）での新たな紛争案件を引き起こす可能性が高く、多国間貿易ルールの形骸化が一層進む恐れがある。対象国が報復措置を取れば、米国の農業・テクノロジー・エネルギーセクターにも悪影響が及び、世界経済の分断（デカップリング）がさらに加速するだろう。地政学的には、欧州やアジア同盟国との貿易摩擦も誘発しうる複雑な局面に入る可能性がある。",
+    "ai_interpretation": "このニュースの本質は、**司法による制約を受けたトランプ政権が、人権・倫理的枠組みを「政治的・経済的手段」として戦略的に活用し始めた**という点にある。強制労働という道義的に反論しにくい根拠を使うことで、国内外の批判をかわしながら保護主義政策を維持しようとする巧みな政治手法と見ることができる。グローバル経済への示唆としては、今後の通商政策が「経済合理性」だけでなく「人権・安全保障」という価値観を盾にした新たな保護主義の時代へと移行しつつあることを示しており、企業はサプライチェーンの倫理的透明性確保を一層求められる局面を迎えている。",
+    "collected_at": "2026-06-04T06:58:36.271552+09:00",
+    "market_impact": "強制労働を名目とした関税は、中国・東南アジアからの輸入品を中心にサプライチェーンへの打撃を与え、製造業・小売業のコスト上昇を招く可能性がある。為替市場では米ドルの不安定化や新興国通貨への売り圧力が高まることが懸念される。また、グローバルな貿易摩擦の激化により、株式市場でも輸出依存度の高いセクターに下押し圧力がかかるリスクがある。"
+  },
+  {
+    "title": "Three-quarters of workers not on track for 'moderate' pension income, report suggests",
+    "japanese_title": "労働者の4分の3が老後の「適度な」年金収入に届かず――英国の退職後生活費問題が浮き彫りに",
+    "url": "https://www.bbc.com/news/articles/c3928m30v89o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 新たな報告書によると、英国で退職後に「適度な」生活水準を維持するには、1人あたり年間3万2,700ポンド、2人世帯では4万5,400ポンドが必要とされている。",
+      "2. しかし現状では、労働者の約4分の3がこの水準の年金収入を確保できる見通しが立っていない。",
+      "3. 高齢化社会と生活費高騰が重なる中、年金制度の持続可能性と老後の資金不足が深刻な社会問題として浮上している。"
+    ],
+    "points": [
+      "・ 退職後の「適度な生活」に必要な費用が具体的に数値化され、多くの人が現実とのギャップに直面していることが明確化された",
+      "・ 労働者の75%が老後資金不足というのは英国だけの問題ではなく、先進国共通の構造的課題を示唆している",
+      "・ インフレや住宅費の上昇が必要老後資金の水準を押し上げており、問題がさらに悪化するリスクがある"
+    ],
+    "prediction": "英国政府は年金制度改革や自動加入型積立制度（オートエンロールメント）の拡充を迫られる可能性が高く、財政政策上の優先課題となるだろう。グローバルには、欧米・日本など高齢化が進む主要国でも同様の年金不足問題が表面化しており、公的年金への依存度低下と私的資産形成の重要性が一層高まる見通しだ。長期的には、高齢者の就労延長や退職年齢の引き上げを促す政策が各国で加速する可能性がある。",
+    "ai_interpretation": "このニュースの本質は、単なる英国の年金問題にとどまらず、「長寿リスク」と「購買力の維持」という現代社会が直面する構造的矛盾を浮き彫りにしている点にある。グローバル経済においては、年金資産の運用不足が個人消費の縮小を招き、内需主導型経済の持続的成長を脅かす要因となりうる。また、社会保障コストの増大が財政を圧迫し、各国政府の政策余地を狭めることで、世界的な経済の脆弱性を高めるという連鎖的リスクへの警鐘とも読み取れる。",
+    "collected_at": "2026-06-04T06:58:55.388813+09:00",
+    "market_impact": "英国の年金不足問題は、金融・保険業界における個人年金商品や資産運用サービスへの需要拡大を促す可能性がある。また、高齢者の消費力低下は英国内需に下押し圧力をかけ、ポンドや英国株式市場にも間接的な影響を与えうる。一方、政府による年金支援政策の拡充が財政赤字拡大懸念につながる可能性もある。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-04",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-06-04.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-06-04.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-06-03",
+    "href": "2026-06-03.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
