@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Harry's and Coterie owner Mammoth Brands has ambitions to be the next CPG giant",
+    "japanese_title": "ハリーズ・コテリー運営のマンモス・ブランズ、次世代CPG（消費財）大手を目指す野望とD2C戦略の全貌",
+    "url": "https://www.cnbc.com/2026/06/07/harrys-coterie-owner-mammoth-brands-growth-ipo-rumors.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. マンモス・ブランズは「Harry's（カミソリ）」「Coterie（おむつ）」などのD2Cブランドを傘下に持ち、消費財市場の破壊的革新を主導している。",
+      "2. カミソリ・おむつ・デオドラントといった日用品カテゴリーで、既存の大手消費財メーカー（P&G、ユニリーバ等）に対抗する新たな市場秩序を構築しつつある。",
+      "3. 同社はD2Cモデルを軸に、次世代の総合消費財コングロマリット（CPGジャイアント）への成長を明確に目指している。"
+    ],
+    "points": [
+      "・ **D2Cモデルの進化**：顧客データを直接取得できるD2Cモデルが、製品開発・マーケティングの精度を飛躍的に向上させている点",
+      "・ **カテゴリー破壊戦略**：カミソリ・おむつ・デオドラントという「コモディティ化した日用品」を高付加価値ブランドとして再定義している点",
+      "・ **プラットフォーム型成長**：単一ブランドではなく、複数ブランドを束ねる持株会社モデルで規模の経済を追求している点"
+    ],
+    "prediction": "マンモス・ブランズがIPO（株式公開）や大型資金調達を実施すれば、D2C消費財セクター全体への投資が活性化し、類似モデルの企業群が世界各地で台頭するきっかけとなるだろう。一方で、Amazonや小売大手との流通競争、および原材料コスト上昇・物流コスト増大という逆風が、収益構造の持続可能性に対する試練となる。地政学的には、米国発のブランドが新興国市場へ拡大する際、各国の規制・関税政策が成長の障壁となり得る。",
+    "ai_interpretation": "このニュースの本質は、「消費財産業における権力の民主化」である。かつてはP&GやJ&Jといった巨大企業だけが握っていたブランド構築力・流通力を、デジタル技術とD2Cモデルが中小規模の企業に開放したことを象徴している。グローバル経済的に見れば、これは単なる企業の成長ストーリーではなく、製造業・小売業・広告業を横断するバリューチェーンの再編を示唆しており、伝統的CPG企業はデジタル変革の加速か、有力D2Cブランドの買収戦略かという二者択一の岐路に立たされている。",
+    "collected_at": "2026-06-08T05:19:25.919527+09:00",
+    "market_impact": "D2Cブランドの台頭は、P&GやユニリーバなどCPG伝統大手の市場シェアを侵食し、グローバル消費財市場の競争構造を根本から変えつつある。デジタルマーケティングとサプライチェーン効率化を武器にした価格競争力は、新興国市場への展開も容易にし、為替変動リスクを分散できるオムニチャネル戦略と組み合わさることで国際競争力を高める。また、消費財セクターへの投資家マネーがスタートアップ型ブランドへシフトする動きを加速させる可能性がある。"
+  },
+  {
+    "title": "Eli Manning weighs in on Giants QB Jaxson Dart's Trump rally fallout",
+    "japanese_title": "イーライ・マニング、NFLクォーターバック ジャクソン・ダートのトランプ集会登場をめぐる論争に見解を示す",
+    "url": "https://www.cnbc.com/2026/06/04/eli-manning-giants-jaxson-dart-trump.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ニューヨーク・ジャイアンツのQBジャクソン・ダートがトランプ大統領の政治集会で紹介役を務め、波紋を呼んだ。",
+      "2. ジャイアンツのレジェンドQBであるイーライ・マニングが、アスリートの政治活動について自身の見解を公表した。",
+      "3. スポーツ選手の政治参加・発言の是非をめぐる議論が、NFLおよびスポーツ界全体で再燃している。"
+    ],
+    "points": [
+      "・ アスリートの政治的表現の自由とチーム・リーグの利益相反という構造的問題",
+      "・ トランプ政権とスポーツ界の関係強化が持つメディア戦略的意図",
+      "・ イーライ・マニングという影響力ある人物の発言がNFL内の世論形成に与える波及効果"
+    ],
+    "prediction": "NFLはスポーツと政治の関係について改めてガイドライン整備を迫られる可能性があり、各チームのブランド管理が一層複雑化するだろう。米国内の政治的二極化が進む中、スポーツ選手への政治的期待や圧力はさらに高まり、スポンサー企業のリスク管理コストも増加が見込まれる。グローバルなスポーツビジネス市場においても、米国発の政治・スポーツ融合トレンドが他国市場の戦略に影響を与える可能性がある。",
+    "ai_interpretation": "このニュースの本質は、スポーツという中立的な文化空間が政治的動員ツールとして活用される現代米国の構造変化を象徴している。経済的観点からは、スポーツ選手のブランド価値が政治的立場と不可分になりつつあり、スポンサー企業や放映権ビジネスにとって新たなリスク変数が生まれていることを示唆する。グローバル経済においても、米国スポーツ産業の政治化は国際的なブランド展開やESG投資判断にまで波及し得る重要なトレンドとして注視すべきである。",
+    "collected_at": "2026-06-08T05:19:44.339323+09:00",
+    "market_impact": "このニュース単体が金融市場や為替に直接的な影響を与える可能性は極めて低い。ただし、NFLやスポーツビジネス関連の広告・スポンサー市場においては、選手の政治的立場が企業のブランドリスク評価に影響を与える可能性がある。スポーツエンターテインメント産業における政治的分断の深化は、視聴率やスポンサー獲得戦略に長期的な課題をもたらし得る。"
+  },
+  {
+    "title": "Eli Lilly's top dealmaker says don't be surprised to see more M&A that pushes Lilly into new areas",
+    "japanese_title": "イーライリリー、世界最大製薬企業として新たなM&A戦略を加速－新領域への積極展開を示唆",
+    "url": "https://www.cnbc.com/2026/06/03/eli-lilly-to-use-glp-1-windfall-to-fund-ma-and-diversify-pipeline.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. イーライリリーの新たなM&A責任者が、同社が世界最高時価総額の製薬企業となった現在、M&Aへのアプローチを刷新していることを明らかにした。",
+      "2. 今後は既存事業の枠を超えた新領域へのM&Aを積極的に検討しており、予想外の分野への進出も辞さない姿勢を示している。",
+      "3. オゼンピック対抗薬（GLP-1）などの主力製品で莫大な収益を背景に、豊富な資金力を活用した大型買収戦略が現実味を帯びている。"
+    ],
+    "points": [
+      "・世界最大の製薬企業という地位が、交渉力と資金調達力を飛躍的に高め、従来より大規模・多様なM&Aを可能にしている",
+      "・「新領域」への進出示唆は、デジタルヘルス・AI創薬・医療機器など製薬の枠を超えた買収ターゲットの存在を暗示している",
+      "・GLP-1（肥満・糖尿病治療薬）ブームで積み上げた潤沢なキャッシュフローが、攻撃的なM&A戦略の財務的裏付けとなっている"
+    ],
+    "prediction": "イーライリリーはAIを活用した創薬プラットフォーム企業や、希少疾患・神経疾患領域のバイオベンチャーへの投資・買収を加速させる公算が大きい。地政学的観点では、欧州・アジアのバイオクラスターへの資本流入が促進され、各国の規制当局による審査強化や国家安全保障上の懸念が高まる可能性もある。製薬業界の覇権争いが激化する中、M&A価格の高騰がイノベーション促進と株主還元のバランスを問う議論を呼ぶだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる企業買収戦略の変化にとどまらず、「製薬企業」という業態の境界線が溶解しつつあることを象徴している。イーライリリーが「新領域」と表現する先には、ヘルスケアとテクノロジーの融合という産業構造の大転換が透けて見える。世界経済へのより広い示唆として、GLP-1薬がもたらした莫大な富が一企業に集中し、その資本がグローバルなイノベーション生態系の形成を左右する「メガキャップ主導型イノベーション経済」の到来を告げている点が極めて重要だ。",
+    "collected_at": "2026-06-08T05:20:06.109904+09:00",
+    "market_impact": "イーライリリーの積極的なM&A姿勢は、バイオテクノロジーや医療機器など隣接産業のスタートアップ企業の株価押し上げ要因となる可能性がある。また、競合するファイザーやノボノルディスクなど大手製薬各社にも買収競争を促す波及効果が生じ、製薬セクター全体のM&A市場が活性化する見通しだ。潤沢なドル資金による海外企業買収が増加すれば、対象国の通貨にも一定の影響を与える可能性がある。"
+  },
+  {
+    "title": "Trump strips job protections from 8,000 federal workers",
+    "japanese_title": "トランプ大統領、高級官僚8,000人の身分保障を剥奪する大統領令に署名",
+    "url": "https://www.npr.org/2026/06/03/nx-s1-5742806/trump-federal-employees-civil-service-job-protections-schedule-f",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. トランプ大統領は、約8,000人の上級公務員を「正当な理由なく解雇可能」な新たな雇用カテゴリーに移行させる大統領令に署名した。",
+      "2. この措置は、連邦政府の官僚機構に対するトランプ政権の大規模な改革・掌握戦略の一環とみられる。",
+      "3. 従来の公務員制度が持つ政治的中立性・身分保障の仕組みを根本から変える可能性がある。"
+    ],
+    "points": [
+      "・ 対象となる8,000人は政策立案に関わる上級ポストであり、行政の中枢機能への影響が甚大",
+      "・ 従来の公務員保護法（Merit Systems Protection）を事実上無力化する動きとして批判を受けている",
+      "・ 司法省・環境保護局・金融規制機関など主要機関の独立性が損なわれるリスク"
+    ],
+    "prediction": "訴訟による法廷闘争が不可避とみられ、連邦裁判所での差し止め命令の可能性が高い。中長期的には、政治任用による行政の「党派化」が進み、米国の政策継続性や国際的な信頼性に影響を与え、外国企業・投資家の対米投資判断にも慎重姿勢が広がる恐れがある。",
+    "ai_interpretation": "このニュースの本質は、米国の「行政国家（Administrative State）」の解体を目指すトランプ政権の戦略的意図にある。独立した専門官僚制度は民主主義における「制度的歯止め」として機能してきたが、その弱体化はグローバルな政策予測可能性の低下を招き、米国をパートナーとする各国や多国籍企業のリスク計算を大きく変える。世界経済における米国の「ルールに基づく行動」への信頼が揺らぐことで、ドル基軸体制や米国主導の国際秩序にも中長期的な構造変化をもたらしうる。",
+    "collected_at": "2026-06-08T05:20:24.670952+09:00",
+    "market_impact": "米国の行政運営の安定性への懸念から、規制当局の政策判断が政治的圧力に左右されるリスクが高まり、金融・エネルギー・医療などの規制産業に不確実性をもたらす可能性がある。ドルや米国債への信頼感にも間接的な影響を与えうるが、短期的には市場の反応は限定的とみられる。一方、規制緩和への期待感から一部セクターにはポジティブな見方もある。"
+  },
+  {
+    "title": "Firings at CBS' '60 Minutes' reflect the fight for media control in the age of Trump",
+    "japanese_title": "CBS「60ミニッツ」大量解雇が示すトランプ時代のメディア支配をめぐる攻防",
+    "url": "https://www.npr.org/2026/06/03/nx-s1-5844929/cbs-60-minutes-scott-pelley-cecilia-vega-bari-weiss-trump",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. CBSの人気報道番組「60ミニッツ」で、幹部3名・記者2名に続き、看板キャスターのスコット・ペリーも解雇された。",
+      "2. 番組の新リーダーはペリーの解雇理由を「反抗的行為」と説明しているが、ペリー本人は報道の独立性を守るための行動だったと反論している。",
+      "3. 一連の解雇劇は、トランプ政権下における権力とメディアの緊張関係を象徴する出来事として広く注目されている。"
+    ],
+    "points": [
+      "・トランプ政権との関係改善を図る経営判断が、報道の独立性と正面衝突している構図",
+      "・「反抗的行為」vs「報道倫理の擁護」という解雇理由をめぐる真っ向からの対立",
+      "・大物ジャーナリストの相次ぐ離脱による番組ブランド価値の毀損リスク"
+    ],
+    "prediction": "トランプ政権との緊張関係が続く中、主要メディア企業は政治的圧力と報道の独立性の間でさらに難しい舵取りを迫られると見られる。この動向はNBC・ABC・CNNなど他の大手メディアにも波及し、業界全体の自主規制や編集方針の見直しが加速する可能性がある。長期的には、独立系デジタルメディアへの信頼シフトが進み、既存メディア企業の広告収益モデルがさらに圧迫される懸念がある。",
+    "ai_interpretation": "このニュースの本質は、単なる人事問題ではなく、政治権力がメディア機関の内部統治に浸透しつつある「メディアの制度的自律性の危機」を示している。報道機関が資本・政治・経営の三重圧力に晒される環境は、民主主義の「監視機能」の弱体化を意味し、長期的には政策の透明性低下を通じてグローバルな投資環境の不確実性を高めるリスクがある。トランプ時代のメディア支配の行方は、米国の「ソフトパワー」と情報の信頼性という観点から、世界経済の構造的リスクの一つとして注視すべき問題である。",
+    "collected_at": "2026-06-08T05:20:44.482459+09:00",
+    "market_impact": "CBSの親会社パラマウント・グローバルの株価や企業イメージへの悪影響が懸念され、メディア・エンターテインメントセクター全体への投資家心理を冷え込ませる可能性がある。また、メディア企業の編集独立性への疑念が強まれば、広告主の出稿判断にも影響を与えかねない。さらに、米国メディア産業全体の信頼性低下は、情報の信憑性を重視するグローバル投資家の意思決定にも間接的な影響を及ぼし得る。"
+  },
+  {
+    "title": "I was applying for hundreds of jobs - this tip helped me get one",
+    "japanese_title": "数百社に応募しても音沙汰なし→採用を勝ち取った「たった一つのコツ」とは？求職者4人が語る成功の秘訣",
+    "url": "https://www.bbc.com/news/articles/cd7pqwr5lqxo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 何百社にも応募しても返答が得られなかった求職者たちが、採用につながった具体的な工夫や戦略を共有している。",
+      "2. 従来の一般的な応募方法では通用しにくくなっており、差別化された独自のアプローチが内定獲得の鍵となっている。",
+      "3. 4人の成功者がそれぞれの体験談をもとに、現代の厳しい就職市場を乗り越えるためのヒントを提供している。"
+    ],
+    "points": [
+      "・ 大量応募戦略が機能しなくなっている現代の雇用環境の実態",
+      "・ AIスクリーニングや採用システムの普及が求職者に与える構造的不利",
+      "・ ネットワーキングや個別アプローチなど、「人的つながり」の重要性の再浮上"
+    ],
+    "prediction": "AIによる自動選考が主流化する中、求職者は単なるスキルマッチングを超えた「人間らしさ」や「個性の発信力」が一層求められるようになるだろう。グローバルに見ても先進国を中心に若年層・中途層の雇用ミスマッチは継続し、政府・企業双方のリスキリング投資や採用プロセス改革が急務となっている。長期的には、求職活動そのもののデジタルリテラシー格差が社会的不平等を拡大させるリスクがある。",
+    "ai_interpretation": "このニュースの本質は、単なる就職テクニックの紹介にとどまらず、**現代の労働市場における構造的な断絶**を浮き彫りにしている点にある。大量応募が当たり前になった時代において、企業と求職者の間のコミュニケーションが形骸化し、優秀な人材が埋もれるという経済的損失が生じている。グローバル経済の観点では、人的資本の最適配分が妨げられることは生産性の停滞につながり、特に技術革新が加速する現在において、その機会損失は計り知れない。",
+    "collected_at": "2026-06-08T05:21:03.258078+09:00",
+    "market_impact": "現代の雇用市場では求人数に対して求職者数が過剰となっており、特にホワイトカラー職でのミスマッチが深刻化している。AIによる書類選考の普及が応募者の「見えない壁」を生み出し、採用プロセス自体の効率性と公平性が問われる局面となっている。人材サービス産業やHRテック企業にとっては、新たなソリューション需要が拡大するチャンスとも言える。"
+  },
+  {
+    "title": "M&S launches new traineeship for 1,000 young people",
+    "japanese_title": "M&S（マークス&スペンサー）、若者1,000人向け職業訓練プログラムを新設——若年無業者問題に挑む",
+    "url": "https://www.bbc.com/news/articles/cr7xr3dvxp9o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 英国大手小売チェーンのM&Sが、就労・就学・職業訓練のいずれにも参加していない若者（NEET層）1,000人を対象とした新たな訓練制度（トレイニーシップ）を開始した。",
+      "2. このプログラムは、若年層の雇用離れという「深刻化する社会課題」に民間企業として積極的に対応する取り組みである。",
+      "3. 小売業界における人材育成と社会的責任（CSR）を融合させた施策として注目を集めている。"
+    ],
+    "points": [
+      "・ 英国でNEET（若年無業者）問題が「成長する課題（growing challenge）」と表現されており、社会問題の深刻化が示唆されている",
+      "・ 政府機関ではなく民間小売企業が主導している点で、官民連携の新たなモデルとなる可能性がある",
+      "・ 1,000人規模という数字は象徴的であり、他の大手企業への波及効果（業界標準化）が期待される"
+    ],
+    "prediction": "英国経済がブレグジット後の労働力不足と物価高騰によるコスト圧力を受ける中、民間主導の雇用創出モデルはさらに重要性を増すと考えられる。M&Sの取り組みが成功すれば、欧州全体の大手小売・サービス業がNEET支援プログラムを模倣・導入する動きが加速する可能性がある。また、各国政府がこうした民間企業の社会投資に対して税制優遇などのインセンティブを強化する政策論議を呼ぶことも予想される。",
+    "ai_interpretation": "このニュースの本質は、**福祉国家の機能低下を補完する形で民間企業が社会インフラを担い始めている**という構造的変化を示している点にある。単なる企業の善意ではなく、将来の労働力確保という経営戦略と社会課題解決が一致した「戦略的CSR」の好例であり、グローバル経済における企業の役割の再定義を象徴している。こうした動きは、ESGや社会的インパクト投資の潮流と相まって、「企業が社会問題を解決するプレーヤー」として評価される時代の到来を示す重要なシグナルと言えるだろう。",
+    "collected_at": "2026-06-08T05:21:23.464384+09:00",
+    "market_impact": "英国の若年失業率は依然として課題であり、民間企業によるこうした取り組みは労働市場の底上げに寄与する可能性がある。小売業界全体にとっては、人手不足解消と将来的な優秀人材の確保につながり、業界の持続可能な成長を支える布石となり得る。為替や株式市場への直接的な影響は限定的だが、ESG投資の観点からM&Sの企業評価にはポジティブな影響を与えるだろう。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-08",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-06-08.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-06-08.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-06-07",
+    "href": "2026-06-07.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>

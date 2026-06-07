@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Notion restores access to Anthropic after service disruption",
+    "japanese_title": "NotionがAnthropicへのアクセスを復旧——サービス障害後に連携機能が回復",
+    "url": "https://techcrunch.com/2026/06/07/notion-restores-access-to-anthropic-after-service-disruption/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. NotionでAnthropicのAI機能が利用できなくなるサービス障害が発生した。",
+      "2. 障害は復旧し、Notionのプロダクト責任者が公式に状況を説明した。",
+      "3. この件に関する投稿が大量にリツイートされたことに対し、同責任者が驚きを示した。"
+    ],
+    "points": [
+      "・ NotionのようなSaaSツールがサードパーティAI（Anthropic）に強く依存する構造的リスクが露呈した",
+      "・ サービス障害情報がSNSで爆発的に拡散したことは、ユーザーのAI機能への依存度の高さを示している",
+      "・ プロダクト責任者自身がSNSで直接コミュニケーションを取るという透明性の高い対応が注目される"
+    ],
+    "prediction": "NotionはAnthropicとの連携安定性向上に向けたインフラ整備を強化するとみられる。また、単一AIプロバイダーへの依存リスクを軽減するため、OpenAIやGoogle AIなど複数モデルへの対応拡充が加速する可能性がある。ユーザー側でもAI機能障害時のバックアッププランを意識する動きが広がるだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる技術的障害の報告を超え、現代のSaaSビジネスがいかにAIサービスへの依存を深めているかを浮き彫りにしている。ユーザーの反応の大きさ（大量RT）は、AI機能がもはや「あれば便利」ではなく「なくては困る」インフラになりつつあることを示す証左である。プロバイダー間の依存関係が複雑化する中、企業には可用性と冗長性の設計が今後ますます重要な競争力となるだろう。",
+    "collected_at": "2026-06-08T05:14:41.691343+09:00",
+    "background": "NotionはAnthropicのAIモデル（Claude）を活用したAI機能を自社サービスに統合しており、多くのユーザーが業務や創作活動でこの機能に依存している。今回、何らかの原因でNotionからAnthropicへの接続が遮断され、AI関連機能が一時的に使用不能となった。こうしたAIサービスへの依存度の高まりを反映し、障害情報がSNS上で急速に拡散した。"
+  },
+  {
+    "title": "OpenAI is still working on that ‘super app’",
+    "japanese_title": "OpenAIが「スーパーアプリ」開発を継続中――「チャットの時代は終わった」と幹部が発言",
+    "url": "https://techcrunch.com/2026/06/07/openai-is-still-working-on-that-super-app/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. OpenAIはチャット形式を超えた「スーパーアプリ」の開発に取り組んでいることが明らかになった。",
+      "2. OpenAIの上級社員が「チャットは死んだ」と発言し、AIインターフェースの大きな転換を示唆した。",
+      "3. 同社は単なる会話型AIを超えた、より統合的なプラットフォームへの進化を目指している。"
+    ],
+    "points": [
+      "・「チャットは死んだ」という強烈な表現が示す、OpenAI内部のUI・UXに対する危機感と変革意識",
+      "・中国のWeChat的な「スーパーアプリ」モデルをAI分野で実現しようとする野心的な方向性",
+      "・チャット以外のインターフェース（音声・画像・エージェント操作など）が主役になる可能性"
+    ],
+    "prediction": "OpenAIはエージェント機能や音声・画像・タスク自動化などを一つのアプリに統合した「オールインワンAIプラットフォーム」の構築を加速させるとみられる。これはAppleやGoogleのOS・エコシステムとの正面衝突を意味し、プラットフォーム競争が激化する可能性が高い。短期的にはChatGPTアプリの大幅なUI刷新や新機能の統合として現れてくるだろう。",
+    "ai_interpretation": "このニュースの本質は、AIが「ツール」から「プラットフォーム」へと進化しようとしているパラダイムシフトを示している。チャットはAIへの入り口に過ぎず、OpenAIが目指すのはユーザーの生活・業務に深く組み込まれたインフラ的存在だ。「チャットの死」とは退化ではなく、AIがより自律的・統合的に機能する新時代への宣言と解釈できる。",
+    "collected_at": "2026-06-08T05:14:58.818446+09:00",
+    "background": "ChatGPTはテキストチャット形式でAIを一般に普及させた立役者だが、競合他社も類似サービスを次々と投入し、チャットUI自体の差別化が難しくなっている。OpenAIはGPT-4oやsora、音声モードなど機能を急速に拡張しており、単一のチャット画面に収まらない多機能なアプリへの移行を模索してきた。こうした流れの中で「スーパーアプリ」構想が改めて注目を集めている。"
+  },
+  {
+    "title": "TechCrunch Mobility: Inside GM’s $900M EV battery gamble",
+    "japanese_title": "GM（ゼネラルモーターズ）がEVバッテリーに9億ドルを投資——自動車業界の電動化戦略の真相",
+    "url": "https://techcrunch.com/2026/06/07/inside-gms-900m-ev-battery-gamble/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. GMはEV（電気自動車）用バッテリー分野に約9億ドル（約1,350億円）規模の大型投資を行う戦略的な賭けに出ている。",
+      "2. TechCrunch Mobilityが同投資の内幕を報じており、自動車業界の電動化競争における同社の立ち位置が注目されている。",
+      "3. この動きは、テスラや中国系メーカーに対抗するための米国自動車大手の生き残り戦略の一環と見られる。"
+    ],
+    "points": [
+      "・ 9億ドルという投資規模はバッテリー内製化・技術確保への強い意志を示す",
+      "・ バッテリーサプライチェーンの自社コントロールにより、コスト削減と安定供給を狙う",
+      "・ 米国内製造へのシフトはIRA（インフレ削減法）の補助金活用とも密接に関連している"
+    ],
+    "prediction": "GMのバッテリー投資が成功すれば、EVの製造コスト削減と航続距離向上が実現し、テスラへの対抗力が増すと予想される。一方で、バッテリー技術の進化スピードは速く、投資対象技術が陳腐化するリスクも存在する。今後数年で同社のEV販売台数と収益性がこの「賭け」の成否を判断する試金石となるだろう。",
+    "ai_interpretation": "このニュースが示す本質は、自動車産業における「ハードウェアの覇権争い」がバッテリー技術に集約されつつあるという構造変化である。GMの大型投資は単なる設備投資ではなく、ソフトウェア・エネルギー管理・製造ノウハウを垂直統合しようとする戦略的意図の表れといえる。伝統的自動車メーカーが「変革するか、淘汰されるか」という歴史的分岐点に立っていることを、この9億ドルという数字は雄弁に物語っている。",
+    "collected_at": "2026-06-08T05:15:17.213872+09:00",
+    "background": "世界的な脱炭素化の潮流を受け、各国政府がEV普及を推進する規制強化を続けており、従来型自動車メーカーは急速な事業転換を迫られている。GMはかつてEV開発で先行したものの、テスラの台頭や中国メーカーの低コスト攻勢により競争力の低下が指摘されてきた。バッテリーはEVのコストと性能を左右する核心技術であり、この分野への大規模投資は同社の電動化戦略の根幹をなすものである。"
+  },
+  {
+    "title": "The Humanoid Robot of the Future Is a 6-Foot-Tall Beefcake With a Chinese Body and an American Brain",
+    "japanese_title": "中国製ボディ×米国製AI搭載——NvidiaのロボティクスリードCが語る「未来の人型ロボット」の全貌",
+    "url": "https://www.wired.com/story/nvidia-unitree-humanoid-robot-h2-plus/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. 身長約183cmの大型ヒューマノイドロボットが、中国製の機体と米国製（Nvidia）のAIブレインを組み合わせた\"ハイブリッド構造\"で開発されている。",
+      "2. NvidiaのロボティクスリードであるSpencer Huang氏がWIREDの取材に応じ、この融合が「両国の強みを最大化する」と説明した。",
+      "3. ハードウェア製造力に強みを持つ中国と、AI・ソフトウェア技術をリードする米国の分業体制が、ロボット開発の新たなモデルとして注目されている。"
+    ],
+    "points": [
+      "・ 中国製ハードウェア（ボディ・アクチュエーター等）と米国製AIソフトウェア（Nvidiaチップ・プラットフォーム）の組み合わせという、国際的な技術協業モデルの登場",
+      "・ 身長6フィート（約183cm）という大型サイズは、産業・物流現場での実用性を強く意識した設計であることを示唆",
+      "・ 米中間の技術デカップリング（分断）が進む中でも、民間レベルでの協業が続いている実態が浮き彫りに"
+    ],
+    "prediction": "米中間の輸出規制や技術安全保障の観点から、このようなハイブリッド型開発モデルは政治的摩擦に晒される可能性が高く、規制強化によって構造変更を迫られるリスクがある。一方で、コスト効率と性能を両立するこのアプローチは業界標準になり得るため、他のロボットメーカーも追随する動きが出てくるだろう。短期的にはNvidiaのロボティクス向けプラットフォーム（Isaac、Jetsonシリーズ等）の普及加速につながると見られる。",
+    "ai_interpretation": "このニュースの本質は、単なるロボット製品の紹介ではなく、「グローバル技術サプライチェーンの再編」と「AIハードウェア覇権争い」の縮図である。米中対立が激化する中でも、最も合理的な製品を作ろうとする民間企業の論理が国家間の分断を超えようとしており、テクノロジー産業における地政学と経済合理性の緊張関係を象徴している。Nvidiaがロボティクス分野でも「AIの頭脳」としてデファクトスタンダードを狙う戦略的意図も、この動きの背後に透けて見える。",
+    "collected_at": "2026-06-08T05:15:38.963470+09:00",
+    "background": "近年、人型ロボット（ヒューマノイド）開発競争はTeslaのOptimus、Figure AI、1X Technologiesなど多くの企業が参入し急加速している。一方、中国はロボット製造・部品供給において圧倒的なコスト競争力と技術力を持ち、米国はNvidiaを筆頭にAI処理・学習基盤で世界をリードしている。この地政学的な技術分断を逆手に取り、両国の強みを組み合わせる戦略的アプローチが生まれてきた。"
+  },
+  {
+    "title": "What’s Worth More Than Cash in San Francisco Real Estate? Anthropic Stock",
+    "japanese_title": "サンフランシスコ不動産市場で現金より価値あり？住宅をAnthropicの未公開株と交換する新トレンド",
+    "url": "https://www.wired.com/story/whats-worth-more-than-san-francisco-real-estate-anthropic-stock/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. サンフランシスコ・ベイエリアの不動産市場で、住宅の売却対価としてAIスタートアップ「Anthropic」の株式を受け入れる物件リストが複数登場している。",
+      "2. これはAnthropicの企業評価額が急騰し、その未公開株が現金以上の価値を持つ資産と見なされ始めていることを示している。",
+      "3. AI産業の急成長がシリコンバレーの不動産市場にまで直接的な影響を与えるという異例の現象が生まれている。"
+    ],
+    "points": [
+      "・ 未公開株（プライベートエクイティ）が不動産という実物資産の「通貨」として機能し始めるという市場の変容",
+      "・ Anthropicへの市場の信頼度が非常に高く、IPO前の株式でも担保・交換対象として成立するほどの評価を受けていること",
+      "・ AIバブルの熱狂がテック業界内にとどまらず、一般の不動産市場にまで波及している社会現象としての側面"
+    ],
+    "prediction": "AnthropicのIPOが実現すれば、株式を受け取った売主は大きな利益を得る可能性があり、この取引モデルが注目・模倣される可能性がある。一方で未公開株には流動性リスクや価値下落リスクも伴うため、規制当局や金融専門家から慎重論が出てくることも予想される。AIスタートアップへの熱狂が続く限り、同様の「株式バーター型」不動産取引がベイエリア以外にも広がる可能性がある。",
+    "ai_interpretation": "このニュースの本質は、AIへの期待感が「通貨的信頼」を獲得しつつあるという現代の資産観の変化を象徴している。現金という最も流動性の高い資産よりもAI企業の未公開株が好まれるという事実は、テクノロジー信仰とバブル的熱狂が交差した特異な経済心理を反映している。歴史的に見れば、このような「特定資産への過剰な信頼」はバブル崩壊の予兆となることもあり、シリコンバレーの熱狂を冷静に読み解く視点が今後ますます重要になるだろう。",
+    "collected_at": "2026-06-08T05:15:59.953141+09:00",
+    "background": "Anthropicは「Claude」を擁するAIスタートアップとして急速に成長し、Amazonなどから巨額の投資を受け企業価値は数兆円規模に達している。シリコンバレーでは過去にもFacebookやGoogleの株が不動産取引に使われた前例があり、今回のAIブームがその現代版として再現されている。未公開株でありながら高い流動性と将来性への期待から、売主側が現金よりも魅力的な資産として積極的に受け入れる動きが出ている。"
+  },
+  {
+    "title": "School shooting survivor sues AI gun detection firm after system failed to spot weapon",
+    "japanese_title": "学校銃乱射事件の生存者、AIによる銃器検知システムの失敗を訴え──精度基準はどこに？",
+    "url": "https://arstechnica.com/tech-policy/2026/06/school-shooting-survivor-sues-ai-gun-detection-firm-after-system-failed-to-spot-weapon/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. 学校での銃乱射事件の生存者が、AIを活用した銃器検知システムのメーカーを相手取り訴訟を起こした。",
+      "2. 問題のAIシステムは、実際の銃器を検知することができず、事件の防止に失敗したとされる。",
+      "3. このケースはAIシステムの精度基準や法的責任の所在という重大な問いを社会に突きつけている。"
+    ],
+    "points": [
+      "・ AIシステムが「動作していた」にもかかわらず銃器を見逃したという事実が、製品の信頼性に深刻な疑問を投げかけている",
+      "・ 「AIシステムはどの程度の精度を持てば商用利用が許されるのか」という法的・倫理的基準がいまだ整備されていない現状が浮き彫りになった",
+      "・ 安全保障分野に特化したAI企業が、製品の失敗に対して法的責任を問われる先例となり得る重要な訴訟である"
+    ],
+    "prediction": "この訴訟の結果次第では、AI安全システムメーカーに対する精度開示義務や法的責任基準の策定が進む可能性がある。また、学校や公共機関におけるAI導入の際に、より厳格な第三者評価や性能保証が求められるようになるだろう。一方で、訴訟リスクを嫌ったAI企業が安全分野への参入を控える「萎縮効果」が生まれる懸念もある。",
+    "ai_interpretation": "このニュースの本質は、「AIへの過度な信頼（オーバーリライアンス）」がもたらすリスクの顕在化にある。AIシステムはあくまで確率的な判断ツールであり、100%の精度を前提とした運用設計は根本的に危険である。人命に直結する安全システムにAIを活用する場合、その限界を正直に開示し、人間による補完的な監視体制を組み合わせる「ヒューマン・イン・ザ・ループ」の思想が不可欠であることを、この事件は改めて示している。",
+    "collected_at": "2026-06-08T05:16:17.831756+09:00",
+    "background": "近年、米国の学校での銃乱射事件が相次ぐ中、AI技術を活用した銃器検知システムの導入が安全対策として普及しつつある。こうした製品は高い検知精度を売りに教育機関や公共施設に販売されてきたが、実環境での精度については疑問の声もあった。今回の訴訟は、そうした「AI万能論」への現実的な反証として注目されている。"
+  },
+  {
+    "title": "The skeptic’s guide to humanoid robots going viral on the Internet",
+    "japanese_title": "バイラル動画に騙されるな！ヒューマノイドロボットの「誇張」を見抜く懐疑的ガイド",
+    "url": "https://arstechnica.com/ai/2026/06/the-skeptics-guide-to-humanoid-robots-going-viral-on-the-internet/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. インターネット上で拡散するヒューマノイドロボットのデモ動画は、実際の能力を大幅に誇張して伝える可能性がある。",
+      "2. ロボットのデモンストレーションは、制御された環境や編集によって現実以上に印象的に見えるよう演出されることが多い。",
+      "3. 一般市民がロボット技術の真の実力を正確に評価するためのリテラシーが求められている。"
+    ],
+    "points": [
+      "・ デモ動画には「チェリーピッキング（都合の良い場面だけ選ぶ）」が多用されており、失敗シーンはカットされる",
+      "・ 視覚的に印象的なパフォーマンスと、実際の汎用性・実用性の間には大きなギャップが存在する",
+      "・ 投資家や政策立案者がバイラル動画を根拠に意思決定するリスクが高まっている"
+    ],
+    "prediction": "ヒューマノイドロボット市場への投資は今後も拡大が見込まれるが、誇大な期待と現実のギャップが明らかになることで、かつてのAIバブルのような「幻滅期」が訪れる可能性がある。一方で、メディアリテラシーや技術評価の透明性を求める声も高まり、企業には第三者機関による検証や公正なデモの開示圧力がかかるだろう。長期的には、誠実な情報発信を行う企業が信頼を勝ち取り、業界全体の健全な発展につながると考えられる。",
+    "ai_interpretation": "このニュースの本質は、**テクノロジーのマーケティングと現実の乖離**という普遍的な問題を改めて問い直している点にある。ロボット動画のバイラル化は、企業の資金調達や採用活動に有利に働く一方で、社会全体の技術理解を歪め、誤った政策判断や過剰投資を招く危険性をはらんでいる。「見えるものを信じる」ではなく「見えているものを批判的に問う」姿勢こそが、AI・ロボット時代を生き抜くための重要なリテラシーであることを示唆している。",
+    "collected_at": "2026-06-08T05:16:38.937234+09:00",
+    "background": "近年、Tesla（Optimus）やFigure AI、Boston Dynamicsなどが公開するヒューマノイドロボットの動画がSNSで爆発的に拡散し、「AIロボット革命」への期待が急速に高まっている。しかしその多くは、特定のタスクのみを切り取ったデモや、何度も繰り返しリハーサルされた動作を収録したものである。ロボット工学の専門家たちは、こうした動画が技術の現状について一般の誤解を招いていると警鐘を鳴らしてきた。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-08",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-06-07",
+    "href": "2026-06-07.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
