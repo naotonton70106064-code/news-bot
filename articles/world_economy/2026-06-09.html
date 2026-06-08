@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Airlines find the grass isn't always greener with new engines",
+    "japanese_title": "航空会社CEO、新型エンジンの供給不足と信頼性低下に警鐘―製造業者への不満が噴出",
+    "url": "https://www.cnbc.com/2026/06/08/airline-engines-ge-pratt-rtx.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 航空会社のCEOたちは、エンジンメーカーが需要に見合った生産量を確保できていないと強く批判している。",
+      "2. 新型エンジンは信頼性の面でも期待を下回っており、航空会社の運航計画に支障をきたしている。",
+      "3. 「新しいエンジンが必ずしも良いとは限らない」という現実が、航空業界全体の課題として浮き彫りになっている。"
+    ],
+    "points": [
+      "・ エンジン供給不足はコロナ禍後の航空需要急回復と製造能力の回復遅れとのギャップを反映している",
+      "・ 信頼性問題はメーカーの品質管理やアフターサービス体制の脆弱さを示唆している",
+      "・ 航空会社とメーカーの関係悪化は、今後の発注・契約交渉に大きな影響を与える可能性がある"
+    ],
+    "prediction": "エンジンメーカーは増産・品質改善への投資を迫られ、短期的にはコスト増と利益率低下が続くとみられる。航空会社は旧型機材の延命や代替機材の確保を模索せざるを得ず、航空機リース市場の需要がさらに高まる可能性がある。長期的には、この問題が次世代エンジン開発の方向性や製造業のサプライチェーン再構築議論を加速させるきっかけになるだろう。",
+    "ai_interpretation": "このニュースの本質は、ポストコロナにおける「需要の急回復」と「製造・技術供給の限界」という構造的ミスマッチを象徴している点にある。新技術・新製品が必ずしも即戦力にならないという現実は、航空業界に限らずEVや半導体など他の産業にも共通する現代経済の課題を映し出している。グローバル経済全体への示唆として、過度な技術革新への依存と生産能力への過小投資がいかにサプライチェーンの脆弱性を生み出すか、改めて問い直す契機となっている。",
+    "collected_at": "2026-06-09T06:16:28.822520+09:00",
+    "market_impact": "GEアエロスペースやCFM、プラット＆ホイットニーといった主要エンジンメーカーの株価・評価に下押し圧力がかかる可能性がある。航空会社側は機材繰りの悪化により運航便数の削減やコスト増を余儀なくされ、航空券価格の上昇や収益圧迫につながりかねない。サプライチェーンの混乱は航空需要の回復基調にも水を差すリスクをはらんでいる。"
+  },
+  {
+    "title": "Novo and Lilly are competing to win the GLP-1 pill market as they prepare for Medicare coverage",
+    "japanese_title": "ノボ・ノルディスクとイーライリリー、GLP-1経口薬市場でメディケア獲得に向け激しい競争",
+    "url": "https://www.cnbc.com/2026/06/08/novo-nordisk-eli-lilly-obesity-pills-medicare-coverage.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ノボ・ノルディスクとイーライリリーの両社が、従来の注射型に続き、経口GLP-1薬（飲み薬）市場での覇権争いを本格化させている。",
+      "2. 米国の高齢者向け公的医療保険「メディケア」がGLP-1薬のカバレッジ（保険適用）拡大を検討・準備しており、両社はシニア層市場の取り込みを狙っている。",
+      "3. 長年にわたるライバル関係にある両社が、次世代の肥満・糖尿病治療薬の主導権を巡り、製品開発・価格戦略・マーケティングの全面戦争に突入している。"
+    ],
+    "points": [
+      "・ 経口GLP-1薬は注射型と比較して利便性が高く、服薬継続率や新規患者獲得において大きな競争優位をもたらす可能性がある",
+      "・ メディケア保険適用の可否が市場規模を左右する最大の政策変数であり、バイデン・トランプ両政権の医療政策の動向が直接影響する",
+      "・ 両社の価格設定戦略（薬価交渉）が、米政府・保険者との関係で今後の業界標準を形成するモデルケースになりうる"
+    ],
+    "prediction": "メディケアの適用拡大が実現すれば、GLP-1薬市場は2030年までに1,500億ドルを超える規模に達するとの試算もあり、両社の世界的な製造能力・供給網の強化競争はさらに激化するとみられる。一方で、薬価引き下げ圧力や後発品参入の動向によっては利益率が圧縮されるリスクも存在する。地政学的観点では、欧米での市場独占が進む中、アジア・新興国市場への展開戦略も両社の中長期的な成長を左右する重要な焦点となる。",
+    "ai_interpretation": "このニュースの本質は、単なる製薬企業間の競争を超え、「肥満・代謝疾患の治療패러다임の転換」と「公的医療保険制度の持続可能性」という2つの巨大テーマが交差している点にある。経口化という技術革新がメディケアという巨大な公的購買力と結びつくことで、民間イノベーションと公的財政の緊張関係がグローバルレベルで顕在化する先行事例となりうる。長期的には、この競争の行方が製薬業界のR&D投資戦略・価格モデル・規制環境を世界規模で再定義する可能性を秘めており、投資家・政策立案者双方にとって注視すべき構造変化といえる。",
+    "collected_at": "2026-06-09T06:16:52.154232+09:00",
+    "market_impact": "メディケアによる保険適用が実現すれば、GLP-1薬の対象患者数が爆発的に拡大し、両社の売上高はさらに数百億ドル規模で成長する可能性がある。製薬セクター全体の株価にポジティブな影響を与える一方、医療費増大への懸念からメディケア財政議論が激化し、米国の医療政策リスクが高まる可能性がある。また、経口薬への移行は注射デバイス・針メーカーなどの関連産業に構造的な需要変化をもたらしうる。"
+  },
+  {
+    "title": "Food supply 'not at risk' after new Texas screwworm cases, USDA secretary says",
+    "japanese_title": "米農務長官「テキサスでのラセンウジバエ新規感染後も食料供給に支障なし」と表明",
+    "url": "https://www.cnbc.com/2026/06/08/texas-screwworm-cases-food-supply-brooke-rollins.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国農務長官は、テキサス州で新たなラセンウジバエ（スクリューワーム）の感染事例が確認されたにもかかわらず、食料供給は脅威にさらされていないと明言した。",
+      "2. 米国は1950年代後半から実績のある対策、特に不妊化した昆虫を放出して害虫の個体数を抑制する「不妊虫放飼法（SIT）」を中心とした対応策を採用する方針。",
+      "3. ラセンウジバエは家畜の傷口に寄生し深刻な被害をもたらす害虫であり、過去に撲滅に成功した経緯を持つ米国が再び科学的防除戦略を展開する。"
+    ],
+    "points": [
+      "・ 1950年代後半に確立された**不妊虫放飼法（SIT）**という実績ある生物的防除技術を再び活用する点",
+      "・ テキサス州という米国最大級の畜産州での発生であり、封じ込めの成否が全米の畜産業に直結する",
+      "・ メキシコ・中米との国境管理および農業分野での国際協調が防疫の鍵を握る点"
+    ],
+    "prediction": "不妊虫放飼法は過去に北米大陸からラセンウジバエをほぼ根絶した実績があるため、早期かつ集中的な対応が取られれば被害拡大は限定的にとどまる公算が高い。ただし、気候変動による害虫の生息域拡大が懸念されており、今回の事例が孤立したケースに終わらない可能性も排除できない。中長期的には、農業バイオテクノロジーや害虫管理産業への投資拡大が促進され、食料安全保障を巡る政策議論が再燃する可能性がある。",
+    "ai_interpretation": "このニュースの本質は、単なる害虫問題にとどまらず、**食料安全保障・科学的農業政策・国際協調**という三つの要素が交差する複合的な課題である点にある。政府が迅速に「食料供給は安全」と発信したことは、情報管理と市場安定化を重視する姿勢の表れであり、農産物市場における信頼維持がいかに経済的に重要かを示している。グローバル経済への示唆として、気候変動や生態系変化が引き起こす農業リスクは今後も増加する見通しであり、各国が科学的防除技術と国際連携を強化する「農業レジリエンス」への投資が不可欠となっている。",
+    "collected_at": "2026-06-09T06:17:15.071335+09:00",
+    "market_impact": "ラセンウジバエの拡散懸念が続く場合、テキサスを中心とした畜産業（牛・豚・羊）のコスト増や生産減少を招き、牛肉・豚肉の国内価格上昇圧力につながる可能性がある。一方、農務長官による「食料供給は安全」との声明は市場の過度な不安を抑制し、農業関連株や食品セクターへのパニック売りを防ぐ効果が期待される。メキシコや中米との越境での害虫管理協力が求められるため、農業貿易や二国間交渉にも影響を与えうる。"
+  },
+  {
+    "title": "Hey, Siri: Apple just announced a long-awaited AI update",
+    "japanese_title": "Apple、待望のAI機能「Apple Intelligence」を発表――セキュリティと子どもの安全を強調しながら競合を牽制",
+    "url": "https://www.npr.org/2026/06/08/nx-s1-5847937/apple-wwdc-2026-siri-ai-tim-cook",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. Appleは年次開発者会議（WWDC）にて、長らく待望されていたAI機能群を正式発表し、同社のAI戦略を初めて本格的に公開した。",
+      "2. 新機能ではセキュリティ・プライバシー保護および子どもの安全対策を前面に打ち出し、競合他社（Google・Microsoftなど）との差別化を図った。",
+      "3. SiriのAI強化を中心に、iOS・macOS全体へのAI統合が示され、AppleのAIエコシステム構築への本格参入が宣言された。"
+    ],
+    "points": [
+      "・ **プライバシー戦略の差別化**：オンデバイス処理を重視し「プライベートAI」として競合との明確な違いを訴求",
+      "・ **Siriの大幅刷新**：従来の音声アシスタントからLLMベースの高度なAIアシスタントへの進化が示唆",
+      "・ **競合批判の明示化**：AppleがGoogleやOpenAIなど競合のAIアプローチを公の場で批判するという異例の姿勢"
+    ],
+    "prediction": "Apple Intelligenceの実装が進むにつれ、プライバシー重視のAI市場セグメントが拡大し、規制当局（特にEU）のAI規制議論にも影響を与える可能性がある。また、約22億台に及ぶAppleデバイスへのAI展開は、世界的なAI普及速度を加速させ、AIサービス経済圏のさらなる拡大を促すと予測される。地政学的には、米中技術対立の文脈でAppleのAI戦略が中国市場でどう展開されるかが重要な注目点となる。",
+    "ai_interpretation": "このニュースの本質は、「AIの民主化」における最後の巨人・Appleが土俵に上がったことで、AI競争が一部技術者向けから**数十億人規模の一般消費者レベル**へと完全に移行したことを意味する。Appleが「安全・プライバシー」を競争軸に設定したことは、単なるマーケティングではなく、AI規制が強化される世界潮流を先読みした戦略的ポジショニングであり、グローバルなAIガバナンス議論を企業側から再定義しようとする動きとも解釈できる。長期的には、AppleのAI参入がハードウェアとAIの融合を加速させ、プラットフォーム経済における次の覇権争いの構図を塗り替える可能性を秘めている。",
+    "collected_at": "2026-06-09T06:17:36.196925+09:00",
+    "market_impact": "Appleの本格的なAI参入発表は、同社株（AAPL）への投資家期待を高め、短期的な株価押し上げ要因となる可能性がある。一方、GoogleやMicrosoftなど先行するAI企業との競争激化により、AIチップ・クラウドインフラ需要がさらに拡大し、半導体市場（NVIDIAなど）にも波及効果が見込まれる。また、AppleのAI機能はiPhoneの買い替え需要を刺激し、サプライチェーン全体（台湾・韓国・中国）にも間接的な影響を与えるだろう。"
+  },
+  {
+    "title": "With just days left, the U.S. opening match at the World Cup is still not sold out",
+    "japanese_title": "ワールドカップ開幕戦のチケットが売れ残り——米国・カナダ戦の需要低迷が示す消費トレンドの変化",
+    "url": "https://www.npr.org/2026/06/08/nx-s1-5849905/fifa-world-cup-tickets-prices",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ワールドカップ米国・カナダ両国の開幕戦チケットが、開催数日前にもかかわらず数百枚単位で売れ残っている。",
+      "2. 二次流通市場（リセールプラットフォーム）では、さらに多くのチケットが定価を下回る価格で出回っている。",
+      "3. 大型スポーツイベントへの需要が期待を下回り、チケット市場全体に過剰供給の兆候が見られる。"
+    ],
+    "points": [
+      "・定価を下回るリセール価格は、消費者の購買意欲低下またはチケット投機目的の転売者が損失を抱えていることを示唆",
+      "・米国・カナダという開催国でさえ需要が低調な点は、FIFA側のチケット価格設定戦略の失敗を示す可能性",
+      "・インフレや生活費上昇を背景に、高額スポーツ観戦への消費者優先度が低下しているトレンドの一端"
+    ],
+    "prediction": "消費者の「体験消費」離れは一時的なものにとどまらず、スポーツイベントの収益モデル全体の再検討を促す契機となる可能性がある。FIFAや国際スポーツ団体は今後、チケット価格の弾力的設定や早期購入インセンティブの強化を迫られるだろう。また、開催国経済への波及効果が限定的となれば、将来の大型イベント誘致に対する各国政府の費用対効果評価にも影響が出る可能性がある。",
+    "ai_interpretation": "このニュースの本質は、単なるチケット販売不振ではなく、「スポーツイベントは常に需要超過」という従来の常識が崩れ始めているシグナルである。高インフレ・高金利環境が続く中、消費者は支出の優先順位を再編しており、大型エンターテインメントへの出費抑制はグローバルな消費縮小トレンドの縮図と見ることができる。スポーツビジネスや関連産業にとっては、価格設定とブランド価値の再評価が急務であり、過信されてきたイベント経済効果の見直しを世界に促す象徴的な事例と言えよう。",
+    "collected_at": "2026-06-09T06:17:55.986141+09:00",
+    "market_impact": "スポーツイベント関連の観光・宿泊・飲食業界にとってはインバウンド需要の下振れリスクとなり、開催地周辺の経済効果が当初予測を下回る可能性がある。チケット二次流通市場における価格下落は、消費者の可処分所得の圧迫やインフレ長期化による「体験消費」への支出抑制を反映している可能性がある。また、スポーツビジネス・放映権・スポンサー契約にも間接的な評価見直しが波及し得る。"
+  },
+  {
+    "title": "Jailed crypto founder Sam Bankman-Fried seeks Trump pardon",
+    "japanese_title": "収監中のFTX創業者サム・バンクマン＝フリード、トランプ大統領に恩赦を正式申請",
+    "url": "https://www.bbc.com/news/articles/cjwgd6jqd5do?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 暗号資産取引所FTXの元創業者サム・バンクマン＝フリード（SBF）が、25年の禁固刑服役中に正式な恩赦申請を行った。",
+      "2. 申請はトランプ大統領を対象とし、月曜日に公式手続きが開始された。",
+      "3. 史上最大級の暗号資産詐欺事件の主犯が、政治的な恩赦という異例の救済手段に活路を求めている。"
+    ],
+    "points": [
+      "・トランプ政権は暗号資産産業に親和的な姿勢を示しており、恩赦申請が政治的に考慮される余地が他政権より高い",
+      "・SBFは過去にトランプ陣営へも献金を行っており、政治的な関係性が焦点となる",
+      "・恩赦が認められれば、金融犯罪に対する抑止力の低下と暗号資産規制の後退を懸念する声が高まる"
+    ],
+    "prediction": "トランプ大統領が恩赦を認めるかどうかは、暗号資産業界に対する規制方針の「踏み絵」となり、世界的な仮想通貨規制の方向性に大きな影響を与えるだろう。恩赦が実現すれば、他国の規制当局がより厳格な監督体制を強化する動きを加速させる可能性があり、特にEUや日本などの市場では投資家保護の観点から制度整備が進むと予想される。一方、恩赦が否定された場合は、金融犯罪への法的厳格さが維持され、機関投資家の暗号資産市場への信頼回復に寄与する可能性がある。",
+    "ai_interpretation": "このニュースの本質は、暗号資産業界が「政治力」と「法の支配」のどちらに依拠するのかという構造的な問いを提示している点にある。SBFの恩赦申請は、金融犯罪に対する司法の独立性と、新興テクノロジー産業が政治的庇護を求める傾向という二つの緊張関係を象徴している。グローバル経済への示唆としては、暗号資産が「脱規制」と「制度化」の間で揺れ動く中、その正当性を担保するのは技術革新ではなく透明性と法的整合性であるという教訓を改めて世界に示す事例といえる。",
+    "collected_at": "2026-06-09T06:18:16.640503+09:00",
+    "market_impact": "SBFの恩赦申請が注目を集めることで、暗号資産市場全体への規制・信頼性に関する議論が再燃し、ビットコインやアルトコインの価格に短期的な不確実性をもたらす可能性がある。トランプ政権が暗号資産業界に対して友好的な姿勢を示しているため、恩赦が実現した場合は暗号資産関連株や市場センチメントに一時的な波乱要因となり得る。また、金融規制当局や投資家の監視強化につながり、機関投資家の暗号資産参入判断にも影響を与える可能性がある。"
+  },
+  {
+    "title": "Starmer tells Apple and Google to ban nude images on children's phones",
+    "japanese_title": "スターマー英首相、AppleとGoogleに子どものスマホへの性的画像ブロック機能の義務化を要求",
+    "url": "https://www.bbc.com/news/articles/cly752ydjw6o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 英国のスターマー首相が、AppleおよびGoogleに対し、子ども向けスマートフォンにおいて性的露骨な画像へのアクセスを遮断する組み込み機能を有効化するよう要求した。",
+      "2. 両社はすでにこうした保護機能を技術的に保有しているとされており、政府はその「デフォルト有効化」を期待している。",
+      "3. 子どものオンライン安全を巡る規制強化の一環として、テック大手への政府圧力がさらに高まっている。"
+    ],
+    "points": [
+      "・ 既存の技術機能を「義務的にデフォルト化」させるという規制アプローチは新たな前例となりうる",
+      "・ 英国のオンライン安全法（Online Safety Act）の延長線上にある施策であり、規制の実効性が問われる",
+      "・ AppleおよびGoogleが政府の要求にどこまで応じるか、プラットフォームの自律性と公権力の関係が焦点"
+    ],
+    "prediction": "英国の動きはEU・米国・日本など主要国の政策立案者にも影響を与え、子どものデジタル安全に関する国際的な規制標準化の議論が加速する可能性が高い。テック企業は各国の異なる規制要件への対応を迫られ、製品設計のローカライズコストが増大する恐れがある。長期的には、未成年者向けデバイスの機能制限が業界標準となり、新たなビジネスモデルの再構築が求められるだろう。",
+    "ai_interpretation": "このニュースの本質は、テクノロジー企業が「できること」と「すべきこと」の間のギャップを政府が埋めようとしている点にある。技術的解決策はすでに存在しながらも企業側が自発的に導入しない状況は、プラットフォーム企業の社会的責任と利益優先の姿勢の矛盾を浮き彫りにしている。グローバル経済への示唆として、デジタルプラットフォームへの公的規制が「任意」から「強制」へと転換する流れが加速しており、テック産業全体のガバナンスモデルが根本的な転換期を迎えていると言える。",
+    "collected_at": "2026-06-09T06:18:36.609716+09:00",
+    "market_impact": "AppleやGoogleの親会社Alphabetにとって、規制対応コストの増加や製品仕様変更が求められる可能性があり、特に欧州市場での事業運営に影響を与えかねない。英国発の規制が先例となり、EUや他の主要市場へ波及すれば、テックプラットフォーム全体のコンプライアンスコストが上昇する懸念がある。一方で、ペアレンタルコントロール関連のセキュリティソフト市場には追い風となる可能性がある。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-09",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-06-09.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-06-09.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-06-08",
+    "href": "2026-06-08.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
