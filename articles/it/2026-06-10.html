@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Hey Siri, here’s what I actually want from AI",
+    "japanese_title": "Siriよ、これが私が本当にAIアシスタントに求めるもの―便利さと依存の狭間で",
+    "url": "https://techcrunch.com/2026/06/09/hey-siri-heres-what-i-actually-want-from-ai/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 筆者はパーソナルAIアシスタントの必要性を強く感じながらも、それへの依存に対して複雑な感情を抱いている。",
+      "2. スマートフォンのAI音声アシスタント（Siriなど）が日常生活に浸透する中、人間としての自律性や能力の喪失への懸念が生まれている。",
+      "3. AIの利便性と人間としてのアイデンティティ・自立性をどう両立させるかという現代的なジレンマを提起している。"
+    ],
+    "points": [
+      "・ AIへの「欲求」と「依存への恐れ」という二律背反した感情が現代人の間で広がっている",
+      "・ 「ロボットの声なしでは機能できない人間になりたくない」という自己アイデンティティへの問い",
+      "・ テクノロジーの進化が人間の能力・思考力・判断力を代替することへの哲学的・社会的懸念"
+    ],
+    "prediction": "AIアシスタントの機能は今後さらに高度化・個人化が進み、生活のあらゆる場面に溶け込んでいくと予想される。一方で、AI依存問題はメンタルヘルスやデジタルウェルビーイングの観点から社会的議論のテーマとなっていくだろう。「AIをうまく使いこなす人間」像の定義が、新たなリテラシー教育の課題として浮上してくる可能性が高い。",
+    "ai_interpretation": "このニュースが示す本質は、テクノロジーの進歩が単なる「便利さの問題」を超え、「人間とは何か」という実存的な問いを突きつけ始めているという点にある。私たちはAIを道具として使うのか、それともAIに使われる存在になるのか―その境界線がますます曖昧になっている時代に差し掛かっている。AIへの向き合い方は今後、個人の選択を超えた社会全体の規範・倫理設計の問題として議論されるべき段階に来ている。",
+    "collected_at": "2026-06-10T06:00:30.689161+09:00",
+    "background": "ChatGPTやGemini、Apple Intelligenceなどの生成AIが急速に普及し、日常的なAIアシスタント活用が現実のものとなってきた。SiriをはじめとするAI音声アシスタントは長年存在してきたが、近年の技術革新によりその能力が飛躍的に向上し、より深い生活への組み込みが可能になっている。こうした流れの中で、利便性への期待と同時に「AI依存」への心理的抵抗感を覚えるユーザーが増えている。"
+  },
+  {
+    "title": "Anthropic’s Fable 5 can make weirdly fun video games with the click of a button",
+    "japanese_title": "AnthropicのClaude「Fable 5」がワンクリックで個性的なビデオゲームを自動生成——バイブコーダーに革命",
+    "url": "https://techcrunch.com/2026/06/09/anthropics-fable-5-can-make-weirdly-fun-video-games-with-the-click-of-a-button/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. AnthropicのAIモデル「Claude Fable 5」が、ボタン一つでユニークなビデオゲームを生成できる機能を持つことが話題となっている。",
+      "2. この機能は、コーディングの雰囲気・感覚を重視する「バイブコーダー」と呼ばれる層に特に支持されると予測されている。",
+      "3. 専門的なプログラミング知識がなくても、AIがゲーム制作を可能にする新時代の到来を示唆している。"
+    ],
+    "points": [
+      "・ノーコード／ローコードの延長線上にある「バイブコーディング」文化との親和性が非常に高い",
+      "・ゲーム開発という従来は高度な専門知識が必要だった領域をAIが民主化しつつある",
+      "・「奇妙で楽しい（weirdly fun）」という表現が示すように、AIならではの予測不能なクリエイティビティが差別化要素となっている"
+    ],
+    "prediction": "Claude Fable 5のようなAIゲーム生成ツールが普及することで、インディーゲーム市場や教育・エンタメ分野での個人クリエイターの参入障壁がさらに下がると予想される。一方で、既存のゲーム開発者やエンジンメーカー（Unity、Unreal等）はAIとの競争・共存戦略を迫られることになるだろう。バイブコーダー文化の拡大とともに、「作る楽しさ」を重視したプラットフォーム競争が激化していく可能性が高い。",
+    "ai_interpretation": "このニュースの本質は、**ゲーム制作の「民主化」がついに感覚・直感レベルにまで到達した**ことを示している点にある。技術的スキルではなく「やりたいこと・感じたいこと」を起点にしたクリエイションが可能になることは、AI時代における人間の創造性の再定義を意味する。AnthropicがこのポジションをClaudeで確立できれば、単なるチャットAIを超えた「創造的パートナー」としてのブランド価値を大きく高めることができるだろう。",
+    "collected_at": "2026-06-10T06:00:48.810640+09:00",
+    "background": "近年、生成AIの急速な進化により、テキストや画像だけでなく、インタラクティブなコンテンツの自動生成が現実のものとなってきた。AnthropicはOpenAIやGoogleと競合するAI企業として、Claudeシリーズの性能向上に継続的に投資してきた。「バイブコーディング」という概念が広まる中、コードの論理よりも感覚や直感でAIを操る新世代のクリエイター層が台頭してきた背景がある。"
+  },
+  {
+    "title": "Can tech companies learn to love cheaper AI models?",
+    "japanese_title": "テック企業は低コストAIモデルを受け入れられるか？AI経済の大転換点",
+    "url": "https://techcrunch.com/2026/06/09/can-tech-companies-learn-to-love-cheaper-models/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 同等の品質を維持しながら、より安価なAIモデルでワークロードを処理できる可能性が浮上している。",
+      "2. これが実現すれば、AI業界全体のコスト構造と経済モデルに革命的な変化をもたらす。",
+      "3. テック企業がコスト効率の高いAIモデルを積極採用するかどうかが、今後の業界の焦点となっている。"
+    ],
+    "points": [
+      "・ 品質を損なわずにAIコストを削減できるかどうかが、企業導入拡大の鍵を握る",
+      "・ 高コストな大規模モデルへの依存からの脱却が、AIビジネスモデルを根本から変える可能性がある",
+      "・ クラウド大手（AWS・Azure・GCP）の収益構造にも大きな影響を与えうる"
+    ],
+    "prediction": "企業はユースケースに応じてモデルを使い分ける「ハイブリッド戦略」が主流となり、すべてのタスクに最上位モデルを使う時代は終わりに向かうと予想される。低コストモデルの競争が激化することで、AI全体の価格破壊が進み、中小企業の参入障壁もさらに下がるだろう。一方でNvidiaなど高性能GPU需要を前提としたビジネスには、見直しを迫る圧力が生じる可能性がある。",
+    "ai_interpretation": "このニュースの本質は、「AI＝高コスト」という従来の常識が崩れようとしているという産業構造の転換点を示している。品質とコストの両立が可能になれば、AIの民主化が真の意味で進展し、一部の巨大テック企業だけが享受してきたAIの恩恵が広く分散される。これは単なる技術トレンドではなく、AIをめぐる権力構造そのものの再編を示唆している。",
+    "collected_at": "2026-06-10T06:01:04.582277+09:00",
+    "background": "OpenAIやGoogleなどが展開する大規模AIモデルは高性能である一方、運用コストが非常に高く、企業の導入障壁となってきた。一方でMistralやMetaのLlamaなど、より軽量・低コストなモデルが台頭し、実用レベルの性能を示し始めている。こうした流れの中で、コストと品質のトレードオフを再評価する動きが加速している。"
+  },
+  {
+    "title": "Anthropic Offers Mythos Upgrade for Cyber Partners and a ‘Safe’ Version for the Rest of You",
+    "japanese_title": "Anthropicがサイバー防衛向け「Claude Mythos 5」と一般向け安全版「Claude Fable 5」を二段階リリース",
+    "url": "https://www.wired.com/story/anthropic-releases-claude-fable-5-mythos-5/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. AnthropicはサイバーセキュリティパートナーなどTrusted組織向けに「Claude Mythos 5」を、一般向けには「Claude Fable 5」をリリースする。",
+      "2. Fable 5はサイバー攻撃への悪用ができないよう制限が施された\"安全版\"として提供される。",
+      "3. 同じ世代のモデルを用途・信頼レベルによって段階的に展開するという新たな配布戦略が注目される。"
+    ],
+    "points": [
+      "・ **二層構造の展開モデル**：同一世代のAIを「高機能版（信頼組織向け）」と「制限版（一般公開）」に分けるという前例のない配布戦略",
+      "・ **\"Trusted Organizations\"の定義**：どの組織が高機能版にアクセスできるのか、その審査基準や透明性が問われる",
+      "・ **技術的制限の信頼性**：Fable 5が本当にサイバー攻撃に使えないかどうか、制限回避（ジェイルブレイク）への耐性が実際の安全性を左右する"
+    ],
+    "prediction": "OpenAIやGoogleなど競合他社も同様の「差別化アクセス」戦略を採用する可能性が高く、AI業界全体でTiered（階層型）配布モデルが標準化していくと考えられる。また、「誰がTrusted Organizationに認定されるか」をめぐって政府・規制当局との摩擦や、独占的アクセスへの批判が生じる可能性もある。長期的には、AIの能力開示と安全保証のバランスをめぐる国際的な議論が加速するだろう。",
+    "ai_interpretation": "このニュースの本質は、AIの「民主化」と「安全管理」という相反する価値観の間でAnthropicが下した一つの現実的妥協点を示している点にある。完全公開でも完全非公開でもなく「信頼に基づくアクセス階層」を設けることで、責任あるAI活用を制度的に担保しようとする試みは、今後のAIガバナンスの雛形になり得る。ただし「誰が信頼に値するか」を民間企業が決定するという構造は、権力集中や恣意的運用のリスクを内包しており、透明性の確保が不可欠な課題となる。",
+    "collected_at": "2026-06-10T06:01:25.012989+09:00",
+    "background": "AI技術の急速な発展により、大規模言語モデルがサイバー攻撃のツールとして悪用されるリスクが現実的な脅威として認識されるようになった。一方で、サイバーセキュリティの防衛・研究分野ではAIの高度な能力が不可欠であり、能力制限と活用促進のジレンマが業界全体の課題となっていた。Anthropicはこの矛盾を「信頼レベルに応じた段階的公開」という形で解決しようとしている。"
+  },
+  {
+    "title": "Apple says its AI is still private, even when it's running on Google's servers",
+    "japanese_title": "AppleのAIはGoogleのサーバー上でも「プライバシーは守られる」と主張——その仕組みとは？",
+    "url": "https://arstechnica.com/apple/2026/06/apple-says-its-ai-is-still-private-even-when-its-running-on-googles-servers/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. AppleはAI機能の一部モデルをGoogleのクラウド上で動作させているが、Googleはそのデータにアクセスできないと説明している。",
+      "2. Appleは「プライベートクラウドコンピューティング」と呼ばれる独自の技術的アーキテクチャによってユーザーのプライバシーを保護していると主張する。",
+      "3. クラウドインフラを他社に依存しながらもプライバシーを担保するという、新たなモデルの確立を目指している。"
+    ],
+    "points": [
+      "・Googleのサーバーを利用しながらも、Googleがデータを「見られない」仕組みをAppleが独自に構築している点",
+      "・AppleがクラウドインフラをGoogleに依存するという、競合他社との協業という複雑な関係性",
+      "・「プライバシー保護」というAppleのブランドイメージを、外部クラウド利用後もいかに維持するかという課題"
+    ],
+    "prediction": "Appleはこの技術的な透明性をさらにアピールするため、独立した第三者機関による検証や監査レポートの公開を進める可能性がある。一方で、規制当局やプライバシー団体からは実際の保護レベルの独立検証を求める声が高まることも予想される。長期的にはApple自身のクラウドインフラ拡充に投資し、外部依存度を下げる方向へ進むとみられる。",
+    "ai_interpretation": "このニュースの本質は、「インフラの所有者」と「データのコントロール権」を切り離すという新しいプライバシーモデルの提示にある。クラウド時代においてすべてを自社で抱えることは非現実的であり、Appleはその制約の中でいかにユーザーの信頼を維持するかという課題に正面から向き合っている。これはApple単独の問題ではなく、AIとプライバシーの共存を目指すすべてのテック企業が直面する構造的ジレンマを象徴している。",
+    "collected_at": "2026-06-10T06:01:43.488190+09:00",
+    "background": "AppleはApple Intelligence（AI機能群）の展開において、自社データセンターだけでは処理能力が不足する場合にGoogleやAmazonなどのクラウドインフラを活用していることが明らかになっている。一方で、Appleはプライバシーを最大の差別化要素として掲げており、サードパーティのクラウドを使用することへのユーザーの懸念払拭が急務となっている。こうした背景から、Appleはデータを暗号化・分離する技術的保護措置を強調する形でこの問題に対応している。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-10",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-06-09",
+    "href": "2026-06-09.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
