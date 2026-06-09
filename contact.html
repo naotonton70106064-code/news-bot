@@ -20,7 +20,11 @@
     textarea { resize: vertical; min-height: 120px; }
     .submit-btn { display: inline-block; padding: 10px 24px; background: #111; color: #fff; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; }
     .submit-btn:hover { background: #333; }
+    .submit-btn:disabled { background: #999; cursor: not-allowed; }
     .note { font-size: 12px; color: #888; margin-top: 1rem; }
+    .form-status { font-size: 14px; margin-top: 1rem; padding: 12px 16px; border-radius: 8px; display: none; }
+    .form-status.success { display: block; background: #E1F5EE; color: #085041; border: 1px solid #b6e6d6; }
+    .form-status.error { display: block; background: #fdeaea; color: #a31515; border: 1px solid #f5c6c6; }
   </style>
 </head>
 <body>
@@ -29,14 +33,16 @@
     <h1>お問い合わせ</h1>
     <p>当サイトに関するご質問・ご意見・ご要望がございましたら、以下のフォームよりお問い合わせください。</p>
 
-    <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+    <!-- ▼▼▼ Formspree 設定: action の YOUR_FORM_ID を自分のフォームIDに置き換えてください ▼▼▼ -->
+    <form id="contact-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+    <!-- ▲▲▲ 例: https://formspree.io/f/xpzgkqwd ▲▲▲ -->
       <div class="form-group">
         <label for="name">お名前</label>
         <input type="text" id="name" name="name" required>
       </div>
       <div class="form-group">
         <label for="email">メールアドレス</label>
-        <input type="email" id="email" name="_replyto" required>
+        <input type="email" id="email" name="email" required>
       </div>
       <div class="form-group">
         <label for="subject">件名</label>
@@ -46,10 +52,64 @@
         <label for="message">お問い合わせ内容</label>
         <textarea id="message" name="message" required></textarea>
       </div>
-      <button type="submit" class="submit-btn">送信する</button>
+      <!-- 件名をメール通知のタイトルに反映 / スパムbot対策 -->
+      <input type="hidden" name="_subject" value="【AIニュースまとめ】お問い合わせ">
+      <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off">
+      <button type="submit" class="submit-btn" id="submit-btn">送信する</button>
     </form>
 
-    <p class="note">※ お問い合わせフォームを利用するには、Formspreeの設定が必要です。設定完了までは、GitHubリポジトリのIssuesからもお問い合わせいただけます。</p>
+    <div class="form-status" id="form-status" role="status" aria-live="polite"></div>
+
+    <p class="note">※ いただいたメールアドレスは、お問い合わせへの返信のみに利用します。</p>
   </div>
+
+  <script>
+    (function () {
+      const form = document.getElementById("contact-form");
+      const btn = document.getElementById("submit-btn");
+      const status = document.getElementById("form-status");
+
+      function showStatus(type, message) {
+        status.className = "form-status " + type;
+        status.textContent = message;
+      }
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        // 未設定（YOUR_FORM_ID のまま）なら送信せず案内
+        if (form.action.indexOf("YOUR_FORM_ID") !== -1) {
+          showStatus("error", "お問い合わせフォームは現在準備中です。お手数ですが時間をおいて再度お試しください。");
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "送信中...";
+
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            body: new FormData(form),
+            headers: { "Accept": "application/json" },
+          });
+
+          if (response.ok) {
+            form.reset();
+            showStatus("success", "送信が完了しました。お問い合わせありがとうございます。");
+          } else {
+            const data = await response.json().catch(() => ({}));
+            const msg = (data.errors && data.errors.map(err => err.message).join(" / "))
+              || "送信に失敗しました。時間をおいて再度お試しください。";
+            showStatus("error", msg);
+          }
+        } catch (err) {
+          showStatus("error", "通信エラーが発生しました。ネットワーク環境をご確認のうえ再度お試しください。");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "送信する";
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
