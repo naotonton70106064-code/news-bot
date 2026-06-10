@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Everyone wants a piece of Tesla’s battery business",
+    "japanese_title": "テスラの電池ビジネスに参入相次ぐ——GMやフォードも蓄電事業に本格参入",
+    "url": "https://techcrunch.com/2026/06/10/everyone-wants-a-piece-of-teslas-battery-business/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. AIデータセンターによる電力需要の急増が、エネルギー貯蔵市場を急拡大させている。",
+      "2. テスラが先行してきた蓄電池ビジネスに、GMやフォードなど大手自動車メーカーが続々と参入している。",
+      "3. 自動車産業がEV製造にとどまらず、エネルギーインフラ事業者へと変貌しつつある。"
+    ],
+    "points": [
+      "・ AIデータセンター需要が蓄電池市場の新たな主要ドライバーとなっている点",
+      "・ GMやフォードなど伝統的自動車メーカーが「エネルギー企業」へと業態転換を図っている点",
+      "・ テスラのビジネスモデルが業界標準として認知され、追随者を生み出している点"
+    ],
+    "prediction": "蓄電池市場への参入企業増加により競争が激化し、コスト低下と技術革新が加速するとみられる。一方で、テスラは先行者優位と規模の経済を活かして市場シェアを守ろうとするため、価格競争と技術開発競争が同時進行するだろう。また、電力グリッドの安定化ニーズが高まる中で、自動車メーカーとエネルギー企業・電力会社との提携・再編も活発化すると予想される。",
+    "ai_interpretation": "このニュースの本質は、「AIインフラの拡大」が自動車産業の事業定義そのものを書き換えつつあるという産業構造の転換点を示している点にある。バッテリーはもはや「車を動かすもの」ではなく「社会インフラを支えるもの」へとその役割が拡張されており、テスラが描いたエネルギーエコシステム戦略の正しさが証明されつつある。自動車メーカーが生き残るためには、モビリティ企業を超えてエネルギーソリューション企業へと自己変革できるかどうかが、今後の競争優位を左右する鍵となるだろう。",
+    "collected_at": "2026-06-11T06:26:22.624660+09:00",
+    "background": "生成AIの普及に伴い、大規模データセンターの電力消費量が爆発的に増加しており、安定した電力供給と余剰電力の貯蔵ニーズが世界的に高まっている。テスラはいち早く「Megapack」などの大規模蓄電システムで市場をリードしてきたが、その収益性の高さが他社の注目を集めた。EVシフトで培ったバッテリー技術・製造ノウハウを持つ自動車メーカーにとって、蓄電事業への参入は自然な流れとなっている。"
+  },
+  {
+    "title": "Fresh off bond sale, Amazon borrows $17.5B from banks as AI spending continues",
+    "japanese_title": "アマゾン、AI投資加速で銀行から175億ドル調達——社債発行直後の巨額借り入れが示す「AI軍拡競争」の実態",
+    "url": "https://techcrunch.com/2026/06/10/fresh-off-bond-sale-amazon-borrows-17-5-billion-from-banks-as-ai-spending-continues/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. アマzonは社債発行直後にもかかわらず、銀行団から175億ドル（約2.6兆円）もの巨額融資を新たに調達した。",
+      "2. この資金調達の主目的はAI開発・データセンター整備などの大規模設備投資とみられる。",
+      "3. AI覇権争いに参戦する大手テック企業全体で債務残高が急膨張しており、業界全体のリスクが高まっている。"
+    ],
+    "points": [
+      "・社債発行の「直後」に銀行融資も実施するという異例の二段構え調達は、資金需要の緊迫度を示している",
+      "・「AI軍拡競争（AI arms race）」という表現が使われているほど、各社の投資競争が軍事的消耗戦の様相を呈している",
+      "・収益化が不透明なAI投資のために企業債務が膨らむことで、金利上昇局面では財務リスクが一気に顕在化する可能性がある"
+    ],
+    "prediction": "Microsoft・Google・Metaも同様の大規模資金調達を続けるとみられ、テック大手の有利子負債はさらに拡大する見通しだ。AIのROI（投資対効果）が市場の期待に応えられなければ、債務負担が経営を圧迫するシナリオも現実味を帯びてくる。一方で、先行投資を制した企業がAIインフラ市場を独占するという構造になれば、現在の「出血競争」が長期的な参入障壁形成につながる可能性もある。",
+    "ai_interpretation": "このニュースの本質は、AIが「技術革新」の段階から「資本集約型インフラ産業」へと変質しつつあることを示している。巨額の借り入れを続けられる財務体力のある企業だけが競争に残れるという構造は、AIの民主化という理想と真逆の「寡占化」を加速させる力学だ。つまりアマゾンの175億ドル調達は単なる資金繰りではなく、AIエコノミーの「勝者総取り」構造を固めるための戦略的布石と解釈すべきである。",
+    "collected_at": "2026-06-11T06:26:42.721460+09:00",
+    "background": "ChatGPTの登場以降、GoogleやMicrosoft、MetaなどがこぞってデータセンターやGPUへの投資を急拡大し、AI開発費の高騰が止まらない状況が続いている。アマゾンもAWSのAIクラウドサービス強化やAnthropicへの追加出資などで多額の資本を必要としており、手元資金だけでは賄いきれない規模の支出が続いている。こうした状況下、社債と銀行融資を組み合わせた多層的な資金調達戦略が業界標準となりつつある。"
+  },
+  {
+    "title": "North Koreans behind nearly half of US tech industry hacks, says CrowdStrike",
+    "japanese_title": "北朝鮮ハッカーが米テック企業への攻撃の約半数を占める――CrowdStrikeが警告",
+    "url": "https://techcrunch.com/2026/06/10/north-koreans-behind-nearly-half-of-us-tech-industry-hacks-says-crowdstrike/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. CrowdStrikeの報告によると、北朝鮮のハッカーが過去12ヶ月間における米国テック業界へのサイバー攻撃の約半数を担っていることが明らかになった。",
+      "2. 北朝鮮のハッカーはリモートITワーカーや採用担当者に偽装するという巧妙な手口で、米国・欧州・アジアの企業を標的にしている。",
+      "3. 単なる技術的侵入にとどまらず、「人間になりすます」ソーシャルエンジニアリング型の攻撃が主流となっている。"
+    ],
+    "points": [
+      "・ 攻撃手法が「技術的ハッキング」から「人的なりすまし」へと高度化・多様化している点",
+      "・ 対象が米国にとどまらず、欧州・アジアにも広がっており、脅威がグローバル規模に拡大している点",
+      "・ テック業界という高付加価値・機密情報の多いセクターが集中的に狙われている点"
+    ],
+    "prediction": "AI技術の進化により、偽装の精度（フェイク面接・なりすまし書類など）がさらに向上し、企業側の検知がより困難になると予想される。各国政府とサイバーセキュリティ企業が連携した対策強化が急務となり、採用プロセスや委託契約における本人確認基準の厳格化が進むだろう。一方で北朝鮮側も手口を進化させ続けるため、いたちごっこの状況はしばらく続くとみられる。",
+    "ai_interpretation": "このニュースが示す本質は、サイバー脅威が「技術vs技術」の戦いから「人間の信頼を利用した戦い」へと本質的に変容しているという点である。北朝鮮という国家が、制裁回避と外貨獲得のためにサイバー攻撃をほぼ「産業」として組織化している現実は、従来のセキュリティ対策の枠組みでは不十分であることを示唆している。企業は技術的防御だけでなく、人事・調達・契約といったビジネスプロセス全体をセキュリティの視点で見直す必要があるという重要なメッセージを含んでいる。",
+    "collected_at": "2026-06-11T06:27:00.956963+09:00",
+    "background": "北朝鮮は国際的な経済制裁による資金不足を補うため、長年にわたりサイバー攻撃を国家戦略として活用してきた。特にリモートワークが普及した2020年代以降、IT人材に偽装して企業に潜入する手口が急増しており、正規雇用プロセスを悪用するケースが世界的に問題視されている。米FBIや各国政府機関もすでに複数回にわたり警告を発してきた経緯がある。"
+  },
+  {
+    "title": "Google DeepMind releases DiffusionGemma, a model that runs local AI 4x faster",
+    "japanese_title": "Google DeepMindが「DiffusionGemma」を公開——ローカルAIテキスト生成を4倍高速化する拡散モデルの革新",
+    "url": "https://arstechnica.com/google/2026/06/googles-latest-diffusiongemma-open-ai-model-comes-with-a-4x-speed-boost/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. Google DeepMindが、拡散モデル技術をテキスト生成に応用した新モデル「DiffusionGemma」をリリースした。",
+      "2. 従来の自己回帰型テキスト生成と比較して、ローカル環境でのAI処理速度を最大4倍高速化することが可能。",
+      "3. 画像生成で主流だった拡散技術をテキスト領域に転用することで、AIの実用性と応答性能を大幅に向上させる。"
+    ],
+    "points": [
+      "・ 拡散技術のテキスト生成への転用という、AI分野のアーキテクチャ的パラダイムシフトを示す試み",
+      "・ ローカル環境（エッジデバイス・オフライン）での動作に最適化されており、プライバシーや通信コスト面での優位性がある",
+      "・ 処理速度4倍という数値は、リアルタイム応答が求められるアプリケーション（チャットボット・音声AI等）に大きなインパクトをもたらす可能性"
+    ],
+    "prediction": "DiffusionGemmaの登場により、他のAI企業もテキスト向け拡散モデルの研究開発を加速させる競争が生まれる可能性が高い。スマートフォンやPCなどのオンデバイスAIの性能が飛躍的に向上し、クラウド依存度を下げた新たなAIアプリケーションが増加するだろう。また、速度向上により、これまでリアルタイム処理が困難だったユースケース（リアルタイム翻訳・会話AIなど）への応用が現実味を帯びてくる。",
+    "ai_interpretation": "このニュースの本質は、「速度の壁」を突破することでAIのローカル活用の可能性を根本から変える技術的転換点である。クラウドに依存せずに高速な生成AIを手元で動かせるようになることは、プライバシー保護・低遅延・コスト削減という三つの重要課題を同時に解決しうる。拡散モデルという「既存技術の再解釈」によってブレークスルーを生み出したことは、AIイノベーションが必ずしも全く新しい技術を必要とせず、技術の組み合わせと応用領域の転換によって起きることを示している。",
+    "collected_at": "2026-06-11T06:27:20.427041+09:00",
+    "background": "拡散モデル（Diffusion Model）はこれまでStable DiffusionやMidjourneyなど主に画像生成分野で活躍してきた技術であり、テキスト生成はGPTなどの自己回帰型モデルが主流だった。しかし自己回帰型モデルはトークンを1つずつ逐次生成するため、処理速度に構造的な限界があった。Google DeepMindはこの課題を解決するため、拡散アプローチをテキスト生成に応用する研究を進めてきた。"
+  },
+  {
+    "title": "Nobody needs AI to search the Internet, court says in ruling against Google",
+    "japanese_title": "ドイツ裁判所がGoogleのAI検索機能「AI Overview」に敗訴判決――AI検索業界に激震",
+    "url": "https://arstechnica.com/tech-policy/2026/06/nobody-needs-ai-to-search-the-internet-court-says-in-ruling-against-google/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. ドイツの裁判所が、GoogleのAI概要（AI Overview）機能に対して不利な判決を下した。",
+      "2. 裁判所は「インターネット検索にAIは必要ない」との見解を示し、AI検索の正当性に疑問を呈した。",
+      "3. この判決はGoogle単体にとどまらず、AI検索業界全体に深刻な影響を与える可能性がある。"
+    ],
+    "points": [
+      "・「検索にAIは不要」という裁判所の判断が、AI活用の必然性そのものを法的に否定した点",
+      "・ドイツ・EU圏での判決が他国の規制や訴訟に波及する「先例効果」の可能性",
+      "・GoogleだけでなくPerplexity AIやMicrosoft Copilot等、AI検索全般への影響範囲の広さ"
+    ],
+    "prediction": "この判決を受け、EUおよび各国の規制当局がAI検索機能に対するガイドラインや規制強化を加速させる可能性が高い。Googleはドイツ市場でAI Overviewの機能を修正・制限するか、控訴によって対抗する戦略を迫られるだろう。また、同様の訴訟が他のEU諸国や米国にも広がり、AI検索ビジネスモデル全体の見直しを余儀なくされる事態も考えられる。",
+    "ai_interpretation": "この判決の本質は、技術的な優位性があるからといって法的・社会的な正当性が自動的に認められるわけではないという重要な示唆を含んでいる。AI検索は利便性を高める一方で、オリジナルコンテンツ制作者の権利やビジネスモデルを根底から脅かす構造的な問題を抱えており、今回の判決はそのトレードオフを社会が直視し始めたターニングポイントと言える。テクノロジー企業は「できる」と「してよい」の境界線を法的枠組みの中で再定義することを強く求められている。",
+    "collected_at": "2026-06-11T06:27:38.205081+09:00",
+    "background": "GoogleはAI Overviewという機能を通じて、検索結果の上部にAIが生成した要約を表示するサービスを展開してきた。しかし、このAI生成コンテンツが既存のメディアや情報提供者の権利を侵害するとして、ドイツで法的な異議申し立てが行われた。ドイツはEU内でもデジタル規制に対して特に厳格な姿勢を持つ国として知られており、今回の訴訟もその流れの中に位置づけられる。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-11",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-06-10",
+    "href": "2026-06-10.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
