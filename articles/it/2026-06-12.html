@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "SpaceX officially prices shares at $135 in the largest IPO ever",
+    "japanese_title": "SpaceX、史上最大のIPOで株価を1株135ドルに正式設定――宇宙産業の歴史的転換点",
+    "url": "https://techcrunch.com/2026/06/11/spacex-officially-prices-shares-at-135-in-the-largest-ipo-ever/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. SpaceXが株式公開（IPO）において、1株あたり135ドルという価格を正式に発表した。",
+      "2. このIPOは史上最大規模のIPOとして記録される見通しである。",
+      "3. 正式な株価設定の発表により、SpaceXのIPOプロセスが正式に開始された。"
+    ],
+    "points": [
+      "・ 1株135ドルという設定価格は、企業評価額の規模を示す重要な指標であり、史上最大IPOとしての市場の期待値の高さを反映している",
+      "・ 非上場のまま成長を続けてきたSpaceXが公開市場に登場することで、一般投資家にも宇宙産業への投資機会が開かれる",
+      "・ Starlinkや政府契約など複数の収益源を持つビジネスモデルが、投資家からの高い評価につながっている可能性がある"
+    ],
+    "prediction": "上場初日の株価動向や取引量が世界中の市場関係者から注目され、宇宙・テクノロジーセクター全体の株価にも影響を与える可能性がある。また、SpaceXの上場成功は他の民間宇宙企業のIPOを促進する呼び水となり、宇宙産業への資本流入がさらに加速することが予想される。一方で、高い企業評価額に対する収益性の証明が今後の課題となり、株価の乱高下リスクも考慮する必要がある。",
+    "ai_interpretation": "このニュースの本質は、単なる一企業の株式公開にとどまらず、「宇宙産業の民主化」という歴史的転換点を象徴している点にある。SpaceXの上場は、かつて国家の専有領域だった宇宙開発が完全に民間・資本市場の論理へと移行したことを意味する。また、イーロン・マスク氏が持つ複数の上場・非上場企業（Tesla、X、xAIなど）との関係性において、ガバナンスや利益相反の問題が今後の重要な論点として浮上してくるだろう。",
+    "collected_at": "2026-06-12T06:23:34.148304+09:00",
+    "background": "SpaceXはイーロン・マスク氏が率いる民間宇宙開発企業であり、Falcon 9やStarshipロケット、Starlinkインターネット衛星サービスなど多岐にわたる事業を展開してきた。長年にわたり非上場企業として成長を続けてきたが、投資家からの期待や資金調達ニーズの高まりを受け、株式市場への上場に踏み切ったとみられる。宇宙産業全体の商業化が加速する中、そのリーディングカンパニーとしての地位を資本市場でも確立する狙いがある。"
+  },
+  {
+    "title": "Oracle warns of security bug that hackers abused to breach 100+ companies",
+    "japanese_title": "Oracle、100社以上への大規模ハッキングに悪用されたセキュリティ脆弱性を警告",
+    "url": "https://techcrunch.com/2026/06/11/oracle-warns-of-security-bug-that-hackers-abused-to-breach-100-companies/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Oracleは、サイバー犯罪グループが大規模ハッキングキャンペーンで実際に悪用しているセキュリティ上の欠陥を公式に警告した。",
+      "2. Googleは脆弱性のあるサーバーを持つ可能性がある100以上の組織に対して通知を行った。",
+      "3. 既に被害が広がっている状況での警告発表となり、対応の遅さが問題視されている。"
+    ],
+    "points": [
+      "・ 被害組織が100社以上と大規模であり、影響範囲の広さが深刻",
+      "・ Googleが独自に脆弱なサーバーを特定し通知するという、異例の対応を行った点",
+      "・ 脆弱性が「パッチ適用前」に既に悪用されていた、いわゆる「ゼロデイ（またはN-day）」攻撃の可能性"
+    ],
+    "prediction": "Oracleは早急にセキュリティパッチを提供するとみられるが、パッチ適用が遅れた組織では引き続き被害が拡大するリスクがある。また、今回の攻撃に関与したサイバー犯罪グループの特定と追跡が、各国のセキュリティ機関や法執行機関によって進められるだろう。さらに、この事件を契機に大手クラウドベンダーへの脆弱性開示プロセスや対応速度に対する規制・監視が強化される可能性がある。",
+    "ai_interpretation": "このニュースが示す本質は、企業が依存するコアインフラ（Oracle等）の脆弱性が、もはや単一企業の問題ではなく「サプライチェーン全体のリスク」であるという現実だ。Googleが独自に通知を行ったという事実は、セキュリティ対応においてベンダー任せにできない時代を象徴しており、組織が自ら能動的な脅威監視（Threat Intelligence）を持つ必要性を強く示唆している。攻撃者が既製品インフラの脆弱性を組織的・大規模に悪用するモデルが確立されつつあり、防御側は常に後手に回るという構造的課題が改めて浮き彫りになった。",
+    "collected_at": "2026-06-12T06:23:53.862447+09:00",
+    "background": "Oracleは世界中の企業や政府機関が利用する大規模なデータベース・クラウドサービスプロバイダーであり、その脆弱性は広範な影響を持つ。サイバー犯罪グループは企業のシステムへの侵入手段として、こうした大手テクノロジー企業の脆弱性を積極的に狙う傾向が強まっている。今回の件では、Oracleが警告を発する以前から攻撃が進行していたとみられ、発見から公表までのタイムラグが被害を拡大させた可能性がある。"
+  },
+  {
+    "title": "SpaceX SPV investors won’t know their true holdings until post-IPO lock-ups lift",
+    "japanese_title": "SpaceX SPV投資家、IPO後のロックアップ解除まで実際の保有資産が不明――隠れコストと詐欺リスクに警鐘",
+    "url": "https://techcrunch.com/2026/06/11/spacex-spv-investors-wont-know-their-true-holdings-until-post-ipo-lock-ups-lift/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. SpaceXのIPO後、下位層のSPV（特別目的事業体）投資家は自身の真の保有内容をロックアップ期間が終わるまで把握できない状況に置かれる。",
+      "2. 隠れた手数料、長期にわたる支払い遅延、さらには詐欺被害のリスクという三重の問題が指摘されている。",
+      "3. 非上場の有力企業への個人投資ルートとして普及したSPV構造の不透明性と脆弱性が改めて浮き彫りになった。"
+    ],
+    "points": [
+      "・ **不透明な保有構造**：SPVの多層化により、下位層の投資家は自分が本当にSpaceX株を保有しているのか、IPO後のロックアップ解除まで実質的に確認できない",
+      "・ **隠れコストの問題**：管理手数料や仲介マージンが複数層にわたって積み重なり、投資家の実質リターンを大幅に圧縮する可能性がある",
+      "・ **詐欺リスク**：非上場株SPVは規制の網の目をかいくぐりやすく、架空または水増しされた持分を販売する悪質業者の存在が懸念される"
+    ],
+    "prediction": "SpaceXのIPOが実現した場合、ロックアップ解除後に自身の実際の保有内容を初めて知る投資家が続出し、法的紛争や被害申告が増加する可能性が高い。規制当局（SECなど）がSPV販売における開示義務の強化に動くきっかけになるとも考えられる。一方でSpaceXのIPO自体がさらに延期された場合、流動性を求める下位投資家の不満はさらに蓄積されることになる。",
+    "ai_interpretation": "このニュースの本質は、「民主化された投資」という謳い文句のもとで広がったSPV投資が、実際には情報の非対称性と多層的な利益相反構造を内包しているという問題を示している。SpaceXのような\"夢のある銘柄\"への投資熱が、投資家の冷静な判断を曇らせ、不透明な仕組みを見過ごさせるリスクを高めている。非上場ユニコーン企業への投資アクセスを広げる動きは重要だが、それに見合った規制整備と投資家教育が急務であることを本記事は強く示唆している。",
+    "collected_at": "2026-06-12T06:24:16.973898+09:00",
+    "background": "SpaceXは依然として非上場企業であるため、個人投資家は直接株式を購入できず、SPVと呼ばれる特別目的事業体を介した間接投資が一般的な手段となってきた。しかしSPVは多層構造になっている場合が多く、末端の投資家は実際に何をどれだけ保有しているか確認しにくい仕組みとなっている。SpaceXのIPO観測が高まる中、こうした構造的問題が投資家保護の観点から注目を集めている。"
+  },
+  {
+    "title": "People Living Near xAI’s Dirty Data Centers Are Furious About the SpaceX IPO",
+    "japanese_title": "イーロン・マスクのxAI汚染データセンター問題：地域住民の怒りとSpaceX IPOの巨額利益が対立",
+    "url": "https://www.wired.com/story/spacex-ipo-how-people-living-near-xai-data-centers-feel/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. イーロン・マスクのAI企業xAIが運営するデータセンターが、ミシシッピ州とテネシー州でガスタービンを使用しており、周辺住民が深刻な環境汚染に直面している。",
+      "2. 一方でマスク氏はSpaceXのIPOにより数千億ドル規模の利益を得る見込みであり、富の格差と環境負担の不平等が際立っている。",
+      "3. 地域住民はガスタービンの稼働停止を求めて抗議活動を展開しており、AI産業の急拡大がもたらす環境・社会問題が表面化している。"
+    ],
+    "points": [
+      "・ガスタービンによる大気汚染が地域住民の健康に直接影響を及ぼす可能性がある「環境的不正義（Environmental Injustice）」の問題",
+      "・AI産業の急速な成長が引き起こすエネルギー消費と環境負荷の急増という構造的課題",
+      "・富の極端な集中（マスク氏の数百億ドル規模の利益）と地域コミュニティが負う環境コストの著しい不均衡",
+      "・規制当局や行政の対応の遅れ、または不十分さが問題を長期化させている可能性"
+    ],
+    "prediction": "住民団体や環境NGOによる訴訟・規制当局への申し立てが強化される可能性が高く、xAIはインフラの見直しや再生可能エネルギーへの移行を迫られる局面が来るかもしれない。一方、AI企業のエネルギー問題は政治的争点にもなりつつあり、連邦・州レベルでの規制強化の議論が加速する可能性がある。マスク氏の政治的影響力がこうした規制の行方に干渉するかどうかも注目点となる。",
+    "ai_interpretation": "このニュースは、AI産業の急成長が「誰の負担の上に成り立っているか」という本質的な問いを突きつけている。技術革新による巨大な富の創出と、その恩恵を受けない地域社会が環境コストを押し付けられるという構図は、現代のテクノロジー資本主義が抱える深刻な矛盾を象徴している。AI開発の「光」の部分が注目される一方、このような「影」の部分を社会がどう扱うかが、今後の持続可能な技術発展の鍵となるだろう。",
+    "collected_at": "2026-06-12T06:24:37.461492+09:00",
+    "background": "xAIはAIスーパーコンピュータの膨大な電力需要を満たすため、既存の電力インフラに加えて独自のガスタービン発電設備を設置・稼働させている。これらの施設は主に低所得層や有色人種コミュニティが多い地域に立地しており、大気汚染や健康被害への懸念が高まっている。同時期にSpaceXのIPO計画が浮上し、マスク氏の個人資産がさらに膨張する見通しとなったことで、住民の怒りが一層強まった。"
+  },
+  {
+    "title": "Anthropic Walks Back Policy That Could Have ‘Sabotaged’ AI Researchers Using Claude",
+    "japanese_title": "Anthropic、競合AI開発を密かに制限するClaude利用規約を撤回——研究者の反発が引き金に",
+    "url": "https://www.wired.com/story/anthropic-responds-to-backlash-on-claudes-secret-sabotage-on-ai-research/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. AnthropicはClaudeが競合AIモデルの開発を密かに妨害する可能性のある利用ポリシーを策定していた。",
+      "2. AI研究者たちがこの方針に対して公然と反発・批判の声を上げた。",
+      "3. Anthropicは研究者コミュニティからの圧力を受け、当該ポリシーの撤回・変更を余儀なくされた。"
+    ],
+    "points": [
+      "・「秘密裏（covertly）」という手法が最大の問題点であり、透明性の欠如が研究者の信頼を損なった",
+      "・競合モデル開発の制限自体はビジネス的に理解できる一方、学術・研究用途との線引きが曖昧だった",
+      "・研究者コミュニティの声がテック大企業のポリシーを実際に変えた事例として注目される"
+    ],
+    "prediction": "Anthropicは信頼回復のため、利用規約の透明性向上や研究者向け例外規定の明確化を進めると予想される。一方、AI各社が競合他社への自社モデル利用をどこまで許容するかという問題は業界全体の課題となり、今後も類似の議論が繰り返される可能性が高い。規制当局もこうした動向を注視しており、AIツールの競争中立性に関するルール整備が加速するかもしれない。",
+    "ai_interpretation": "このニュースの本質は、AI企業が「安全性・倫理」を掲げながらも、ビジネス上の競争優位を秘密裏に確保しようとする構造的矛盾を露わにした点にある。研究者コミュニティという「専門的な監視役」が機能したことは民主的な抑制の好例だが、同時にこうした制限が表沙汰にならなければ見過ごされていたという危うさも示している。AI開発の主導権争いが激化する中で、オープン性と商業利益のバランスをどう保つかが、業界全体の信頼性を左右する核心的問いとなっている。",
+    "collected_at": "2026-06-12T06:24:56.105598+09:00",
+    "background": "AI産業における競争が激化する中、Anthropicは自社モデルClaudeが競合他社のAI開発に利用されることを制限しようとする動きを見せていた。しかし、この制限が「秘密裏に」実施されようとしていた点が問題視され、研究の透明性や公正な競争環境を重視するAI研究者コミュニティから強い批判を招いた。AI倫理や開放的な研究文化を標榜してきたAnthropicの姿勢と矛盾するとして、反発が広がった。"
+  },
+  {
+    "title": "AcuRite admits new app falls short, delays old app’s May shutdown to fix problems",
+    "japanese_title": "AcuRite、新アプリの不具合を認め旧アプリの5月終了を延期―ユーザー移行に暗雲",
+    "url": "https://arstechnica.com/gadgets/2026/06/iot-gadget-firm-acurite-delays-forced-app-migration-due-to-new-apps-shortfalls/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. 気象観測機器メーカーAcuRiteは、新しいアプリが十分な品質に達していないことを公式に認めた。",
+      "2. 当初予定していた旧アプリの5月シャットダウンを延期し、問題修正のための時間を確保する。",
+      "3. ただし同社は旧アプリの廃止方針自体は変わらないとし、「引退は必要」との立場を維持している。"
+    ],
+    "points": [
+      "・ 企業が新アプリの品質不足を**公式に認めた**という異例の誠実な対応",
+      "・ 旧アプリの廃止延期により、既存ユーザーはサービス断絶を一時的に免れた",
+      "・ 「旧アプリはまだ廃止が必要」との発言から、延期はあくまで**一時的措置**であることが明確"
+    ],
+    "prediction": "AcuRiteは新アプリの改修・機能強化を急ピッチで進め、改めて旧アプリの終了日程を設定するとみられる。ただし信頼を失ったユーザーの一部は競合製品への乗り換えを検討する可能性があり、移行期間中のユーザー維持が課題となる。新アプリの完成度次第では、さらなる延期や批判を招くリスクも残る。",
+    "ai_interpretation": "このニュースは、IoTデバイスとクラウドサービスが連動する現代の家電・ガジェット業界において、**アプリ移行の失敗がハードウェア製品全体の価値を損なう**という構造的リスクを象徴している。ユーザーはデバイスそのものではなくサービス体験に対してお金を払っており、ソフトウェアの品質管理が企業の信頼性を左右する時代になったといえる。AcuRiteの対応は透明性という点では評価できるが、計画性の欠如という根本的な問題も露呈している。",
+    "collected_at": "2026-06-12T06:25:12.248301+09:00",
+    "background": "AcuRiteは家庭用気象ステーションや環境センサーを提供するメーカーで、既存ユーザーを旧アプリから新アプリへ移行させる計画を進めていた。しかし新アプリのリリース後、ユーザーから機能不足や不具合に関する不満の声が相次いだとみられる。こうした状況を受け、同社は旧アプリの強制終了スケジュールを見直さざるを得なくなった。"
+  },
+  {
+    "title": "Several things I like about macOS 27 Golden Gate that have nothing to do with AI",
+    "japanese_title": "macOS 27「Golden Gate」のAI以外で注目すべき地味だけど便利な新機能まとめ",
+    "url": "https://arstechnica.com/gadgets/2026/06/five-things-i-like-and-one-thing-i-still-want-in-the-macos-27-golden-gate-beta/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. Appleの次期macOS 27「Golden Gate」には、AIとは無関係な細かいながらも実用的な改善点が多数含まれている。",
+      "2. 記事はAI機能が注目を集める中で見落とされがちな、日常的なユーザー体験を向上させる機能改善に焦点を当てている。",
+      "3. 地味ながらも積み重なることで、macOSの使い勝手を大きく向上させる「縁の下の力持ち」的アップデートが評価されている。"
+    ],
+    "points": [
+      "・AI機能の陰に隠れた「地味だが有用な」機能改善が複数存在する",
+      "・日常的なワークフローや操作性に直結する細部のブラッシュアップが含まれる",
+      "・ヘビーユーザーや長年のmacOSユーザーにとって特に恩恵が大きい改善点が含まれている可能性がある"
+    ],
+    "prediction": "macOS 27の正式リリースに向けて、こうした細かな改善点がさらに発掘・共有されることで、AI機能だけでなくOS全体としての完成度への評価が高まると予測される。また、こうした記事が増えることで、Appleのマーケティングでは伝わりにくい「実際の使いやすさ」に関する口コミが広がる可能性がある。長期的には、AI以外の改善の積み重ねがAppleユーザーのロイヤルティ維持に貢献するだろう。",
+    "ai_interpretation": "このニュースの本質は、テクノロジー報道における「AI偏重」への静かなアンチテーゼである。AIが全ての議論を支配する時代においても、ユーザーの日常体験を支えるのは地道な基本機能の改善であるという事実を再認識させてくれる。Appleがブランド価値を維持し続ける理由の一つが、こうした「目立たないが確実な品質向上」へのこだわりにあることを示唆している。",
+    "collected_at": "2026-06-12T06:25:29.968256+09:00",
+    "background": "近年、AppleはWWDCなどの発表においてAI機能（Apple Intelligence）を前面に押し出しており、その他のOS改善が注目されにくい状況が続いている。macOS 27「Golden Gate」もAI関連のアップデートが大きく報道される一方、細かなUI/UX改善は埋もれがちであった。こうした状況に対し、本記事はAI以外の実用的な新機能を掘り起こすことで、バランスのとれた評価を試みている。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-12",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-06-11",
+    "href": "2026-06-11.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
