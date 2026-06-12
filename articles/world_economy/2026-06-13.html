@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Elon Musk becomes world's first trillionaire as SpaceX begins trading on the Nasdaq",
+    "japanese_title": "イーロン・マスク、SpaceXのナスダック上場で世界初の兆万長者に――純資産約1.05兆ドルを達成",
+    "url": "https://www.cnbc.com/2026/06/12/elon-musk-trillionaire-spacex.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. イーロン・マスクのSpaceX株式評価額が7,660億ドルを超え、テスラ保有株と合算した純資産が約1.05兆ドル（約155兆円）に達し、人類史上初の「兆万長者（トリリオネア）」となった。",
+      "2. SpaceXがナスダック市場での取引を開始したことが今回の資産急増の直接的なトリガーとなり、非上場企業だった同社の株式価値が公開市場で可視化された。",
+      "3. マスク氏の資産はテスラ・SpaceX・X（旧Twitter）・xAI・Boreingなど複数の巨大企業に分散しており、その影響力は民間宇宙・EV・AI・SNSと多岐にわたる。"
+    ],
+    "points": [
+      "・ SpaceXの企業評価額は非上場時から急拡大しており、上場によって「真の時価総額」が市場に問われる歴史的な局面となっている",
+      "・ 個人資産1兆ドル超えは人類経済史上前例がなく、富の集中・格差問題に関する政策議論（富裕税・独禁法）が世界的に再燃するリスクがある",
+      "・ マスク氏が米トランプ政権と近い関係にあることから、SpaceX・NASAとの政府契約や規制緩和が株価を下支えしているとの見方もあり、政治リスクも内包している"
+    ],
+    "prediction": "SpaceXの上場成功は他の大型ユニコーン企業（Stripe・Anthropicなど）のIPO市場を活性化させ、2025年のグローバルIPOサイクルを加速させる起爆剤となる可能性が高い。一方、マスク氏への資産・権力集中は欧米各国の規制当局の監視を強め、EU・米国双方でテック企業への課税強化議論が具体化するきっかけになり得る。地政学的には、民間企業が国家並みの宇宙・通信インフラを握る構図が強まり、安全保障上の新たな論点として浮上するだろう。",
+    "ai_interpretation": "このニュースの本質は「単なる個人資産の記録更新」ではなく、民間資本が国家の経済規模に匹敵する力を持ち始めたという資本主義の構造的変容を象徴している点にある。SpaceXという従来は「国家事業」であった宇宙開発が民間主導で巨大化したことは、国家と企業の力学バランスが根本から変わりつつあることを示すシグナルである。グローバル経済への示唆としては、超富裕層・超巨大テック企業への富の集中が民主主義・税制・安全保障の各分野で既存の制度設計を揺るがす「ゲームチェンジャー」となっており、国際社会として新たなガバナンスの枠組みを早急に構築する必要性が高まっていると言える。",
+    "collected_at": "2026-06-13T06:07:17.615646+09:00",
+    "market_impact": "SpaceXのナスダック上場は宇宙産業セクター全体への投資家注目度を急上昇させ、関連銘柄（ロケット関連・衛星通信・防衛宇宙企業）への資金流入が加速する可能性がある。テスラ株も連動した評価上昇の恩恵を受けやすく、米ハイテク株主導のナスダック指数を一段と押し上げる材料となり得る。ドル資産への信認強化という観点から、短期的にドル高圧力がかかる可能性も否定できない。"
+  },
+  {
+    "title": "Rivian is betting on its R2 EV to turn the automaker into a household name like Tesla",
+    "japanese_title": "リビアン、新型EV「R2」でテスラに挑む——大衆市場参入で業界地図を塗り替えるか",
+    "url": "https://www.cnbc.com/2026/06/09/rivian-r2-suv-tesla-competition.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. リビアンは新型SUV「R2」を主力製品として、ニッチな高級EVメーカーからテスラのような大衆向けEVブランドへの転換を目指している。",
+      "2. これまでリビアンは富裕層向けの高価格帯EVを展開してきたが、R2は価格帯を引き下げ、より幅広い消費者層の獲得を狙う戦略的モデルである。",
+      "3. 米EV市場でテスラが圧倒的な存在感を誇る中、リビアンはブランド認知度の向上と量産体制の確立という二重の課題に直面している。"
+    ],
+    "points": [
+      "・ テスラとの直接競合：大衆価格帯市場でテスラModel YやModel 3と正面から競合する構図",
+      "・ 量産コストの課題：高級路線から大衆路線への転換には製造コスト削減と工場稼働率向上が不可欠",
+      "・ ブランド戦略の転換リスク：既存の高級ブランドイメージを損なわずに大衆化を図る難しいバランス調整"
+    ],
+    "prediction": "R2の成否はリビアンの財務健全性に直結しており、成功すれば追加資金調達や株価回復のカタリストとなる一方、失敗すれば経営危機に直結するリスクをはらんでいる。グローバルには、米国産EVの競争力強化がIRA（インフレ抑制法）の補助金政策とも連動し、欧州・アジアのEVメーカーとの通商摩擦や競争環境に影響を与える可能性がある。また、中国系EV勢力の北米市場参入規制が続く中、リビアンの大衆化戦略は「米国製EV」の代表格としての政治的な追い風を受ける可能性もある。",
+    "ai_interpretation": "このニュースの本質は、単なる新車発表ではなく「EVの民主化」という産業構造的な転換点を象徴している点にある。テスラが証明した「高級路線から大衆路線への段階的展開モデル」をリビアンが追随しようとしており、これはEV産業における成功方程式の再現性を問う試みともいえる。グローバル経済的には、米国のEVエコシステムの厚みが増すことでサプライチェーンの国内回帰が加速し、脱中国依存という地政学的潮流とも合致した戦略的意義を持つニュースである。",
+    "collected_at": "2026-06-13T06:07:39.765672+09:00",
+    "market_impact": "R2の市場投入は、競争が激化する米国EV市場においてテスラや中国系メーカーへの対抗軸となり、北米EV普及率のさらなる押し上げに寄与する可能性がある。自動車関連株や電池・半導体サプライチェーンへの投資家注目度が高まることで、関連セクターの株価にも波及効果が見込まれる。また、量産拡大に伴うリチウムやコバルトなどの希少金属需要増加が資源市場の価格変動要因となりうる。"
+  },
+  {
+    "title": "5 takeaways from airline CEOs' biggest annual gathering",
+    "japanese_title": "航空会社CEO年次総会IATAリオ開催：航空業界の今後を左右する5つの重要テーマ",
+    "url": "https://www.cnbc.com/2026/06/09/iata-annual-meeting-airline-ceo-takeaways.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 国際航空運送協会（IATA）の年次総会がブラジルのリオデジャネイロで開催され、世界主要航空会社のCEOが一堂に会した。",
+      "2. 業界トップリーダーたちが航空需要の回復、燃料コスト、持続可能性など業界横断的な重要課題について議論を交わした。",
+      "3. コロナ後の航空業界の構造変化や地政学的リスクを踏まえた、中長期戦略の方向性が示された。"
+    ],
+    "points": [
+      "・ 航空需要の回復トレンドと地域間格差（アジア太平洋・欧米・中東の比較）",
+      "・ 持続可能航空燃料（SAF）およびカーボンニュートラル目標2050への具体的進捗と課題",
+      "・ 地政学的緊張（ロシア・ウクライナ情勢、中東紛争）による路線・コスト構造への影響"
+    ],
+    "prediction": "IATAの提言や各CEOの発言は今後の業界規制・投資方針に強い影響力を持つため、SAF義務化や炭素税強化に向けた国際的な政策議論が加速する可能性が高い。新興国市場、特にインドや東南アジアを中心とした航空需要の爆発的拡大が次の成長エンジンとして位置づけられ、航空機発注や空港インフラ投資が増加すると予測される。一方、人件費高騰・パイロット不足・機材遅延問題は短期的な業界リスクとして継続する見通しだ。",
+    "ai_interpretation": "このニュースの本質は、単なる業界イベントの報告にとどまらず、**「航空産業がグローバル経済の健全性を映す鏡」**であるという点にある。航空需要の動向はビジネス活動・消費行動・観光投資の総合指標であり、CEOたちの見通しは世界経済の体温計として機能する。また、脱炭素化への対応が「コストか競争優位か」という産業構造の転換点に差し掛かっており、この議論の行方はエネルギー・金融・製造業を含むグローバルサプライチェーン全体の再編を示唆している。",
+    "collected_at": "2026-06-13T06:08:00.460879+09:00",
+    "market_impact": "航空業界の動向は航空機メーカー（ボーイング・エアバス）や航空燃料市場、観光・ホテル産業など広範なセクターに直接影響を与えるため、グローバル株式市場における関連銘柄の動向に注目が集まる。また、旅客需要の見通しが示されることで、新興国通貨や観光依存型経済国の為替・経済指標にも間接的な影響が波及する可能性がある。持続可能航空燃料（SAF）への移行議論は、エネルギー・化学セクターにも新たな投資機会と規制リスクをもたらす。"
+  },
+  {
+    "title": "SpaceX IPO makes history as largest ever. Stock gains 19% on first day",
+    "japanese_title": "SpaceX史上最大規模のIPO上場、初日株価19%急騰でイーロン・マスクが兆万長者へ",
+    "url": "https://www.npr.org/2026/06/12/nx-s1-5855004/stock-ai-spacex-ipo-elon-musk",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. SpaceXがIPOにより約750億ドル（約11兆円）を調達し、世界最大規模の新規上場として歴史を塗り替えた。",
+      "2. 上場初日に株価が19%上昇し、同社は世界有数の巨大企業の仲間入りを果たした。",
+      "3. この上場により、イーロン・マスクの個人資産が1兆ドルを超え、史上初の「兆万長者（トリリオネア）」誕生が現実となった。"
+    ],
+    "points": [
+      "・ 調達額750億ドルは、過去のIPO（アリババの250億ドル等）を大幅に上回る史上最大規模",
+      "・ ロケット事業とAI事業の複合企業としての評価が市場から高く支持された点",
+      "・ マスク氏の個人資産が1兆ドル超となり、富の集中・格差問題が改めて国際的議論を呼ぶ可能性"
+    ],
+    "prediction": "SpaceXの上場を契機に、宇宙ビジネス・衛星通信・AI分野への民間投資がグローバルで急加速し、ブルーオリジンなど競合他社も追随したIPOや資金調達を検討する動きが強まるだろう。地政学的には、Starlinkを擁するSpaceXの影響力がさらに拡大し、安全保障・通信インフラ分野で米国の戦略的優位性が一層際立つ。一方、マスク氏個人への権力集中に対する規制当局の監視強化や、各国政府による宇宙・AI関連規制の議論が国際的に活発化する見通しだ。",
+    "ai_interpretation": "このニュースの本質は、単なる企業上場を超えて「民間主導による宇宙・AI産業の覇権確立」という歴史的転換点を示している。国家が独占してきた宇宙開発領域に民間資本が圧倒的規模で流入することで、地政学・安全保障・経済の三軸において既存の国際秩序が根本から問い直される局面に入った。グローバル経済への示唆としては、「テクノロジー×宇宙」という新たな産業フロンティアが次の成長エンジンとして確立されつつあり、各国の産業政策・投資戦略の根本的な見直しを迫るものと言える。",
+    "collected_at": "2026-06-13T06:08:21.520188+09:00",
+    "market_impact": "SpaceXのIPOは宇宙・AI関連株全体への投資マインドを大幅に高め、関連セクターへの資金流入加速が見込まれる。米国株式市場全体においても巨額資金の流動が生じ、特にナスダック市場の時価総額押し上げ効果をもたらす可能性がある。また、ドル需要の増加により短期的なドル高圧力が生じ、新興国通貨や円への影響も無視できない。"
+  },
+  {
+    "title": "Door shuts on some immigrant entrepreneurs as U.S. restricts small-business loans",
+    "japanese_title": "米国、中小企業向けSBAローンから合法的永住権保有の移民起業家を排除──米国経済に波紋",
+    "url": "https://www.npr.org/2026/06/12/nx-s1-5853375/changes-loans-trump-small-business-immigrants-entrepreneurs-green-card",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国小企業庁（SBA）が従来は合法的永住権保有者（グリーンカード保持者）に認めていた中小企業向け融資を、新たな規制により事実上利用不可とした。",
+      "2. SBAは米国の中小企業融資の根幹を担う機関であり、数十年にわたり合法移民も融資対象として認めてきた歴史的転換点となる。",
+      "3. この措置は移民起業家の新規事業立ち上げや既存ビジネス拡大に直接的な打撃を与え、米国内の移民コミュニティ経済に深刻な影響を及ぼす可能性がある。"
+    ],
+    "points": [
+      "・ グリーンカード保持者は「合法的永住権者」であり、市民権者と同等に近い権利を有してきたが、その権利が経済活動面で後退している点が異例",
+      "・ SBAローンは民間銀行融資と比べ低金利・長期返済など中小企業に有利な条件であり、代替手段が限られる層への影響が特に大きい",
+      "・ トランプ政権下の移民政策強化の一環とみられ、「合法移民」にまで規制が及んでいることは政策の射程拡大を示唆する"
+    ],
+    "prediction": "この政策が継続・拡大されれば、米国を移民起業の目的地として選ぶ傾向が弱まり、優秀な移民起業家がカナダ・欧州・シンガポールなど競合国へシフトするリスクが高まる。また、法的異議申し立てや議会での修正動議など政治的反発も予想され、政策の行方は不透明である。長期的には、イノベーションや雇用創出における移民の貢献度低下が米国の経済競争力に構造的なダメージを与えかねない。",
+    "ai_interpretation": "このニュースの本質は、「合法性」と「包摂性」の乖離にある。法的に認められた永住者でさえ経済機会から排除されるという事実は、移民政策が単なる入国管理を超えて経済活動の制限ツールとして機能し始めていることを示す。グローバル経済的には、米国が長年強みとしてきた「移民による起業・イノベーション文化」（GoogleやYahooも移民創業者を持つ）の土台を自ら掘り崩すリスクであり、国際的な人材・資本の流れを再配分する歴史的な転換点となりうる。",
+    "collected_at": "2026-06-13T06:08:43.491967+09:00",
+    "market_impact": "移民が多く従事する飲食・小売・建設・ITサービスなどの中小企業セクターで資金調達難が生じ、地域経済の活力低下につながる恐れがある。また、移民起業家による雇用創出が抑制されることで、米国内の労働市場や消費需要にも間接的な下押し圧力となりうる。為替への直接的影響は限定的だが、米国の「ビジネス環境の閉鎖性」というシグナルが海外投資家や高度人材の対米投資意欲に影響する可能性もある。"
+  },
+  {
+    "title": "Elon Musk becomes world's first trillionaire as SpaceX soars in stock market debut",
+    "japanese_title": "イーロン・マスク、SpaceX上場で世界初の兆万長者（トリリオネア）に――時価総額220兆円超でナスダック上場",
+    "url": "https://www.bbc.com/news/articles/c4gypy3wwl7o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. イーロン・マスク氏が率いるSpaceXがナスダック株式市場に上場し、時価総額2.2兆ドル（約330兆円）を記録した。",
+      "2. この株価上昇により、マスク氏は人類史上初めて純資産が1兆ドルを超える「トリリオネア」となった。",
+      "3. SpaceXはAI技術と再利用可能ロケット事業を中核とし、宇宙産業と民間テクノロジー融合の象徴的存在となっている。"
+    ],
+    "points": [
+      "・ 時価総額2.2兆ドルはアップル・マイクロソフトに並ぶ超大型上場であり、単一創業者主導企業としては前例のない規模",
+      "・ AI＋宇宙という「二重の成長エンジン」が投資家の期待を最大化し、伝統的なバリュエーション指標を超越した評価を受けている点",
+      "・ マスク氏個人の政治的影響力（DOGE・トランプ政権との関係）と企業価値が不可分に絡み合うリスク構造の存在"
+    ],
+    "prediction": "SpaceXの上場を契機に、宇宙経済（スペースエコノミー）はニッチ産業から主流の投資テーマへと格上げされ、各国政府・民間資本の宇宙開発投資が一段と拡大するだろう。一方、マスク氏への富と権力の集中は独占規制・ガバナンスリスクとして欧米規制当局の監視を強め、地政学的緊張（中国の宇宙覇権競争）をも刺激する可能性がある。長期的には、スターリンク・衛星通信網の拡大が途上国のデジタルインフラ整備に貢献する一方、情報インフラの民間独占という新たな安全保障課題を国際社会に突きつける。",
+    "ai_interpretation": "このニュースの本質は、単なる「大富豪誕生」ではなく、**国家に匹敵する影響力を持つ個人主導のテクノ資本主義の台頭**を象徴する歴史的転換点である。宇宙・AI・通信インフラという「21世紀の公共財」が民間一社に集約されるモデルは、従来の国家主権・多国間協調の枠組みに根本的な問いを投げかけている。グローバル経済への示唆としては、富の超集中が加速するなか、各国が「テクノ封建主義」への対抗策として規制・税制・国際条約の再設計を迫られる時代が到来しつつあると言えるだろう。",
+    "collected_at": "2026-06-13T06:09:07.758144+09:00",
+    "market_impact": "SpaceXの上場はナスダック全体の時価総額を押し上げ、テクノロジー・宇宙関連株への投資マネーの流入を加速させる可能性がある。米ドルへの信認強化や宇宙・防衛・AI関連産業のバリュエーション上昇を通じ、競合他社（Blue Origin・Rocketlab等）の株価にも連鎖的な影響が及ぶとみられる。また、既存の航空宇宙産業（ボーイング・ロッキード・マーチン等）との競争激化が従来型産業の再評価を促す局面も想定される。"
+  },
+  {
+    "title": "UK vows to phase out Russian diesel and jet fuel imports by new year",
+    "japanese_title": "英国、年内にロシア産ディーゼル・ジェット燃料の輸入を全面禁止へ―ウクライナ侵攻制裁を強化",
+    "url": "https://www.bbc.com/news/articles/ceqdl8xre7qo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 英国政府はウクライナ戦争への対応として、ロシア産ディーゼル燃料およびジェット燃料の輸入を年末までに段階的に廃止することを宣言した。",
+      "2. この措置はロシアへの制裁パッケージの一環として実施されるものであり、エネルギー分野での経済的圧力を強化する狙いがある。",
+      "3. 欧米諸国が連携してロシアのエネルギー収入源を断つという国際的な制裁強化の流れと一致する動きとなっている。"
+    ],
+    "points": [
+      "・ 代替調達先として中東・米国・アフリカ産燃料への需要シフトが加速する見込み",
+      "・ 英国内の燃料価格、特に運輸・物流コストへの直接的な影響が注目される",
+      "・ EUや他のG7諸国との制裁協調がどこまで維持・強化されるかが鍵となる"
+    ],
+    "prediction": "英国の輸入禁止措置は他の西側諸国に対する追加制裁強化の先例となり、ロシアのエネルギー輸出収入はさらに圧迫される可能性が高い。一方、ロシアは中国・インド・トルコなどへの販路転換を加速させるとみられ、グローバルなエネルギー市場の分断（デカップリング）が一層深まるだろう。中長期的には、欧州全体のエネルギー自立に向けた再生可能エネルギー投資拡大の動きを後押しする契機にもなりうる。",
+    "ai_interpretation": "このニュースの本質は、エネルギー安全保障と地政学的対立が不可分に結びついている現代の国際秩序を象徴している点にある。ロシアへの経済制裁はウクライナ支援という政治的意図を持つ一方で、英国自身もエネルギーコストの上昇というトレードオフを受け入れる覚悟を示したものといえる。グローバル経済への示唆としては、資源依存のリスク管理とサプライチェーンの多様化が先進国にとって戦略的優先課題であることを改めて浮き彫りにしている。",
+    "collected_at": "2026-06-13T06:09:26.889450+09:00",
+    "market_impact": "ロシア産燃料の代替調達が必要となるため、欧州の燃料市場では短期的に供給逼迫と価格上昇圧力が生じる可能性がある。航空・輸送業界はジェット燃料やディーゼルのコスト増大に直面し、物価上昇（インフレ）への波及が懸念される。また、英ポンドや欧州通貨はエネルギーコスト上昇に伴う経済減速懸念から不安定な動きを示す可能性がある。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-13",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-06-13.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-06-13.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-06-12",
+    "href": "2026-06-12.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
