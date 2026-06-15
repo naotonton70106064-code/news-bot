@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Centene to offer buyouts to some employees as health insurer cuts costs",
+    "japanese_title": "米健康保険大手センテン、コスト削減で希望退職者募集－医療保険業界に構造改革の波",
+    "url": "https://www.cnbc.com/2026/06/15/centene-to-offer-buyouts-to-some-employees.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国の大手健康保険会社センテン（Centene）が、コスト削減策の一環として一部従業員に対し希望退職（バイアウト）を提示した。",
+      "2. 同社は対象となる従業員数や削減目標人数については具体的な数字を公表していない。",
+      "3. 医療保険業界全体でコスト圧力が高まる中、人員最適化による経営効率化が加速している。"
+    ],
+    "points": [
+      "・ 対象従業員数や削減規模が非公表であり、透明性の欠如が投資家の不安材料となりうる",
+      "・ 米国の医療保険業界全体でメディケイド（低所得者向け医療保険）関連の収益悪化が続いており、業界再編の前触れである可能性がある",
+      "・ UnitedHealth、Humanaなど競合大手も同様のコスト圧力に直面しており、業界横断的なリストラトレンドが拡大するリスクがある"
+    ],
+    "prediction": "米国の医療保険業界は、政府のメディケイド支出見直しや医療費インフレの圧力を受け、今後も構造的なコスト削減が続くと予想される。センテンの動向は業界他社にとっても先行指標となり得るため、類似したリストラ発表が相次ぐ可能性がある。また、トランプ政権下での医療政策の変化が業界の収益構造に与える影響も、今後の重要な観察ポイントとなる。",
+    "ai_interpretation": "このニュースの本質は、単なる一企業のコスト削減にとどまらず、米国医療保険業界が「成長モデルの転換点」に差し掛かっていることを示唆している。パンデミック後の医療利用増加や政府補助の縮小により、かつての高収益モデルが持続困難になりつつあり、業界全体がスリム化・効率化を迫られている。グローバル経済の観点からは、米国ヘルスケアセクターの変容が医療テクノロジーや製薬業界への投資戦略にも影響を与え、日本を含む世界の機関投資家のポートフォリオ再編につながる可能性がある。",
+    "collected_at": "2026-06-16T06:50:42.862912+09:00",
+    "market_impact": "センテンの人員削減策は、同社株価にとって短期的にはコスト改善期待からポジティブに働く可能性がある一方、医療保険セクター全体の不透明感を示すシグナルとも受け取られる。米国の医療・ヘルスケア産業は雇用規模が大きいため、大手企業の人員削減は関連サービス業や医療IT分野にも波及効果をもたらす可能性がある。為替への直接的な影響は限定的だが、ヘルスケアETFや関連株への資金流入・流出に影響を与えるだろう。"
+  },
+  {
+    "title": "Fox to buy streaming device maker Roku for $22 billion",
+    "japanese_title": "フォックス、ストリーミング大手Rokuを約3.3兆円で買収合意――メディア業界再編が加速",
+    "url": "https://www.cnbc.com/2026/06/15/fox-to-buy-roku.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米メディア大手フォックス（Fox）が、ストリーミングデバイスメーカーのRoku（ロク）を企業価値約220億ドル（約3.3兆円）で買収することで合意した。",
+      "2. フォックスはニュース・スポーツ専門ネットワークを保有しており、本買収によりハードウェアとコンテンツの垂直統合を狙う戦略とみられる。",
+      "3. Rokuは北米を中心に数千万台のストリーミングデバイスを普及させており、その巨大なユーザーベースと広告プラットフォームがフォックスの主要な取得目的と考えられる。"
+    ],
+    "points": [
+      "・ **垂直統合戦略**：コンテンツ（フォックス）とデバイス・プラットフォーム（Roku）を一体化することで、ユーザー接点を川上から川下まで掌握する狙い",
+      "・ **CTV広告市場の覇権争い**：Rokuの広告プラットフォームは年間数十億ドル規模の収益を誇り、デジタル広告市場における新たな強者誕生を意味する",
+      "・ **規制リスク**：米国の独占禁止当局（DOJ・FTC）による審査が不可避であり、買収完了までに相当の時間と条件変更が求められる可能性がある",
+      "・ **既存メディア企業への波及**：ComcastやWarner Bros. Discoveryなど他の伝統的メディア企業にも同様のプラットフォーム買収圧力が高まる"
+    ],
+    "prediction": "フォックスによるRoku買収が完了すれば、テレビ広告からストリーミング広告へのシフトが一段と加速し、従来の放送モデルに依存するメディア企業の経営環境はさらに厳しくなるだろう。また、AppleやAmazon、Googleといったビッグテック各社も対抗措置としてメディア・コンテンツ領域への投資を強化する可能性が高く、業界全体での大型M&A連鎖が予想される。地政学的観点では、米国メディア産業の寡占化が進むことで、コンテンツの多様性や情報流通のあり方をめぐる政治的議論が再燃する恐れもある。",
+    "ai_interpretation": "このニュースの本質は、**「コンテンツ×プラットフォーム×データ」の三位一体支配**を巡るメディア産業の構造変革にある。フォックスはニュース・スポーツという強力なライブコンテンツを持ちながらも、視聴者との直接的なデジタル接点を欠いていたが、Roku買収によってその弱点を一気に補完しようとしている。グローバル経済への示唆として、これはメディア・テクノロジー・広告の境界線が完全に溶解しつつある時代において、「流通チャネルを制する者がコンテンツ経済を制する」という新たなパワーダイナミクスを象徴する取引といえる。",
+    "collected_at": "2026-06-16T06:51:12.557377+09:00",
+    "market_impact": "本買収はメディア・テクノロジー業界の大型M&Aとして市場の注目を集め、NetflixやAmazon Prime Video、Disney+など競合ストリーミング各社の株価や戦略にも影響を与える可能性がある。広告市場においては、Rokuの持つ膨大な視聴データとフォックスのコンテンツが融合することで、CTV（コネクテッドTV）広告分野での競争が激化し、Googleやメタなどデジタル広告大手への対抗軸が形成されうる。為替面では直接的な影響は限定的だが、米テクノロジー・メディアセクターへの投資マインドを刺激する可能性がある。"
+  },
+  {
+    "title": "KFC leans into boneless chicken, new drinks as chain tries to regain market share",
+    "japanese_title": "KFC、骨なしチキンと新ドリンクで巻き返し——世界的チキンブームで競争激化",
+    "url": "https://www.cnbc.com/2026/06/15/kfc-menu-chicken.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. KFCは市場シェア回復を目指し、骨なしチキン製品の強化と新ドリンクメニューの導入を戦略の柱として打ち出した。",
+      "2. 世界的なチキン需要の高まりを背景に、KFCは老舗大手ファストフードチェーンと新興ブランドの双方から競争圧力を受けている。",
+      "3. 消費者の嗜好変化（手軽さ・食べやすさ重視）に対応するため、メニュー刷新によるブランド再活性化を図っている。"
+    ],
+    "points": [
+      "・ 骨なしチキン（ボーンレス）へのシフトは、利便性を重視するミレニアル・Z世代の消費行動を明確に意識した戦略転換",
+      "・ 新ドリンク導入は客単価向上と来店頻度増加を狙うもので、バリューチェーン全体の収益改善を目的としている",
+      "・ チキン市場の競争激化は、Chick-fil-AやPopeyes、さらには地域密着型の新興ブランドとの直接対決を意味し、KFCのブランド差別化が急務"
+    ],
+    "prediction": "チキンを中心とした世界のファストフード市場は今後も拡大が見込まれ、アジア・中東・アフリカなどの新興市場での出店競争がさらに激化するとみられる。KFCが骨なしチキンや飲料強化で成功した場合、競合他社も追随するメニュー戦略の転換が業界全体に波及し、QSRセクターの製品革新サイクルが加速する可能性がある。一方で、鶏肉価格の変動や物流コストの上昇がコスト構造を圧迫するリスクも依然として残る。",
+    "ai_interpretation": "このニュースの本質は、単なるメニュー変更ではなく「グローバルフードトレンドへの適応競争」という構造的変化を象徴している点にある。チキンという一つの食材をめぐって多国籍企業と地場ブランドが激突する構図は、今後の消費財・外食産業における「ローカル対グローバル」の競争軸を鮮明にしている。KFCの戦略的対応は、ブランドの歴史的強みをいかに現代の消費者ニーズに再接続するかという、あらゆるレガシー企業が直面する普遍的課題の縮図といえる。",
+    "collected_at": "2026-06-16T06:51:34.062713+09:00",
+    "market_impact": "世界的なチキン需要の拡大は、鶏肉関連のコモディティ市場や飼料・加工業界にポジティブな影響を与え、関連株・商品価格の押し上げ要因となり得る。KFCを傘下に持つヤム・ブランズ（Yum! Brands）の株価・収益動向は、QSR（クイックサービスレストラン）セクター全体の投資家心理にも波及する可能性がある。また、新興チキンチェーンの台頭はフランチャイズ市場の競争構造を変化させ、既存大手の収益モデル再考を迫る状況が続く。"
+  },
+  {
+    "title": "Oil prices drop to cheapest level since early days of Middle East conflict",
+    "japanese_title": "原油価格が中東紛争勃発以来の最安値に下落——ホルムズ海峡の再開通で市場が急反応",
+    "url": "https://www.npr.org/2026/06/14/nx-s1-5858115/oil-prices-trump-iran-deal",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国とイランの合意が近づくとの観測から、木曜・金曜日にかけて原油価格が急落し、中東紛争開始以来の最低水準に達した。",
+      "2. トランプ大統領はSNS上で、合意署名後にホルムズ海峡が再開通されると発表した。",
+      "3. 市場は外交的解決への期待を先取りする形で、エネルギー価格の大幅な修正を既に織り込みつつある。"
+    ],
+    "points": [
+      "・ホルムズ海峡は世界の原油輸送量の約20〜21%が通過する戦略的要衝であり、その再開通は供給懸念を一気に解消する",
+      "・トランプ大統領がSNSで外交成果を\"先行発表\"するという異例の情報発信スタイルが市場の先取り反応を加速させた",
+      "・合意の詳細（核開発制限・制裁解除の範囲）が不明確なまま価格が動いており、合意不成立時のリバウンドリスクが残存する"
+    ],
+    "prediction": "合意が正式に署名・履行されれば、原油供給の安定化によりインフレ圧力が緩和し、各国中央銀行の金融政策に一定の柔軟性が生まれる可能性がある。一方、イランの核関連活動や中東の地政学的緊張は根本的には解消されておらず、合意の履行状況次第で価格は再び乱高下するリスクを内包している。中長期的には、産油国カルテル（OPEC+）の生産戦略にも再調整を迫る可能性が高い。",
+    "ai_interpretation": "このニュースの本質は「地政学的リスクプレミアムの剥落」であり、単なる価格下落を超えて、エネルギー安全保障の構図が再編されつつあることを示唆している。トランプ政権による強引とも言える\"宣言外交\"が市場を先導するという構造は、情報の非対称性と政治リスクを同時に高める両刃の剣である。グローバル経済にとっては短期的な朗報である一方、外交合意の持続可能性への懐疑が払拭されない限り、エネルギー市場のボラティリティは高止まりし続けるだろう。",
+    "collected_at": "2026-06-16T06:51:55.410864+09:00",
+    "market_impact": "原油価格の急落はエネルギー株や産油国通貨（リヤル・ディルハムなど）に下押し圧力をかける一方、原油輸入国である日本・インド・欧州などにとっては製造コスト低減という追い風となる。為替市場ではリスクオン心理が広がり、円やユーロなど主要通貨に対してドルが弱含む可能性がある。航空・運輸・石油化学など燃料コストに敏感な産業は短期的な恩恵を受けるとみられる。"
+  },
+  {
+    "title": "SpaceX IPO expected to set record when it goes public Friday",
+    "japanese_title": "SpaceX、史上最大規模のIPOで金曜日にNASDAQ上場へ――宇宙産業が新時代に突入",
+    "url": "https://www.npr.org/2026/06/12/nx-s1-5850321/spacex-ipo-expected-to-set-record-when-it-goes-public-friday",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. SpaceXが金曜日にNASDAQへ上場予定で、史上最高額のIPOとなる見通しである。",
+      "2. NASDAQはSpaceXのような大型企業を誘致するために新たな上場規則を整備し、IPO市場での存在感を強化している。",
+      "3. 宇宙開発・民間航空宇宙産業への投資家関心が一気に高まり、市場全体に強いセンチメントをもたらす可能性がある。"
+    ],
+    "points": [
+      "・ 史上最大規模のIPOとして、調達資金額と企業評価額（バリュエーション）が世界的な注目を集める",
+      "・ NASDAQが上場規則を改定してSpaceXを誘致した背景には、NYSE（ニューヨーク証券取引所）との激しい競争がある",
+      "・ イーロン・マスク氏の影響力と政治的リスクが、IPO後の株価変動要因として特に警戒されている"
+    ],
+    "prediction": "SpaceXの上場成功は、他のユニコーン企業（未上場の大型スタートアップ）のIPO意欲を刺激し、2025年以降の世界的なIPO市場の活性化につながる可能性が高い。宇宙産業の民営化・商業化が加速することで、各国政府の宇宙政策や防衛戦略にも影響を与え、地政学的競争の新たな舞台となることが予想される。一方で、マスク氏の経営する複数企業間での利益相反リスクや規制強化の動きが、株価の不安定要因として尾を引く可能性もある。",
+    "ai_interpretation": "このニュースの本質は、単なる一企業の株式公開を超えて、「宇宙産業の金融化」という歴史的転換点を象徴している点にある。SpaceXの上場は、かつて国家が独占していた宇宙開発領域が完全に民間資本市場に統合されたことを意味し、グローバル経済における新たな成長フロンティアの確立を示す。長期的には、宇宙インフラ（衛星通信・宇宙輸送・資源開発）が石油や半導体と並ぶ戦略的資産として位置づけられ、国際的な経済覇権争いの構図をも塗り替える可能性を秘めている。",
+    "collected_at": "2026-06-16T06:52:14.986376+09:00",
+    "market_impact": "SpaceXのIPOは株式市場全体のリスクオンムードを高め、特にテクノロジー・宇宙関連株への資金流入を加速させると予想される。ドル需要の増加により短期的にドル高圧力が生じる可能性があり、新興国通貨や円への影響も注視が必要だ。また、防衛・通信・衛星関連産業にも波及効果が期待され、関連セクターの株価上昇を牽引する可能性がある。"
+  },
+  {
+    "title": "How could the US-Iran deal affect oil prices and the cost of food?",
+    "japanese_title": "米イラン核合意が原油価格と食料コストに与える影響とは？世界経済への波及を徹底分析",
+    "url": "https://www.bbc.com/news/articles/cd0p8me2m5do?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国とイランの間で進む外交交渉（核合意・制裁緩和）が、国際原油市場に大きな変動をもたらす可能性がある。",
+      "2. 原油価格の変動は輸送コストや農業生産コストに直結し、世界的な食料価格の上昇・下落に影響を与える。",
+      "3. 専門家たちは、中東情勢の緊張が今後数ヶ月にわたってグローバル経済に影響を及ぼし続けると警告している。"
+    ],
+    "points": [
+      "・ イランの原油輸出再開による世界供給量の増加と、OPECプラスの減産戦略との綱引き",
+      "・ 中東地域の地政学的リスクが依然として解消されておらず、合意の持続性・実効性に不透明感",
+      "・ 食料価格への波及ルート（エネルギーコスト→肥料価格→農産物価格）の連鎖的影響"
+    ],
+    "prediction": "米イラン合意が正式に成立・履行された場合、短期的には原油価格の下落圧力が強まり、エネルギー輸入国（日本・EU・インドなど）にとって経済的な恩恵が生じると予想される。一方で、サウジアラビアをはじめとするOPEC主要国が減産で対抗する可能性があり、価格下落幅は限定的にとどまるシナリオも十分考えられる。中東の地政学的不安定性が継続する限り、市場のボラティリティは高止まりし、食料・エネルギー安全保障を巡る各国の政策対応が引き続き試される局面が続くだろう。",
+    "ai_interpretation": "このニュースの本質は、「エネルギー地政学」と「食料安全保障」が密接に連動しているという構造的リスクを改めて浮き彫りにしている点にある。原油という単一コモディティの需給変化が、燃料・肥料・輸送・食料という複数のサプライチェーンを通じて世界中の家計や企業に波及するという「コスト伝播メカニズム」は、グローバル化した経済の脆弱性そのものを示している。米イラン関係の行方は単なる二国間外交問題ではなく、インフレ・食料危機・通貨安といった形で新興国を中心に広範な影響を与える「グローバル経済の分岐点」として注視すべき案件である。",
+    "collected_at": "2026-06-16T06:52:36.377279+09:00",
+    "market_impact": "イランへの経済制裁が緩和されれば、イラン産原油が国際市場に再流入し、原油供給量の増加により原油価格が下落する可能性がある。原油価格の低下は航空・輸送・農業などのエネルギーコスト依存型産業にとっては追い風となる一方、産油国通貨（ロシアルーブル・サウジリヤルなど）や関連株式市場には下落圧力がかかる恐れがある。また、食料品の生産・流通コスト低減につながれば、インフレ抑制への一助となる可能性も指摘されている。"
+  },
+  {
+    "title": "SpaceX IPO raised $10bn more than thought",
+    "japanese_title": "SpaceX IPOが予想を上回る875億ドル調達——宇宙産業に新たな資金革命",
+    "url": "https://www.bbc.com/news/articles/cgrk21wnvy9o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. SpaceXのIPO（新規株式公開）は当初予想の750億ドルを大幅に上回り、875億ドルの資金調達に成功した。",
+      "2. 差額にして約100億ドル（約1.5兆円）超が追加で集まり、投資家の旺盛な需要を示した。",
+      "3. 宇宙産業における民間企業の資金調達力が、従来の想定を根本から覆す歴史的な案件となった。"
+    ],
+    "points": [
+      "・ 予想比100億ドル超の上振れは、投資家がSpaceXの成長ストーリーに強い確信を持っていることを示す",
+      "・ 宇宙産業IPOとして史上最大規模となる可能性があり、ベンチマークとして今後参照される案件となる",
+      "・ イーロン・マスク氏の個人資産・影響力がさらに拡大し、政治・経済両面での発言力強化につながる"
+    ],
+    "prediction": "調達資金はStarlinkの衛星網拡張、火星探査計画（Starship開発）、軍事・政府向け契約の拡大に充当されると見られ、米国の宇宙覇権戦略を民間主導で加速させる。中国やEUの宇宙機関・民間企業も対抗措置として投資を拡大する可能性が高く、宇宙分野での地政学的競争が新たな局面に入る。長期的には、宇宙インフラがグローバル経済の基幹インフラとして認識されるターニングポイントとなりうる。",
+    "ai_interpretation": "このニュースの本質は、「宇宙ビジネス」が投機的夢物語から実体経済の主役へと完全に移行したことを市場が明確に認めた瞬間である。875億ドルという数字は単なる資金調達額ではなく、民間企業が国家レベルのインフラを担う新時代の到来を象徴するシグナルだ。グローバル経済への示唆として、今後は「宇宙アクセス」を持つ企業と持たない企業の間で、通信・物流・安全保障において決定的な競争格差が生まれるという現実を、この案件は強く警告している。",
+    "collected_at": "2026-06-16T06:52:56.458352+09:00",
+    "market_impact": "宇宙・防衛・通信関連株に強い追い風が吹き、競合他社（Blue Origin、RocketLabなど）の評価額見直しも促されるとみられる。米ドルへの資金流入が加速し、テクノロジーセクター全体の投資家心理を強気に傾ける可能性がある。また、Starlinkを中核とした通信インフラ事業は、既存の衛星通信・テレコム産業に対する競争圧力をさらに高めるだろう。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-16",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-06-16.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-06-16.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-06-15",
+    "href": "2026-06-15.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
