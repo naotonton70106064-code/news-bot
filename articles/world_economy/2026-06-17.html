@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "How Roku fits into Fox's future – and what investors are missing about the deal",
+    "japanese_title": "フォックスが220億ドルでRokuを買収——株価下落でも投資家が見落とす「ストリーミング覇権」戦略の真相",
+    "url": "https://www.cnbc.com/2026/06/16/fox-roku-stock-investors-streaming.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. メディア大手フォックス（Fox）がストリーミングデバイス・プラットフォーム企業Rokuを約220億ドル（約3.3兆円）で買収すると発表した。",
+      "2. 発表直後にフォックスの株価は下落したが、アナリストの多くはこの買収を長期的に有望な戦略的投資と評価している。",
+      "3. この買収はフォックスがテレビ広告からデジタル・コネクテッドTV広告市場へと事業軸を移行させる重要な転換点とみられている。"
+    ],
+    "points": [
+      "・ Rokuは米国のコネクテッドTVデバイス市場でシェア首位級であり、数千万世帯へのリーチを持つデータ資産が最大の魅力",
+      "・ フォックスはスポーツ・ニュースに強みを持つコンテンツと、Rokuのプラットフォーム・流通網を組み合わせた「縦断型メディア帝国」を狙っている",
+      "・ 株価下落は短期的な市場の懐疑心を示すが、アナリストは広告収益の多様化と視聴者データ活用による長期的収益性を高く評価"
+    ],
+    "prediction": "ストリーミング市場の成熟化が進む中、コンテンツ企業とプラットフォーム企業の垂直統合はグローバルで加速するトレンドとなり、他のメディア企業も類似のM&Aに追随する可能性が高い。また、この大型買収はメディア・テック融合に対する規制当局（特にFTC）の審査を引き付け、独占禁止法の観点から審議が長期化するリスクも内包している。地政学的には、米国デジタルメディアの影響力強化として、欧州・アジア市場でのコンテンツ配信競争にも波及する可能性がある。",
+    "ai_interpretation": "このディールの本質は「コンテンツ」から「プラットフォーム支配」へのパラダイムシフトであり、フォックスは単なるメディア企業からデータドリブンな広告エコシステムの構築者へと脱皮しようとしている。株価下落という市場の短期的反応は、投資家が統合コストを過大評価している可能性を示唆しており、Rokuが持つファーストパーティデータと視聴習慣データの価値はまだ十分に織り込まれていないとも解釈できる。グローバル経済への示唆としては、テレビ広告の「デジタル化・個人最適化」が不可逆的に進行しており、従来型放送モデルの終焉と新たな収益構造の誕生を象徴するニュースといえる。",
+    "collected_at": "2026-06-17T06:47:19.036732+09:00",
+    "market_impact": "コネクテッドTV（CTV）広告市場における競争が一段と激化し、グーグル・アマゾン・アップルなど巨大テック企業との正面衝突が予想される。フォックス株の短期的な売り圧力は、投資家が買収コストと統合リスクを慎重に織り込んでいる表れであり、メディアセクター全体の再編機運を高める可能性がある。またRokuの広告インベントリー獲得により、デジタル広告市場におけるフォックスのプレゼンスが大幅に拡大するとみられる。"
+  },
+  {
+    "title": "Rivian laying off hundreds of workers amid R2 launch",
+    "japanese_title": "リビアン、R2発売直前に数百人規模のレイオフ実施——全従業員の2%未満が対象",
+    "url": "https://www.cnbc.com/2026/06/16/rivian-layoffs.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 電気自動車メーカーのリビアン（Rivian）は、数百人の従業員を解雇すると発表し、全従業員の2%未満に相当する規模のレイオフを実施する。",
+      "2. このレイオフは、同社の次世代モデル「R2」の発売準備が進む中での発表となり、コスト構造の最適化が狙いとみられる。",
+      "3. リビアンはアマゾンやフォルクスワーゲンからの出資を受けているものの、収益化に向けた財務的プレッシャーが続いている状況にある。"
+    ],
+    "points": [
+      "・ R2モデルの発売という重要な局面でのレイオフは、コスト削減を優先した戦略的な組織再編の一環である可能性が高い",
+      "・ 全体の2%未満という規模は比較的小さいが、投資家へのシグナルとして市場の注目を集めている",
+      "・ フォルクスワーゲンとの合弁事業やアマゾンとの提携など、複数のパートナーシップが今後の財務安定性の鍵を握る"
+    ],
+    "prediction": "EV市場全体が「過熱期」から「選別・淘汰期」へと移行する中、リビアンのような新興メーカーは量産効率の向上と収益化の加速が急務となっており、追加的なコスト削減や提携深化が今後も続く可能性がある。R2の市場投入が成功すれば株価の回復と雇用の安定につながる一方、失敗した場合はさらなる構造改革を迫られるリスクも存在する。地政学的には、米国のEV補助金政策（IRAの行方）がリビアンの事業継続に直接影響を与える重要変数となる。",
+    "ai_interpretation": "このニュースの本質は、単なる人員削減ではなく、EV産業が「成長神話」から「経営規律の時代」へ転換していることを象徴している点にある。リビアンはR2という新製品で勝負をかけながらも、財務健全性を維持するための痛みを伴う選択を迫られており、これはEVスタートアップが直面する普遍的なジレンマを体現している。グローバル経済への示唆として、脱炭素化への投資が続く一方で、市場原理による「淘汰の波」が新興EV企業に押し寄せており、生き残りには技術力だけでなく財務戦略の巧拙が問われる時代に突入したことを示している。",
+    "collected_at": "2026-06-17T06:47:40.332276+09:00",
+    "market_impact": "EV業界全体における需要鈍化とコスト圧力が依然として続く中、リビアンの人員削減はEV株全体の投資家心理に慎重なムードをもたらす可能性がある。テスラやルーシッドなど競合他社との競争が激化する中、サプライチェーンや部品調達に関わる関連企業にも間接的な影響が波及し得る。為替面では、米国EV産業の先行き不透明感がドル建て資産への影響を限定的ながら与える可能性がある。"
+  },
+  {
+    "title": "General Motors announces new defense partnership with Lockheed Martin",
+    "japanese_title": "ゼネラルモーターズとロッキード・マーティンが防衛分野で新たな戦略的提携を発表——米国の兵器増産体制が加速",
+    "url": "https://www.cnbc.com/2026/06/16/general-motors-lockheed-martin.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米自動車大手ゼネラルモーターズ（GM）が、防衛・航空宇宙大手ロッキード・マーティンとの新たな防衛分野における提携を正式に発表した。",
+      "2. この提携は、米国が兵器・防衛装備品の生産能力を強化・拡大する国家的取り組みの一環として位置づけられている。",
+      "3. 民間製造業の技術・生産インフラを防衛産業に転用・統合することで、供給体制の強化が図られる。"
+    ],
+    "points": [
+      "・ 民間自動車メーカーが防衛産業に本格参入するという産業構造の転換点となる動き",
+      "・ 米政府による兵器増産方針を背景にした官民連携の深化",
+      "・ EV・自動運転技術などGMが持つ先端技術がどのように軍事転用されるかが焦点"
+    ],
+    "prediction": "ウクライナ紛争や台湾海峡問題など地政学的緊張が続く中、米国の防衛産業基盤の拡充は中長期的なトレンドとなり、他の民間大企業も同様の防衛提携に参入する動きが広がる可能性がある。また、NATOや同盟国への兵器供給拡大を通じて、グローバルな防衛関連サプライチェーンが再構築される局面が訪れるだろう。防衛費増大は各国の財政政策にも影響を与え、インフレ圧力の一因となるリスクも否定できない。",
+    "ai_interpretation": "このニュースの本質は、単なる企業間提携を超えた「製造業の軍事転換（ミリタリー・インダストリアル・コンプレックスの現代的再編）」を象徴している点にある。冷戦期以来となる大規模な官民一体型の軍需生産体制の復活は、グローバル経済における「安全保障と経済の融合（Geo-economics）」という新潮流をさらに加速させるものだ。長期的には、民間技術と軍事需要の相互作用がイノベーションを促進する一方、国際的な軍拡競争リスクと経済の「安全保障化」による市場歪みへの警戒も必要である。",
+    "collected_at": "2026-06-17T06:48:00.372837+09:00",
+    "market_impact": "GM株および米国防衛関連株全般に対してポジティブなセンチメントをもたらす可能性が高く、防衛セクターへの投資資金流入が加速するとみられる。為替市場においては、米国の軍事・産業力強化を背景にドル堅調の材料となり得る。また、自動車産業と防衛産業の垣根を越えた産業再編の先例として、サプライチェーン全体に影響を及ぼす可能性がある。"
+  },
+  {
+    "title": "The war with Iran is making oil changes pricier. And a deal won't solve it",
+    "japanese_title": "イランとの戦争がオイル交換費用を高騰させる――和平合意でも解決しない潤滑油危機の真相",
+    "url": "https://www.npr.org/2026/06/16/nx-s1-5847024/motor-oil-iran-war",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国は原油の世界最大生産国であるにもかかわらず、モーターオイル（潤滑油）においては同様の立場になく、供給構造が根本的に異なる。",
+      "2. イランとの軍事的緊張を背景に潤滑油のコストが急騰しており、一般消費者のカーメンテナンス費用に直撃している。",
+      "3. 仮に停戦・和平合意が実現したとしても、潤滑油価格の上昇問題は構造的要因により短期間では解消されない見通しである。"
+    ],
+    "points": [
+      "・ 米国が原油大国でありながら潤滑油（モーターオイル）では自給自足できていないという構造的矛盾",
+      "・ 地政学的リスク（イラン情勢）が原油市場だけでなく、より川下の精製・添加剤市場にまで波及している点",
+      "・ 和平合意という政治的解決策だけでは市場の供給問題が解決しないという「経済の慣性」の存在"
+    ],
+    "prediction": "イラン情勢が仮に緩和に向かったとしても、潤滑油サプライチェーンの再構築には数ヶ月から数年単位の時間を要するため、消費者物価への影響は長期化する可能性が高い。地政学的リスクが特定のニッチ市場に構造的打撃を与えるという今回のケースは、今後の中東情勢次第でエネルギー関連の派生商品市場全体に連鎖する懸念がある。各国政府・企業はサプライチェーンの多元化と戦略的備蓄の見直しを迫られるだろう。",
+    "ai_interpretation": "このニュースの本質は、「地政学リスクは原油価格だけに留まらず、川下の派生製品市場に非対称・非線形な影響を与える」という点にある。原油は増産で対応できても、精製技術・添加剤・特殊化学品が絡む潤滑油は別次元の供給制約を持つことを改めて示している。グローバル経済への示唆として、エネルギー安全保障の議論を「原油」だけで捉える従来の枠組みを見直し、精製品・化学品レベルまで含めた包括的なサプライチェーン戦略の構築が急務であることを本事例は強く訴えている。",
+    "collected_at": "2026-06-17T06:48:20.687209+09:00",
+    "market_impact": "潤滑油価格の上昇は自動車関連産業全体のコスト増につながり、製造業・輸送業・物流コストを押し上げることでインフレ圧力を強める可能性がある。原油価格とは異なる供給チェーンを持つ潤滑油市場の混乱は、為替市場においても資源輸入国通貨（円・ユーロ等）の下落要因となり得る。また、自動車メンテナンス関連企業や石油化学セクターへの業績影響も無視できない。"
+  },
+  {
+    "title": "Survey confirms the struggle of working parents: 'No way to be two things at once'",
+    "japanese_title": "育児と仕事の両立に悩む働く親たち――Pewの調査が示す「二兎を追えない」現実と有給休暇・保育支援の必要性",
+    "url": "https://www.npr.org/2026/06/16/nx-s1-5856274/working-parents-balance-work-pew",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. Pewの新調査によると、多くの働く親が仕事でも家庭でも100%の力を発揮できないと感じており、「両立の壁」が深刻な問題として浮き彫りになった。",
+      "2. 有給病気休暇や手頃な価格の保育サービスといった福利厚生の整備が、この問題の解決策として注目されている。",
+      "3. 現代の労働環境において、育児支援制度の不備が働く親の生産性・精神的健康・労働参加率に悪影響を与えていることが改めて確認された。"
+    ],
+    "points": [
+      "・「職場でも家庭でも完全に機能できない」と感じる働く親の割合が高く、バーンアウト（燃え尽き症候群）と離職率上昇のリスクを示唆",
+      "・有給休暇制度の整備が政策課題として浮上しており、米国における制度改革議論が加速する可能性",
+      "・保育費の高騰が特に低〜中所得層の女性の労働参加率を下げ、ジェンダー格差の拡大につながっている点"
+    ],
+    "prediction": "少子化・人口減少が進む先進国では、働く親への支援強化が経済成長維持のための政策的優先事項として位置づけられていく見通しであり、政府・企業双方による育児支援投資が拡大するとみられる。米国では2024〜2025年の政治情勢を背景に育児支援政策の実現可能性が揺れているが、企業レベルでの自主的な福利厚生拡充は競争優位の観点から継続すると予想される。グローバルには、育児支援の充実度が国際的な人材流動・頭脳流出の方向性にも影響を与える地政学的要因になりつつある。",
+    "ai_interpretation": "このニュースの本質は、「労働力の質と量」を左右する社会インフラとしての育児支援が、いまだ経済システムの中で十分に価値評価されていないという構造的矛盾を示している点にある。働く親が抱える葛藤は個人の問題ではなく、制度設計の失敗が生み出す「見えないGDPロス」であり、企業・政府・社会全体のコスト問題として再認識する必要がある。グローバル経済の持続的成長には、人的資本への投資として育児・介護支援を位置づける発想の転換が不可欠であり、この分野への遅れは長期的な競争力の低下に直結するという重要な示唆を含んでいる。",
+    "collected_at": "2026-06-17T06:48:42.326123+09:00",
+    "market_impact": "育児支援の不足は労働力供給の制約要因となり、特に先進国における人手不足・生産性低下を通じてマクロ経済に下押し圧力を与える。保育・育児支援関連産業（EdTech、保育サービス企業、福利厚生サービス）への投資需要は高まる可能性があり、関連銘柄に注目が集まるだろう。また、企業の人材獲得競争が激化する中で、充実した育児支援を提供できる企業とそうでない企業の間で、優秀な人材確保に格差が生じるリスクがある。"
+  },
+  {
+    "title": "Musk's SpaceX overtakes Amazon to become world's fifth most valuable firm",
+    "japanese_title": "マスクのSpaceXがAmazonを抜き世界時価総額第5位に浮上｜宇宙産業の経済的台頭を示す歴史的転換点",
+    "url": "https://www.bbc.com/news/articles/cvgd5g7d7gyo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. イーロン・マスク氏が率いるSpaceXが株価の急騰により、Amazonを抜いて世界第5位の時価総額企業となった。",
+      "2. 小売・メディア・クラウド事業を擁するAmazonという巨大企業を、宇宙・ロケット企業が上回るという象徴的な逆転劇が起きた。",
+      "3. テクノロジー企業の価値評価において、宇宙産業・民間宇宙開発セクターへの市場の期待値が急速に高まっていることを示している。"
+    ],
+    "points": [
+      "・SpaceXは非上場企業でありながら、世界トップ5入りという異例の評価を獲得した点が特筆される",
+      "・AmazonはAWS・Prime・広告事業など多角的収益基盤を持つにもかかわらず、単一ミッション型企業に時価総額で逆転された",
+      "・マスク氏がテスラ・X（旧Twitter）・xAIなど複数企業を抱える中、SpaceXの独走的な企業価値上昇は政府契約（NASA・米軍）との連携強化が背景にあると考えられる"
+    ],
+    "prediction": "SpaceXはStarlink衛星通信サービスの世界展開やArtemis計画・火星探査への関与を通じて、さらなる企業価値拡大が見込まれ、近い将来IPOを実施した場合には市場に与える衝撃は計り知れない。地政学的観点では、宇宙空間の商業・軍事的支配力をめぐる米中の競争が激化する中、SpaceXの台頭は米国の宇宙覇権戦略において民間セクターが中核的役割を担う構造を強化する。Amazonも対抗するProject Kuiperを抱えるが、後発ゆえのキャッチアップ競争が本格化するとみられる。",
+    "ai_interpretation": "このニュースの本質は、「物理的インフラと宇宙へのアクセス」が次世代の経済的覇権を左右するという市場の強いメッセージであり、デジタル経済一辺倒から「リアル×宇宙インフラ経済」への価値軸のシフトを象徴している。SpaceXの評価急騰は単なる一企業の成功を超え、国家安全保障・通信インフラ・エネルギー輸送など複合的な未来産業への期待を一身に体現したものといえる。イーロン・マスク個人が持つ政治的影響力（トランプ政権との近接性）も企業価値に織り込まれており、テクノロジーと政治権力の融合という新たなリスク要因としても注視が必要である。",
+    "collected_at": "2026-06-17T06:49:06.469806+09:00",
+    "market_impact": "宇宙関連株や防衛・航空宇宙セクター全体への投資家の関心が一層高まり、同分野への資金流入が加速する可能性がある。一方、Amazonをはじめとする従来型テックジャイアントへの相対的な評価見直しが進む可能性があり、ナスダックやS&P500における構成銘柄の重みにも間接的な影響を与え得る。為替面では、米国宇宙産業の優位性が再確認されることでドル資産への信認が維持・強化される方向に作用するとみられる。"
+  },
+  {
+    "title": "Struggling Pizza Hut chain to be sold for $2.7bn",
+    "japanese_title": "経営難のピザハット、27億ドルで売却へ――競争激化が招いた外食大手の苦境",
+    "url": "https://www.bbc.com/news/articles/c75yd6dy2vlo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 長期的な経営難に陥っていたピザハットチェーンが、約27億ドル（約4,000億円）で売却されることが決定した。",
+      "2. 売却の背景には、競合他社との激しい競争激化による業績低迷が長期にわたって続いていたことがある。",
+      "3. グローバルに展開する大手外食チェーンでさえも、現代の競争環境では抜本的な事業再編を余儀なくされている実態が浮き彫りとなった。"
+    ],
+    "points": [
+      "・ 長年にわたるブランド力を持つ大手チェーンでも競争激化には勝てないという「ブランド神話の崩壊」",
+      "・ ドミノ・ピザやウーバーイーツ等のデリバリー特化型サービスとの競争が売却の遠因となった可能性",
+      "・ 27億ドルという売却額が、現在の外食チェーンの資産評価基準として業界標準となりうる点"
+    ],
+    "prediction": "新オーナーのもとでピザハットはデジタル戦略やデリバリーモデルへの転換を強化するとみられ、グローバル外食産業におけるDX（デジタルトランスフォーメーション）競争はさらに激化するだろう。また、本件を機に同様の経営難を抱える中堅外食チェーンのM&A案件が増加し、業界の寡占化が一層進む可能性がある。地政学的には、新オーナーの国籍・資本背景によって各国市場での展開戦略が大きく変わりうる点にも注目が必要だ。",
+    "ai_interpretation": "このニュースの本質は、単なる一企業の売却にとどまらず、「規模の大きさ」や「ブランドの歴史」が競争優位性を保証しない時代の到来を象徴している点にある。フードテック・デリバリーエコノミーの台頭により、伝統的なQSR（クイックサービスレストラン）モデルは根本的な変革を迫られており、ピザハットの事例はその典型的なケーススタディとなるだろう。グローバル経済への示唆として、消費者行動の変化とテクノロジーの進化が既存産業の価値構造を急速に塗り替えており、いかなる大企業も「変革か衰退か」の選択を迫られる時代であることを改めて示している。",
+    "collected_at": "2026-06-17T06:49:27.732291+09:00",
+    "market_impact": "外食・フードデリバリー業界における大型M&Aとして市場の注目を集め、競合他社の株価や買収候補先の評価額に影響を与える可能性がある。また、27億ドルという取引規模は機関投資家やPEファンドの動向にも波及し、外食セクター全体の再編を加速させる契機となりうる。為替面では、ドル建て取引のため米ドルの対円・対ユーロレートにわずかながら影響を与える可能性がある。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-17",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-06-17.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-06-17.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-06-16",
+    "href": "2026-06-16.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
