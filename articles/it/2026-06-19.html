@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "AI inference startup Baseten reportedly raising $1.5B months after its last mega round",
+    "japanese_title": "AI推論スタートアップBaseten、前回大型調達から数ヶ月で企業価値130億ドルの15億ドル資金調達へ",
+    "url": "https://techcrunch.com/2026/06/18/ai-inference-startup-baseten-reportedly-raising-1-5b-months-after-its-last-mega-round/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. AIスタートアップのBasetenが、企業価値130億ドル（約1.9兆円）で15億ドル（約2,200億円）の資金調達を最終化しつつあると報じられた。",
+      "2. 前回の大型ラウンドからわずか数ヶ月という短期間での追加調達であり、異例のスピードが注目される。",
+      "3. 「推論ゴールドラッシュ」と呼ばれるAI推論インフラへの投資熱が背景にある。"
+    ],
+    "points": [
+      "・ 前回ラウンドから数ヶ月という極めて短いインターバルでの大型追加調達は、投資家の高い期待感を反映",
+      "・ 企業価値が130億ドルに達し、ユニコーン（10億ドル超）をはるかに超える「デカコーン」水準に迫る評価",
+      "・ 「推論ゴールドラッシュ」という表現が示すように、AI推論市場全体が急速に拡大・過熱している状況"
+    ],
+    "prediction": "調達した資金はインフラ拡充、エンジニア採用、グローバル展開に投じられると見られ、推論プラットフォーム市場でのポジション強化が加速するだろう。一方、AWS・Google・Microsoftなどクラウド大手も推論サービスを強化しており、競争は一層激化する可能性が高い。市場の過熱が続く中、実際の収益性や持続可能なビジネスモデルの確立が中期的な課題となる。",
+    "ai_interpretation": "このニュースの本質は、AIブームが「モデル開発競争」から「推論インフラ競争」へとフェーズシフトしていることを象徴している点にある。どれほど優れたAIモデルが存在しても、それを実用的なスピードとコストで動かすインフラなくしてはビジネス価値を生み出せないという現実が、投資家に広く認識されてきた。Basetenへの巨額投資は、AIの「表舞台」ではなく「縁の下の力持ち」となるインフラ層こそが次の価値創出の主戦場であるという市場のコンセンサスを示している。",
+    "collected_at": "2026-06-19T06:23:01.051509+09:00",
+    "background": "ChatGPTをはじめとする生成AIの普及により、AIモデルを実際に動かす「推論（Inference）」インフラの需要が爆発的に拡大している。Basetenはこの推論インフラ領域に特化したスタートアップであり、企業がAIモデルを高速・低コストで本番運用するためのプラットフォームを提供している。AI開発競争の激化に伴い、推論基盤を握る企業への投資家の関心が急速に高まっている。"
+  },
+  {
+    "title": "Snap spins off AI video team into new company, Dotmo, due to costs",
+    "japanese_title": "Snapがコスト削減でAI動画チームを新会社「Dotmo」としてスピンオフ",
+    "url": "https://techcrunch.com/2026/06/18/snap-spins-off-ai-video-team-into-new-company-dotmo-due-to-costs/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Snapchatを運営するSnapが、社内のAI動画開発チームを「Dotmo」という独立した新会社としてスピンオフした。",
+      "2. Dotmoは現在のSnap社員が同社を退社し、AI動画開発に特化する形で構成される。",
+      "3. このスピンオフはコスト負担が主な理由とされており、Snapが事業の選択と集中を進めていることを示している。"
+    ],
+    "points": [
+      "・ 「コストが理由」という異例の透明な理由でのスピンオフであり、Snapの財務的苦境を示唆している",
+      "・ AI動画はOpenAI（Sora）やGoogle、Metaなども参入する激戦区であり、独立会社として戦う意義と難しさがある",
+      "・ 「yet another（またしても）」という表現が使われており、Snapが繰り返しスピンオフを行っていることが示されている"
+    ],
+    "prediction": "Dotmoは独立した資金調達（外部VCや戦略的投資家）を模索することになると予想され、Snapとの関係性（技術提携・資本関係等）が今後の焦点となるだろう。AI動画市場は競争が激しく、Dotmoが独自の差別化ポイントを打ち出せるかが生存の鍵となる。一方、Snap本体はコア事業（Snapchat・AR）への集中度をさらに高めていくと予測される。",
+    "ai_interpretation": "このニュースの本質は、大手テック企業が「AIへの投資」と「財務規律の維持」という相反する命題に直面している現実を象徴している。スピンオフという手法は、将来性のある技術を手放さずにコストをオフバランス化できる妙手である一方、社員の雇用リスクや技術流出のリスクも伴う。Snapのこの判断は、潤沢な資金を持たない中規模テック企業がAI競争を生き抜くための「苦肉の策」であり、今後同様の動きが業界全体に広がる可能性を示唆している。",
+    "collected_at": "2026-06-19T06:23:19.179363+09:00",
+    "background": "Snapは近年、広告収益の伸び悩みや競合（TikTok・Instagram等）との激しい競争により、財務的なプレッシャーにさらされてきた。コスト削減を目的とした人員整理や事業再編を繰り返しており、今回のスピンオフもその流れの一環とみられる。AI動画という成長分野に投資しつつも、本体のコスト構造を軽くするための戦略的判断と考えられる。"
+  },
+  {
+    "title": "OpenAI is bringing on some big guns in the lead-up to its IPO",
+    "japanese_title": "OpenAI、IPO前に大物人材を連続獲得——Transformer共同発明者とトランプ政権AI政策官を同週に招聘",
+    "url": "https://techcrunch.com/2026/06/18/openai-is-bringing-on-some-big-guns-in-the-lead-up-to-its-ipo/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. OpenAIはIPO（新規株式公開）に向けた体制強化の一環として、同一週内に2名の著名人材を獲得した。",
+      "2. 一人目はGoogle DeepMind出身でTransformerアーキテクチャの共同発明者であるNoam Shazeer氏。",
+      "3. 二人目はトランプ政権でAI政策を担当した元政府高官のDean Ball氏。"
+    ],
+    "points": [
+      "・ Noam Shazeer氏はGoogleが誇る最高峰のAI研究者であり、その引き抜きはOpenAIとGoogleの人材争奪戦の激化を示す",
+      "・ Dean Ball氏の採用はIPO前の政治的リスク管理および政府との関係強化を意図している可能性が高い",
+      "・ 同一週での2名採用発表は、IPOに向けた「シグナル効果」を市場・投資家に意識的に送るPR戦略の側面もある"
+    ],
+    "prediction": "OpenAIはIPOに向けてさらなる著名人材の獲得や組織強化を続けると見られ、GoogleやMeta等との人材・技術競争はより熾烈になるだろう。Dean Ball氏の加入により、トランプ政権下のAI規制政策において有利なポジションを確保しようとする動きが加速する可能性がある。IPO後の企業価値評価においても、こうした人材の厚みが重要な評価指標となるため、採用戦略は当面継続されるとみられる。",
+    "ai_interpretation": "このニュースの本質は、OpenAIが「技術」「政治」「市場」という三つの正当性を同時に獲得しようとしている点にある。Shazeer氏はAI技術の権威性を、Ball氏は政策・規制面での影響力を象徴しており、IPOという資本市場への挑戦を前に多角的なリスクヘッジを図っている。これはOpenAIが単なるスタートアップから「社会インフラ企業」へと脱皮しようとする意志の表れであり、今後のAI業界における競争軸が技術力だけでなく政治・資本との融合へとシフトしていることを示唆している。",
+    "collected_at": "2026-06-19T06:23:39.757793+09:00",
+    "background": "OpenAIはサム・アルトマンCEOのもとでIPOに向けた準備を本格化しており、投資家や市場からの信頼獲得が急務となっている。Transformerは現代の生成AIの根幹をなす技術であり、その共同発明者の獲得は技術力の象徴として極めて大きな意味を持つ。また、トランプ政権との関係構築を意識した政策人材の採用は、米国の規制環境や政府契約を見据えた戦略的布石とも読める。"
+  },
+  {
+    "title": "The White House Is Making Up Its Rules for AI in Real Time",
+    "japanese_title": "トランプ政権がAIルールをその場で作り上げ？AnthropicのAIモデル配布停止問題が示す規制の不透明性",
+    "url": "https://www.wired.com/story/anthropic-mythos-export-controls-ai-regulations/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. AI企業Anthropicは「Claude Mythos」および「Fable 5」の配布をトランプ政権との対立により未だに行えない状態が続いている。",
+      "2. しかし同社が具体的に何のルールに違反したのか、政権側からも明確な説明が一切なされていない。",
+      "3. ホワイトハウスがAIに関するルールを明文化せず場当たり的に運用しているとの批判が高まっている。"
+    ],
+    "points": [
+      "・ルールが明文化されていないため、企業側は「何が違反なのか」を知る術がない",
+      "・政府によるAI規制が透明性を欠いたまま事実上の検閲として機能している可能性",
+      "・Anthropicだけでなく、他のAI企業にとっても同様の問題が波及するリスクがある"
+    ],
+    "prediction": "Anthropicが法的手段に訴えるか、あるいは政権との水面下での交渉を通じて配布再開を目指す動きが予想される。AI規制の不透明さに対して業界団体や議会からの批判が強まり、何らかの明文化された基準策定を求める圧力が高まる可能性がある。一方で政権がこのあいまいさを意図的に維持し、企業への影響力として活用し続けるシナリオも否定できない。",
+    "ai_interpretation": "このニュースの本質は、技術規制における「法の支配」対「恣意的行政権力」という構造的問題を浮き彫りにしている点にある。ルールが事後的・流動的に適用される環境は、企業のイノベーション意欲を萎縮させると同時に、政府が気に入らない技術や言論を間接的に抑制できる強力な手段となり得る。AIという新興分野だからこそ、透明で予測可能な規制フレームワークの構築が民主主義的観点からも急務であることを、このケースは強く示唆している。",
+    "collected_at": "2026-06-19T06:23:57.467145+09:00",
+    "background": "トランプ政権は返り咲き後、AI産業に対して独自の規制姿勢を示してきたが、その基準や根拠は公式に文書化されていないケースが多い。Anthropicはバイデン政権時代に安全重視のAI開発企業として一定の信頼を得ていたが、政権交代後に方針の摩擦が生じたとみられる。明確な法的根拠や規制フレームワークが存在しない中での行政判断が、企業側の法的対応を困難にしている。"
+  },
+  {
+    "title": "Meta’s AI Workers Are Revolting, Peter Thiel’s Secret Society, and SBF’s Plea to Trump",
+    "japanese_title": "Meta AI部門で社員が反乱？組織崩壊の実態とピーター・ティールの秘密結社、SBFのトランプへの嘆願まで",
+    "url": "https://www.wired.com/story/uncanny-valley-podcast-meta-ai-workers-revolting-peter-thiel-secret-society-sbf-plea-to-trump/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. MetaのAI部門では新設組織内の機能不全が深刻化しており、社員の士気が著しく低下している。",
+      "2. ピーター・ティールの秘密結社に関する情報や、FTX創業者SBFのトランプへの働きかけも同時に取り上げられている。",
+      "3. Uncanny Valleyポッドキャストがシリコンバレー内部の権力構造と組織的混乱を多角的に報道している。"
+    ],
+    "points": [
+      "・ MetaのAI部門における組織的機能不全の具体的な実態",
+      "・ もともと低かった社員モラルがさらに悪化しているという深刻な状況",
+      "・ ピーター・ティールの秘密結社やSBFのトランプへの接近という権力政治的な動き"
+    ],
+    "prediction": "Meta内部のAI人材流出が加速し、GoogleやOpenAIなどの競合他社への転職がさらに増える可能性がある。組織改革が行われなければ、Metaのサッカーバーグが推進するAI戦略そのものが遅延・頓挫するリスクもある。また、SBFのトランプへの接近が功を奏するかどうかによって、暗号資産規制の行方にも影響が出る可能性がある。",
+    "ai_interpretation": "このニュースの本質は、AI覇権争いが単なる技術競争ではなく、**人材・組織・政治力**という複合的な要素で決まるという現実を浮き彫りにしている。Metaの内部崩壊は、トップダウンの戦略と現場の実態のギャップが生む典型的な組織病理であり、テック大企業が規模拡大と俊敏性を両立させることの難しさを示している。さらにティールやSBFといった人物の動向が絡むことで、シリコンバレーの技術革新が政治・経済権力と不可分であることが改めて示唆されている。",
+    "collected_at": "2026-06-19T06:24:14.633589+09:00",
+    "background": "Metaは生成AIブームに対応するため、AI専門部門を新たに設立したが、急速な組織再編が内部に摩擦を生じさせている。もともとMetaの従業員満足度は大規模レイオフや方針転換の繰り返しにより低下傾向にあり、新AI部門の機能不全がさらに追い打ちをかけている。テック業界全体がAI人材獲得競争を繰り広げる中、内部崩壊は競争力に直接影響する深刻な問題となっている。"
+  },
+  {
+    "title": "Android verification is coming: Google confirms timeline and supported app stores",
+    "japanese_title": "Googleが「Android検証システム」の導入スケジュールと対応アプリストアを正式発表──9月から大規模変更へ",
+    "url": "https://arstechnica.com/gadgets/2026/06/google-shares-updated-timeline-for-rolling-out-android-developer-verification/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. Googleは今月中にAndroid向けの新しい「検証システムサービス」を展開開始すると発表した。",
+      "2. 9月からはアプリストアに関わる大きな変更が段階的に実施される予定である。",
+      "3. Google公式以外の複数のアプリストアも本検証システムの対象として対応することが確認されている。"
+    ],
+    "points": [
+      "・ 今月ロールアウトされる「新システムサービス」は9月の大規模変更に向けた布石であり、段階的展開が計画されている",
+      "・ Google Play以外のサードパーティアプリストアも検証対象に含まれており、エコシステム全体への影響が広範囲に及ぶ",
+      "・ 開発者・ストア運営者は9月までに対応準備を求められる可能性があり、対応遅延によるアプリ配布への影響が懸念される"
+    ],
+    "prediction": "9月以降、検証をパスしないアプリやストアはAndroidデバイスへのインストールに制限・警告が課せられる可能性が高い。サードパーティストア（Amazon AppstoreやSamsungのGalaxy Storeなど）はGoogleの検証基準への準拠対応を迫られ、競争環境が再編される局面を迎えるだろう。また、欧州規制当局との摩擦が生じるかどうかも注視すべき点となる。",
+    "ai_interpretation": "このニュースの本質は、GoogleがAndroidの「開放性」と「安全性」の両立という長年のジレンマに対して、プラットフォームレベルの検証インフラという形で一定の答えを出そうとしている点にある。表向きはセキュリティ強化だが、実質的にはGoogleがアプリ流通の「ゲートキーパー」としての影響力をサードパーティストアにまで拡張することを意味しており、市場支配力の観点から規制当局の scrutiny（精査）を受けるリスクも内包している。オープンなエコシステムの維持とセキュリティ管理の主導権争いという構造的な緊張関係を象徴するニュースである。",
+    "collected_at": "2026-06-19T06:24:33.737082+09:00",
+    "background": "近年、Androidはサードパーティ製アプリストアやサイドロード（非公式インストール）を通じた不正アプリや悪意あるソフトウェアの配布経路として悪用されるケースが増加していた。EUのデジタル市場法（DMA）など規制当局の圧力もあり、Googleはオープンなエコシステムを維持しながらもセキュリティを強化する必要に迫られていた。こうした背景から、公式・非公式を問わず複数のストアに対応できる横断的な検証インフラの整備が急務となっていた。"
+  },
+  {
+    "title": "Bernie Sanders unveils $7 trillion plan to give Americans control of AI industry",
+    "japanese_title": "バーニー・サンダース、7兆ドルのAI国民基金創設計画を発表――AI産業の公共支配を目指す",
+    "url": "https://arstechnica.com/tech-policy/2026/06/bernie-sanders-unveils-7-trillion-plan-to-give-americans-control-of-ai-industry/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. バーニー・サンダース上院議員が、AIの利益をアメリカ国民に還元する総額7兆ドル規模の政策プランを発表した。",
+      "2. この計画はAI産業に対する公的管理・富の再分配を柱としており、大手AI企業への事実上の規制強化を意味する。",
+      "3. 大手AI企業はこの提案に強く反発するとみられ、業界と政界の衝突が予想される。"
+    ],
+    "points": [
+      "・ 規模の大きさ：7兆ドルという数字はAI業界全体の市場規模に匹敵する野心的な計画",
+      "・ 富の再分配：AI企業の利益を「国民基金」として国民全体に配分するという社会主義的アプローチ",
+      "・ 企業の反発：シリコンバレーの主要AI企業にとっては事業モデルの根幹を揺るがす内容"
+    ],
+    "prediction": "共和党や大手テック企業ロビー団体の強い反対により、現状のままでは議会通過は極めて困難とみられる。ただし、AI格差問題への社会的関心が高まれば、一部要素が妥協案として別の法案に盛り込まれる可能性はある。2026年中間選挙に向けた「AI民主化」の争点化を狙う政治的メッセージとしての意味合いも強い。",
+    "ai_interpretation": "このニュースの本質は、AIという新たな「生産手段」を誰が所有・支配するかという、現代版の資本主義対民主主義の問いである。技術革新の恩恵が一部のエリート企業に集中する構造を放置すれば、民主主義社会における経済的平等の理念が形骸化するという警鐘でもある。サンダース提案の実現可能性は低くとも、「AIの利益は誰のものか」という議論をメインストリームに引き上げた点に歴史的意義がある。",
+    "collected_at": "2026-06-19T06:24:51.463498+09:00",
+    "background": "AIの急速な発展により、OpenAI・Google・Microsoftなど一部の巨大テック企業への富と権力の集中が社会問題化している。サンダース議員は従来から経済格差是正を訴えており、AI分野もその延長線上にある不平等の象徴として位置づけている。2024〜2025年にかけてAI規制論が米国内で高まる中、左派からの具体的な対案として本提案が浮上した。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-19",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-06-18",
+    "href": "2026-06-18.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
