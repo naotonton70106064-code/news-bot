@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Federal Reserve says U.S. banks can withstand $708 billion in losses amid overhaul of capital rules",
+    "japanese_title": "米連邦準備制度、米銀行が7,080億ドルの損失に耐えられると発表――資本規制見直しの転換点",
+    "url": "https://www.cnbc.com/2026/06/24/federal-reserve-stress-test-us-banks.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. FRB（連邦準備制度）の年次ストレステストにより、米国の主要銀行が最大7,080億ドルの損失シナリオにも耐えられる十分な資本を有していることが確認された。",
+      "2. 今回のテスト結果は例年と異なり、銀行の自己資本要件に直接影響を与えない形で実施された。",
+      "3. このタイミングはバンク規制の大規模な見直し（オーバーホール）が進む中での重要な節目となっており、規制の枠組み自体が転換期を迎えている。"
+    ],
+    "points": [
+      "・ストレステストの結果が資本要件に「連動しない」という前例のない変更は、FRBの規制アプローチの根本的な方針転換を示唆している",
+      "・7,080億ドルという損失耐性の数字は、2008年金融危機後に構築された金融安全網の成熟度を示す重要な指標である",
+      "・トランプ政権下における金融規制緩和の流れと今回の方針変更が連動している可能性があり、今後の「バーゼルIII最終化」交渉にも影響を与える"
+    ],
+    "prediction": "資本規制の見直しが進む中、米国銀行は競争力強化のためにレバレッジを高める可能性があり、短期的には収益性向上が期待される一方、長期的なシステミックリスクへの懸念が再浮上する可能性がある。欧州や日本などの金融当局も米国の規制緩和の動向を注視しており、グローバルな金融規制の整合性（バーゼル協定）が揺らぐリスクが高まっている。地政学的緊張が続く中で金融セクターの規制が緩和される場合、次の経済危機における公的資金投入（ベイルアウト）リスクが増大するとの批判的見解も強まるだろう。",
+    "ai_interpretation": "このニュースの本質は、銀行の「健全性証明」よりも、ストレステストという規制ツールそのものの**機能的意義が骨抜きにされつつある**という点にある。結果が資本要件に反映されないテストは、実効性を持たない「見せかけの規制」に近づく危険性をはらんでいる。グローバル経済への示唆として、米国が金融規制の国際協調から自国優先の競争的規制緩和へとシフトすることで、世界的な金融安定のガバナンス空白が生まれる可能性があり、これは長期的に見て次の金融危機の温床となりうる構造的リスクである。",
+    "collected_at": "2026-06-25T05:54:21.920484+09:00",
+    "market_impact": "米銀行セクターの健全性が公式に確認されたことで、金融株への投資家心理は短期的に改善する可能性があり、JPモルガンやバンク・オブ・アメリカなど大手行の株価を下支えする要因となり得る。自己資本要件への直接影響がなくなったことで、銀行は余剰資本を自社株買いや配当に充てる余地が拡大し、資本の再配分が活発化する可能性がある。為替市場ではドルの安定感が維持される一方、規制緩和への期待が米国金融セクターへの資金流入を促す可能性がある。"
+  },
+  {
+    "title": "Toyota gains on General Motors in new U.S. sales forecast: 'GM may be looking over their shoulder'",
+    "japanese_title": "トヨタがGMを猛追：ハイブリッド戦略が奏功し米国販売予測でGMに迫る",
+    "url": "https://www.cnbc.com/2026/06/24/toyota-gm-us-sales.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. トヨタは米国市場においてGM（ゼネラルモーターズ）との販売台数差を縮め、最新の販売予測でGMを脅かす存在となっている。",
+      "2. トヨタがハイブリッド車に積極的に注力した戦略が功を奏し、消費者の支持を獲得している。",
+      "3. 一方、GMをはじめとする競合他社は純電気自動車（EV）に経営資源を集中させたが、消費者の採用率が予想を下回り苦戦している。"
+    ],
+    "points": [
+      "・ ハイブリッド車（HV）が「EV一辺倒」市場予測への有力な対抗軸として再評価されていること",
+      "・ 消費者のEV採用率が業界・アナリスト予測を継続的に下回っており、市場の「EV過信」が露呈しつつあること",
+      "・ 「GMが肩越しに振り返らざるを得ない」という表現が示す通り、米国市場における勢力図の構造的変化が起きていること"
+    ],
+    "prediction": "GMやフォードなどの米国自動車メーカーは、EV一辺倒の戦略を修正しハイブリッドや多様なパワートレイン戦略へのシフトを余儀なくされる可能性が高い。トヨタの優位性が続けば、日米間の貿易摩擦や政治的議論が再燃するリスクもあり、米国内でのローカル生産拡大圧力が強まることも予想される。EV転換を巡る政府補助金政策や規制の在り方についても、各国で見直し論議が活発化するだろう。",
+    "ai_interpretation": "このニュースの本質は、「技術トレンドへの過度な前のめり」と「現実の消費者行動」との乖離が企業の命運を分けるという、経営戦略における普遍的な教訓を示している点にある。トヨタのハイブリッド戦略は一時「時代遅れ」と批判されたが、長期的かつ現実的な市場理解に基づく判断が今や競争優位の源泉となっており、「イノベーションの本質は技術の先進性だけでなく市場適合性にある」ことを改めて証明している。グローバル経済全体への示唆としては、脱炭素化の方向性自体は不変であっても、その移行速度や手段の多様性を無視した企業・政策は市場から厳しい審判を受けるという現実を、世界の自動車産業全体に突きつけている。",
+    "collected_at": "2026-06-25T05:54:44.304050+09:00",
+    "market_impact": "トヨタ株および日本の自動車関連銘柄にとってポジティブな材料となり、円相場にも間接的な支援材料となる可能性がある。GM株は投資家の信頼低下懸念から下押し圧力を受けるリスクがあり、米国自動車セクター全体の戦略見直しを促す動きが加速しそうだ。EV関連サプライヤーやバッテリーメーカーにとっては、需要鈍化の現実を改めて突きつけられる形となる。"
+  },
+  {
+    "title": "Slate Auto says $24,950 electric truck will be profitable; targets positive cash flow next year",
+    "japanese_title": "スレートオート、2万4950ドルの格安EVトラックで黒字化宣言――来年度中にキャッシュフロー黒字を目標",
+    "url": "https://www.cnbc.com/2026/06/24/slate-ev-pickup-truck-ceo-business-goals.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. EVスタートアップ「スレートオート」のCEOピーター・ファリシー氏が、同社製EVトラック（価格2万4,950ドル）は全車両でグロスマージンがプラスになると明言した。",
+      "2. 同社は来年中にキャッシュフローの黒字化を目指しており、低価格帯EVの収益モデルとして業界の注目を集めている。",
+      "3. テスラやリビアンなど既存EV勢が収益性に苦しむ中、低価格路線での利益確保という新たなアプローチを打ち出している。"
+    ],
+    "points": [
+      "・ 約2万5,000ドルという価格帯は、一般消費者層へのEV普及を大きく後押しする「マスマーケット戦略」の象徴",
+      "・ 「全車両グロスマージンプラス」という明確な収益コミットメントは、EVスタートアップとして異例の財務規律を示す",
+      "・ 来年のキャッシュフロー黒字化目標は、投資家へのアピールと同時に資金調達環境改善への布石となる"
+    ],
+    "prediction": "スレートオートの収益モデルが成立すれば、中国EV勢（BYDなど）が席巻する低価格帯市場に対抗できる米国発のモデルとして地政学的にも重要な意味を持つ。一方、米国のEV補助金政策や関税動向によって同社の原価構造が大きく左右されるため、政策リスクへの対応力が持続成長の鍵となる。成功すれば他のEVスタートアップの事業モデル再設計を促し、業界再編の引き金になり得る。",
+    "ai_interpretation": "このニュースの本質は、「EVは高価格でなければ採算が取れない」という業界の常識に対する挑戦であり、製造コストの抜本的な見直しとビジネスモデルの革新が同時に問われている点にある。グローバル経済的には、EVの大衆化が実現することで石油需要の中長期的な減少トレンドを加速させ、産油国経済や資源市場にも構造的な変化をもたらす可能性を示唆している。また、低価格EVで利益を出せるスタートアップの台頭は、既存の自動車産業ヒエラルキーを根底から覆す「第二のEV革命」の幕開けを予感させる。",
+    "collected_at": "2026-06-25T05:55:05.210729+09:00",
+    "market_impact": "低価格EVトラックの収益化モデルが実証されれば、EV市場全体の価格競争が一段と激化し、既存メーカーへの値下げ圧力が強まる可能性がある。また、米国の自動車産業サプライチェーンや部品メーカーにはコスト削減要求が波及し、製造コスト構造の見直しが加速するだろう。為替面では、ドル安局面においてコスト競争力が変動するリスクも内包している。"
+  },
+  {
+    "title": "Meta plans to release AI-powered prediction market app, documents show",
+    "japanese_title": "Meta、AI搭載の予測市場アプリを開発中――FacebookやInstagramとは独立した新サービスが明らかに",
+    "url": "https://www.npr.org/2026/06/24/nx-s1-5869486/meta-prediction-market-app-ai",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. Metaは、FacebookやInstagramとは別に、現実世界の出来事に「遊び用のお金（プレイマネー）」を賭けられるAI搭載の予測市場アプリを開発中であることが内部文書により判明した。",
+      "2. 同アプリはAI技術を活用することで、予測精度や参加者体験の向上を図る設計とみられ、現実通貨ではなく仮想通貨を用いることで規制上のハードルを低減する狙いがある。",
+      "3. Metaはソーシャルメディアの広告依存モデルからの多角化を進めており、今回の動きはエンゲージメント向上と新たな収益源の確保を目指す戦略の一環と位置付けられる。"
+    ],
+    "points": [
+      "・ **規制回避戦略**：プレイマネーを採用することで、米国の金融・賭博規制（CEFTCやFINRA等）への抵触リスクを抑えつつ市場参入を狙う巧みな設計",
+      "・ **AI活用の差別化**：単純な賭けプラットフォームではなく、AI予測エンジンを組み込むことでMetaならではの付加価値と膨大なユーザーデータの活用が見込まれる",
+      "・ **プラットフォーム分散化**：FacebookやInstagramから独立したアプリを構築することで、規制リスクの分散とブランドイメージの保護を両立させようとしている"
+    ],
+    "prediction": "MetaがAI予測市場に本格参入すれば、GoogleやApple、TikTokといった競合もエンターテインメント型予測サービスへの参入を加速させ、グローバルなAIプラットフォーム競争が新局面に入ることが予想される。将来的にはプレイマネーから実通貨・暗号資産連動への移行も視野に入り、各国の金融規制当局が対応を迫られる場面も生じうる。また、選挙・経済・地政学イベントへの予測参加が大衆化することで、世論形成や情報エコシステムへの影響についても国際的な議論が深まるだろう。",
+    "ai_interpretation": "このニュースの本質は、Metaが「情報×AI×人間の集合知」を収益化する新たなフロンティアを開拓しようとしている点にある。予測市場は本来、集合知によって将来の不確実性を価格化する仕組みであり、AIとの融合によってその精度と利用者エンゲージメントを飛躍的に高める可能性を秘めている。グローバル経済的には、民間プラットフォームが「未来予測の標準インフラ」を握ることへの懸念と、イノベーション促進のバランスをどう図るかが、今後の規制・競争政策における重要な焦点となるだろう。",
+    "collected_at": "2026-06-25T05:55:29.293037+09:00",
+    "market_impact": "MetaのAI×予測市場参入は、既存のPredictItやPolymarketといった予測市場プラットフォームへの競合圧力となり、関連スタートアップの株価や資金調達環境に影響を与える可能性がある。また、AIを活用した情報集約・予測分析の需要増加は、クラウドインフラやデータ解析関連銘柄（NvidiaやMicrosoft Azure等）にとってプラス材料となり得る。為替への直接的影響は限定的だが、Metaの株価上昇を通じて米国ハイテクセクター全体の時価総額押し上げ効果も期待される。"
+  },
+  {
+    "title": "Congress passes the largest housing affordability bill in decades — and Trump cancels the signing",
+    "japanese_title": "米議会が数十年ぶり最大の住宅購入支援法案を可決もトランプ大統領が署名式を突然キャンセル",
+    "url": "https://www.npr.org/2026/06/23/nx-s1-5867575/congress-passes-housing-affordability-bill",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米議会は数十年ぶりとなる最大規模の住宅価格の手頃さ（アフォーダビリティ）改善法案を可決した。",
+      "2. トランプ大統領は水曜日に予定されていた署名式をキャンセルし、まず厳格な有権者ID法案を議会が可決すべきだと主張した。",
+      "3. 住宅政策という経済的重要課題が、政治的な取引材料として使われる構図が鮮明になった。"
+    ],
+    "points": [
+      "・ 数十年ぶりの大型住宅支援法案という歴史的意義を持ちながら、政治的駆け引きにより署名が止まっている点",
+      "・ トランプ大統領が有権者ID法案を「条件」として提示したことで、異なる政策課題を連動させる「リンケージ戦略」が顕在化している点",
+      "・ 米国の住宅価格高騰・供給不足問題は中間層の経済的圧迫の核心であり、署名遅延は多くの国民生活に直接影響する点"
+    ],
+    "prediction": "トランプ大統領の要求通りに有権者ID法案が先行可決されるか、あるいは与野党間の交渉により住宅法案単独での署名にこぎつけるかが焦点となる。署名が長期間遅延した場合、住宅市場の供給改善が遅れ、インフレ抑制を目指すFRBの政策運営にも余計な複雑性をもたらす可能性がある。また、政治的な条件付け手法は他の重要経済法案にも波及するリスクがあり、米国内の政策の予測可能性低下が海外投資家の懸念材料となり得る。",
+    "ai_interpretation": "このニュースの本質は、「経済政策の人質化」とも言うべき政治手法が米国の立法プロセスに深く浸透していることを示している点にある。住宅アフォーダビリティ問題は単なる国内問題にとどまらず、米国の消費力・労働移動・インフレ構造に直結するグローバル経済の変数であり、その解決が政治的思惑で遅延することは世界経済にとっても損失である。投資家・企業経営者は米国の政策リスクを「地政学リスク」と同等に評価する必要性が、改めて浮き彫りになったと言えよう。",
+    "collected_at": "2026-06-25T05:55:50.504502+09:00",
+    "market_impact": "住宅関連株（建設会社・住宅ローン会社・不動産セクター）は法案の行方に対する不透明感から短期的に乱高下する可能性がある。署名が遅延・停滞すれば、米国の住宅着工件数や住宅ローン市場の回復期待が後退し、消費マインドにも悪影響を与えかねない。ドルや米国債への影響は限定的だが、政治的混乱が長期化すれば投資家心理を圧迫するリスクがある。"
+  },
+  {
+    "title": "Baroness Mone among individuals sued to recover PPE Medpro millions",
+    "japanese_title": "モーン男爵夫人らがPPE Medpro不正契約の損害賠償訴訟対象に―英政府が数百万ポンド回収へ",
+    "url": "https://www.bbc.co.uk/news/articles/c7vy1y7myn5o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 英国のモーン男爵夫人と夫のダグ・バロウマン氏が、PPE Medpro社がコロナ禍の個人防護具（PPE）調達をめぐり政府に負う債務の回収を目的とした訴訟の被告となった。",
+      "2. PPE Medpro社は英国政府との大型PPE供給契約で問題が指摘されており、いわゆる「VIPレーン」を通じた不透明な随意契約として批判を受けてきた。",
+      "3. 政府は同社および関連個人から未回収資金を取り戻すべく法的手段に踏み切り、公的資金の説明責任を問う姿勢を明確にした。"
+    ],
+    "points": [
+      "・ 「VIPレーン」と呼ばれた政治的コネを活用した随意契約の問題が司法の場で本格的に争われる点",
+      "・ 上院議員（貴族院議員）という公職に近い立場の人物が訴訟対象となっており、政治的波及効果が大きい",
+      "・ 政府が個人資産にまで遡及して回収を図る姿勢は、公的資金ガバナンス強化の先例となりうる"
+    ],
+    "prediction": "今回の訴訟はコロナ禍に世界各国で横行した緊急調達における不正・不透明契約に対する法的責任追及の流れを加速させる可能性があり、英国以外の欧米諸国でも類似案件への対応が注目される。英国政府にとっては、法的回収の成否が今後の財政規律・説明責任政策の信頼性に直結するため、訴訟の行方は政治的にも重要な意味を持つ。地政学的には、民主主義国家における公共調達の透明性が改めて問われる事例として国際的な議論を呼ぶことが予想される。",
+    "ai_interpretation": "このニュースの本質は、緊急時における国家権力と民間利益の癒着という構造的問題を、民主主義社会がいかに事後的に是正できるかという統治能力の試金石である。コロナ禍は多くの国で「例外的措置」として通常の調達プロセスが省略されたが、その後の検証と法的追及が公正に行われるかどうかが、長期的な制度への信頼に直結する。グローバル経済へのより深い示唆は、リスク時の政府支出における透明性とアカウンタビリティの欠如が、最終的には公的債務や国民負担の増大という形で経済全体に跳ね返るという教訓にある。",
+    "collected_at": "2026-06-25T05:56:15.439592+09:00",
+    "market_impact": "コロナ禍における英国政府の緊急調達をめぐる一連の不正疑惑は、英国国内の政府調達市場および医療・防衛関連企業への信頼性に影響を与える可能性がある。ポンド相場への直接的な影響は限定的とみられるが、政府支出の透明性に対する投資家の懸念が高まれば、英国財政への間接的なリスクとなりうる。また医療物資サプライチェーン業界では、将来的な契約審査の厳格化が進む可能性がある。"
+  },
+  {
+    "title": "Elon Musk loses trillionaire status as global tech rout hits SpaceX",
+    "japanese_title": "イーロン・マスク、世界的テック株暴落でトリリオネア（兆万長者）の地位を喪失――SpaceXにも打撃",
+    "url": "https://www.bbc.co.uk/news/articles/c8j2m2p8dgmo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. イーロン・マスクは世界的なテック株の急落により、総資産が1兆ドルを下回り「トリリオネア」の称号を失った。",
+      "2. 今回の資産減少は、グローバルなハイテク企業への売り圧力が民間宇宙企業SpaceXの評価額にまで波及したことが主因とされる。",
+      "3. 世界的なリスクオフの動きが、上場・未上場を問わずテック系資産全体に広範な打撃を与えていることが改めて浮き彫りとなった。"
+    ],
+    "points": [
+      "・トリリオネアという前例のない富の水準が、市場環境の変化で急速に毀損されるほどテック資産のボラティリティが高まっていること",
+      "・SpaceXは非上場企業でありながら、セカンダリーマーケットでの評価額が世界的な株安の影響を受けた点（公開市場と連動するリスクの顕在化）",
+      "・マスク氏の富はテスラ株にも大きく依存しており、テック全体の下落が複合的に資産を圧縮した可能性"
+    ],
+    "prediction": "米国の金融政策や地政学的緊張（米中対立・中東情勢等）が引き続き不透明な中、テック株のボラティリティは高止まりする可能性が高く、超富裕層の資産ランキングは今後も激しく変動するだろう。一方でAIインフラや宇宙産業への長期的需要は底堅く、調整局面が一巡すれば評価額の回復も見込まれる。地政学リスクが高まる局面では、各国政府とテック企業との関係（規制・補助金）が企業価値を左右する重要変数となる。",
+    "ai_interpretation": "このニュースの本質は、単一人物の資産増減にとどまらず、「テック企業の評価がいかに市場センチメントに依存した虚構性を帯びているか」を示す象徴的な事例である。1兆ドルという数字が一時的なベンチマークに過ぎず、グローバル経済のリスクオフ局面では上場・非上場の区別なく高バリュエーション資産が脆弱であることを改めて証明した。巨大テック企業の浮沈が世界経済の体温計として機能する現代において、この出来事は投資家・政策立案者双方に対し、資産バブルと実体経済の乖離リスクへの警戒を促すシグナルといえる。",
+    "collected_at": "2026-06-25T05:56:38.219276+09:00",
+    "market_impact": "テック株の急落はナスダックをはじめとする主要株式指数の下押し要因となり、投資家心理の悪化を通じてリスク資産全般に売りが広がる可能性がある。為替市場では安全資産への資金逃避により、円やスイスフランが対ドルで強含む展開も想定される。また、AIや宇宙関連など高成長セクターへのベンチャー投資マインドが冷え込み、スタートアップのバリュエーション調整にも波及しうる。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-25",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-06-25.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-06-25.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-06-24",
+    "href": "2026-06-24.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
