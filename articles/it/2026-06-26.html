@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Patronus AI lands $50M to build ‘digital worlds’ that stress-test AI agents",
+    "japanese_title": "元Meta AI研究者創業のPatronus AI、AIエージェント評価・テスト基盤構築に向け約75億円を調達",
+    "url": "https://techcrunch.com/2026/06/25/patronus-ai-lands-50m-to-build-digital-worlds-that-stress-test-ai-agents/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. AIエージェントの評価・テスト専門スタートアップPatronus AIが5,000万ドル（約75億円）の資金調達を完了した。",
+      "2. 同社はAIエージェントを「デジタルワールド」と呼ぶ仮想環境でストレステストする技術の開発を進めている。",
+      "3. 投資家によれば、同社のサービスへの需要はほぼ飽和状態を知らないほど旺盛だという。"
+    ],
+    "points": [
+      "・ 「デジタルワールド」という仮想環境でAIエージェントを現実に近い条件でテストする独自アプローチ",
+      "・ Meta AI出身者による創業という高い技術的信頼性とブランド力",
+      "・ 投資家が「需要がほぼ尽きない」と表現するほどのAIエージェント評価市場の急拡大"
+    ],
+    "prediction": "調達資金を活用してデジタルワールドの構築・拡充が進み、より多様な業界・ユースケースに対応したテスト環境が整備されていくと考えられる。AIエージェントの企業導入がさらに拡大するにつれ、評価・テスト市場は今後数年で急成長し、競合他社の参入も増えるだろう。Patronus AIはファーストムーバーとしての優位性を活かし、業界標準のテストプラットフォームとしての地位確立を目指すと予測される。",
+    "ai_interpretation": "このニュースの本質は、AIの「作る」フェーズから「信頼して使う」フェーズへと産業の重心が移行し始めていることを象徴している点にある。AIエージェントが高度化するほど、その失敗リスクも増大するため、評価・テストインフラはAIエコシステム全体を支える\"縁の下の力持ち\"として不可欠な存在になりつつある。Patronus AIへの旺盛な需要は、企業がAI導入において安全性・説明責任を真剣に問い始めた成熟の証とも言えるだろう。",
+    "collected_at": "2026-06-26T05:59:13.399818+09:00",
+    "background": "生成AIの普及に伴い、自律的に行動するAIエージェントの実用化が加速しているが、その信頼性・安全性の評価手法が業界全体の課題となっている。Patronus AIはMeta AIの研究者出身者が創業し、AIシステムの評価・検証という専門領域に特化することで差別化を図ってきた。企業がAIエージェントを本番環境に導入するにあたり、事前テストの重要性が増していることが今回の大型調達の追い風となっている。"
+  },
+  {
+    "title": "Polymarket says hackers stole users’ funds",
+    "japanese_title": "予測市場大手Polymarketにハッキング被害——第三者経由でユーザー資金が盗難、全額返金へ",
+    "url": "https://techcrunch.com/2026/06/25/polymarket-says-hackers-stole-users-funds/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 予測市場プラットフォームPolymarketが、第三者経由のセキュリティ侵害によりユーザーの資金が盗まれたことを公表した。",
+      "2. Polymarketは被害を受けたユーザーに対し、盗まれた資金を全額返金すると発表した。",
+      "3. 攻撃は同社直接のシステムではなく、サードパーティを通じて行われたとされている。"
+    ],
+    "points": [
+      "・ 攻撃経路が「第三者（サードパーティ）」である点——自社セキュリティだけでは防げないサプライチェーン型リスクの典型例",
+      "・ Polymarketが迅速に返金対応を表明した点——ユーザー信頼の維持とブランド保護を優先した経営判断",
+      "・ 被害規模（金額・ユーザー数）が現時点で不明確な点——情報開示の透明性が今後問われる可能性がある"
+    ],
+    "prediction": "Polymarketはセキュリティ体制の見直しと、利用するサードパーティサービスの厳格な審査強化を迫られるとみられる。また、返金対応の迅速さは短期的なユーザー離れを防ぐ効果があるものの、今後同様の事案が繰り返されれば信頼は大きく損なわれる可能性がある。規制当局も暗号資産プラットフォームのサードパーティリスク管理に対して、さらなる監視を強める契機となり得る。",
+    "ai_interpretation": "このニュースが示す本質的な問題は、「自社を守るだけではユーザーを守れない」というWeb3・暗号資産業界が抱える構造的な脆弱性である。どれほど自社のセキュリティが堅牢であっても、エコシステム内の最も弱いリンク（サードパーティ）が攻撃対象になり得るという現実は、業界全体のリスク管理の在り方を根本から問い直させる。Polymarketの返金対応は評価できるが、真の解決策は事後対応ではなく、サプライチェーン全体を含めた予防的セキュリティ戦略の確立にある。",
+    "collected_at": "2026-06-26T05:59:31.456843+09:00",
+    "background": "Polymarketは米国発の大手予測市場プラットフォームで、暗号資産を用いて政治・経済・スポーツなど様々な事象の結果に賭けるサービスを提供している。暗号資産業界ではサードパーティのサービスやウォレットプロバイダーを介したハッキングが後を絶たず、DeFi（分散型金融）エコシステム全体のセキュリティリスクが常に問題視されている。今回の侵害も、自社システムではなく外部の第三者サービスが攻撃の起点となった点が特徴的である。"
+  },
+  {
+    "title": "Xbox follows Apple with price increases",
+    "japanese_title": "XboxがAppleに続き価格値上げ——メモリ・ストレージコスト高騰が引き金に",
+    "url": "https://techcrunch.com/2026/06/25/xbox-follows-apple-with-price-increases/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. XboxがAppleに続いてゲーム機および関連製品の価格引き上げを発表した。",
+      "2. 値上げの主な原因は、メモリおよびコンソール用ストレージの価格高騰で、コストは以前の水準の2.5倍以上に達している。",
+      "3. 大手テック企業が相次いで価格改定を行う動きが、業界全体のトレンドとなりつつある。"
+    ],
+    "points": [
+      "・ メモリ・ストレージコストが従来比2.5倍超という異例の高騰水準に達している点",
+      "・ AppleとXboxという異なるカテゴリの大手テック企業が同様の値上げ判断を下している点",
+      "・ 消費者への直接的なコスト転嫁が、ゲーム機市場の需要に与える影響"
+    ],
+    "prediction": "メモリ・ストレージのコスト高騰が続く限り、SonyのPlayStationをはじめとする他のゲームメーカーや周辺機器メーカーも同様の値上げに踏み切る可能性が高い。消費者側では購入を先送りする動きや、中古市場・サブスクリプションサービスへのシフトが加速するかもしれない。一方、コスト環境が改善された際に値下げ還元が行われるかどうかも、各社のブランド信頼性に関わる重要な焦点となるだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる一企業の価格改定ではなく、グローバルなサプライチェーンの構造的コスト変化がエンドユーザーに転嫁される「業界的必然」を示している点にある。「AppleとXboxが相次いで」という構図は、個別企業の判断というよりも、業界全体が直面している原材料コスト問題の深刻さを裏付けている。消費者にとっては選択肢が狭まる厳しい局面だが、企業側には価格戦略の透明性と納得感の提供が、これまで以上に強く求められる時代に入ったと言える。",
+    "collected_at": "2026-06-26T05:59:49.506345+09:00",
+    "background": "半導体・メモリ市場では供給不足や地政学的リスク、製造コストの上昇が続いており、ハードウェアメーカーへのコスト転嫁圧力が高まっている。Appleがすでにデバイスやサービスの値上げを実施しており、Xboxもその流れに続いた形となる。世界的なインフレや為替変動も、グローバル展開する企業にとってのコスト増加要因となっている。"
+  },
+  {
+    "title": "World Cup Teams Are in a Race for AI Dominance",
+    "japanese_title": "ワールドカップでAI覇権争いが勃発——FIFAが全チームにAIエージェントを提供、競技の公平性はどうなる？",
+    "url": "https://www.wired.com/story/fifa-world-cup-2026-artificial-intelligence-tools/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. FIFAは今年のワールドカップにおいて、全参加チームが利用可能な共通AIエージェントを初めて提供する。",
+      "2. AIツールの活用が戦術分析や選手育成に不可欠となる中、資金力のある強豪国と途上国の間で「AIの格差」が生じる懸念がある。",
+      "3. 共通AIの提供は公平性確保の試みだが、独自の高性能AIを導入できる裕福なチームが優位に立つ可能性は依然として残る。"
+    ],
+    "points": [
+      "・FIFAが提供する共通AIエージェントは「最低限の平等化」を目指すものだが、その性能・機能の詳細が鍵となる",
+      "・資金力のある国・チームは共通AIに加えて独自の高度なAIツールを重ねて導入できるため、恩恵の非対称性が生まれる",
+      "・AIの戦術活用が標準化されることで、コーチの経験や直感よりも「データと技術力」が勝敗を左右する時代への転換点となりうる"
+    ],
+    "prediction": "今大会の結果次第では、AIを積極活用したチームの成績が注目され、次回大会以降はAI投資がチーム強化の最重要課題になると予想される。FIFAは共通AIの機能を段階的に拡充していく可能性があるが、独自AIへの規制やガイドライン整備も求められるようになるだろう。長期的には「AIの使い方」そのものがサッカーの戦略・戦術の新たな専門領域として確立されていく可能性が高い。",
+    "ai_interpretation": "このニュースが示す本質は、スポーツにおける「公平な競争」の定義そのものが問われているという点である。人間の能力・努力・戦術眼で競うという競技の根本的な理念に対し、テクノロジーの格差が新たな「経済的ドーピング」として機能しうるリスクをはらんでいる。FIFAの取り組みは問題意識の表れとして評価できるが、AIガバナンスをスポーツの世界にどう組み込むかという、より広範な社会的議論の縮図とも言える。",
+    "collected_at": "2026-06-26T06:00:10.772529+09:00",
+    "background": "近年、スポーツの世界ではデータ分析やAI活用が急速に普及し、サッカーにおいても戦術分析・選手のコンディション管理・対戦相手のスカウティングにAIが活用されるようになっている。欧州の強豪クラブや資金力のある代表チームはすでに独自のAIシステムへ多額の投資を行っており、技術格差が競技力の差に直結しつつある。こうした状況を受け、FIFAは競技の公平性を維持するため、全チームに共通のAIエージェントを提供するという前例のない取り組みに踏み切った。"
+  },
+  {
+    "title": "Notion killing Skiff-influenced email app since most users use AI agents instead",
+    "japanese_title": "NotionがSkiff買収後に開発したメールアプリを廃止——ユーザーの大多数がAIエージェントに移行",
+    "url": "https://arstechnica.com/gadgets/2026/06/notion-killing-skiff-influenced-email-app-since-most-users-use-ai-agents-instead/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. NotionはSkiffの技術を活用して開発したメールアプリの提供を終了すると発表した。",
+      "2. 廃止の理由は、大多数のユーザーが従来のメールUIではなくAIエージェントを使って受信トレイを管理するようになったため。",
+      "3. Notionは今後「AIエージェントによる受信トレイ管理」に経営資源を全面集中させる方針を示した。"
+    ],
+    "points": [
+      "・ユーザー行動の変化がプロダクト廃止の直接的な理由となった点で、AIエージェントの実用化が想定以上に加速していることを示す",
+      "・Skiff買収からわずか短期間でその成果物を廃止するという、戦略の大胆な方向転換が注目される",
+      "・「受信トレイをエージェントが運営する」というコンセプトは、メール体験そのものを根本から再定義しようとする動きを示している"
+    ],
+    "prediction": "NotionはAIエージェントを核としたワークフロー自動化プラットフォームとしての色彩を強め、NotionAIの機能拡充や外部サービスとの連携強化が加速するとみられる。メール管理のAIエージェント化が業界標準として普及すれば、GmailやOutlookなどの既存大手も類似機能の強化を迫られるだろう。一方で、プライバシーやセキュリティの観点からAIへのメール委任に抵抗を感じるユーザー層への対応が課題となる。",
+    "ai_interpretation": "このニュースの本質は、「UIとしてのアプリ」から「代理実行するエージェント」へというパラダイムシフトが、企業の製品戦略を根本から変え始めているという事実にある。ユーザーが「操作する」のではなく「依頼する」時代への移行が現実のビジネス判断として表れた象徴的な事例といえる。Notionの決断は、今後多くのSaaSプロダクトが「エージェントファースト」で設計し直されるトレンドの先触れである可能性が高い。",
+    "collected_at": "2026-06-26T06:00:28.606601+09:00",
+    "background": "Notionは2024年にプライバシー重視のコラボレーションツールを提供していたSkiffを買収し、その技術を活用してメールアプリの開発を進めていた。しかし、生成AIの急速な普及により、ユーザーの行動パターンが「自分でメールを操作する」から「AIエージェントに委任する」へと急速にシフトした。この変化を受け、従来型のメールクライアントを継続開発する意義が薄れたと判断したとみられる。"
+  },
+  {
+    "title": "Google finally releases a Finance Android app, promises iOS version later in 2026",
+    "japanese_title": "Google、待望のFinanceアプリをAndroidに正式リリース——20年越しの登場でAI機能も充実、iOS版は2026年内に提供予定",
+    "url": "https://arstechnica.com/google/2026/06/google-finance-finally-gets-a-mobile-app-as-ai-powered-overhaul-leaves-beta/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. Googleがついに独立したFinance専用Androidアプリをリリースし、約20年の歳月を経てネイティブアプリとして登場した。",
+      "2. アプリにはAI機能が豊富に組み込まれており、最新のGoogle AI技術との統合が図られている。",
+      "3. iOS版については2026年内にリリースすることが約束されており、Androidユーザーが先行して利用できる形となっている。"
+    ],
+    "points": [
+      "・ウェブサービス開始から約20年という異例の長い期間を経てのアプリ化であり、遅すぎるリリースとも言える",
+      "・AI機能をアプリの中核に据えており、単なる株価確認ツールにとどまらないインテリジェントな金融アシスタントを目指している",
+      "・AndroidとiOSでリリース時期に差があり、Appleプラットフォームユーザーへの対応が後回しになっている点は注目に値する"
+    ],
+    "prediction": "2026年中にiOS版がリリースされることで、AppleのAppストアでもGoogle Financeアプリが利用可能になり、既存の競合金融アプリ（Yahoo Finance等）との本格的な競争が始まると予想される。AI機能のアップデートが継続的に行われ、ポートフォリオ管理や市場予測、パーソナライズされた投資情報提供など、機能の拡充が進む可能性が高い。また、GoogleのエコシステムであるGmailやGoogle Payとの連携強化も期待される。",
+    "ai_interpretation": "このニュースの本質は、Googleが「情報整理」から「AI駆動の意思決定支援」へとサービスの軸足を移していることを象徴している点にある。20年間あえてアプリ化しなかったのではなく、AI技術が成熟した今このタイミングでリリースすることで、「AI前提のプロダクト」として市場に投入する戦略的意図が読み取れる。金融情報という高頻度・高関与のドメインにAIを組み込むことで、ユーザーのGoogle依存度をさらに高め、広告・データ収集の観点からも重要な布石となりうる。",
+    "collected_at": "2026-06-26T06:00:47.399510+09:00",
+    "background": "Google Financeはウェブサービスとして長年提供されてきたが、独立したモバイルアプリとしては存在しておらず、ユーザーはブラウザ経由での利用を強いられていた。スマートフォンが金融情報収集の主要デバイスとなった現代において、専用アプリの不在はGoogleの明らかな遅れとして指摘されていた。近年のGeminiをはじめとするAI技術の急速な発展が、アプリ開発・リリースの好機と判断されたと考えられる。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-26",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-06-25",
+    "href": "2026-06-25.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
