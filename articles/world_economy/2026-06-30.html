@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Comcast's NBCUniversal spinoff raises hope for more deals. There may not be good options",
+    "japanese_title": "コムキャストがNBCユニバーサルを分離へ――メディア業界再編の期待と現実のジレンマ",
+    "url": "https://www.cnbc.com/2026/06/29/comcast-nbcu-spinoff-m-and-a.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. コムキャストはケーブル部門とメディア部門（NBCユニバーサル）を今後1年以内に分離する計画を発表した。",
+      "2. この分離により、両社がM&A（合併・買収）に向けた新たな動きを取りやすくなると期待されている。",
+      "3. しかし、実際には有力な買収先や合併相手の選択肢が限られており、楽観視できない状況にある。"
+    ],
+    "points": [
+      "・ケーブルTV事業とメディア事業の分離は、それぞれの事業戦略を独立させ、機動性を高める狙いがある",
+      "・M&Aの潜在的パートナーとして名前が挙がりうるParamount、Warner Bros. Discoveryなども自社の経営課題を抱えており、交渉の難航が予想される",
+      "・ストリーミング（Peacock）事業の収益化がいまだ途上であり、NBCユニバーサル単独での競争力が問われる"
+    ],
+    "prediction": "メディア業界全体でコンテンツコストの増大とストリーミング収益の不安定さが続く中、大型M&Aよりも資産売却や提携といった部分的な再編が現実的な選択肢になると見られる。また、規制当局（FCC・DOJ）による審査強化が続く米国では、大型合併への障壁が依然として高く、業界再編のスピードは市場の期待ほど速くならない可能性が高い。地政学的にも、米国メディアの所有構造変化は情報・コンテンツ影響力の観点から各国政府の注目を集めるだろう。",
+    "ai_interpretation": "このニュースの本質は、「規模の経済」で成長してきた旧来型メディア・通信複合企業モデルの限界を象徴している点にある。デジタル化とストリーミングの波がもたらした構造変化に対応するため、巨大コングロマリットが解体・再編を余儀なくされているという潮流は、コムキャストだけでなくグローバルなメディア産業全体に共通する課題である。グローバル経済への示唆として、「統合による成長」から「選択と集中による競争力強化」へとパラダイムシフトが進んでおり、今後のM&A戦略はいかに質の高いコンテンツとデータ資産を確保するかが核心になるといえる。",
+    "collected_at": "2026-06-30T05:54:15.585052+09:00",
+    "market_impact": "コムキャストの分離計画はメディア・通信セクターの株式市場に短期的な注目と変動をもたらす可能性がある。NBCユニバーサル単独化により、ディズニーやワーナー・ブラザースなど競合他社との業界再編への思惑が高まり、メディアセクター全体のバリュエーションに影響を与えうる。一方、ストリーミング競争の激化と広告収入の低迷を背景に、単純な分離だけでは株主価値向上に限界があるとの見方も根強い。"
+  },
+  {
+    "title": "Eli Lilly, Regeneron among first companies selected for FDA initiative to speed review of new manufacturing facilities",
+    "japanese_title": "FDA新製造施設審査迅速化プログラムにイーライリリーとリジェネロンが初選定｜製薬業界に新たな転換点",
+    "url": "https://www.cnbc.com/2026/06/29/eli-lilly-regeneron-in-fda-precheck-manufacturing-program.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米食品医薬品局（FDA）の「PreCheckパイロットプログラム」に、イーライリリーとリジェネロンを含む7社が初の選定企業として採択された。",
+      "2. 同プログラムは新たな医薬品製造施設の審査プロセスを迅速化することを目的とした革新的なFDAイニシアティブである。",
+      "3. CNBCが独自に入手した情報によるもので、製薬業界の製造能力拡大に向けた規制面での重要な前進を示している。"
+    ],
+    "points": [
+      "・ FDAが従来の審査体制を見直し、製造施設の事前審査を導入するという規制改革の方向性",
+      "・ イーライリリーはGLP-1系肥満治療薬（マンジャロ・ゼップバウンド）の生産拡大が急務であり、タイミングが戦略的に重要",
+      "・ わずか7社のみが初期選定という希少性が、選定企業の競争優位性を際立たせている点"
+    ],
+    "prediction": "パイロットプログラムの成果次第では、FDAの製造審査プロセス全体が刷新され、米国内製造回帰（リショアリング）を後押しする政策的追い風となる可能性が高い。地政学的観点からは、医薬品サプライチェーンの国内強化という米国政府の戦略目標とも合致しており、中国・インド依存からの脱却加速に寄与する見通しである。また、欧州・日本などの規制当局も類似の制度導入を検討する可能性があり、グローバルな規制環境の変化を促すきっかけになり得る。",
+    "ai_interpretation": "このニュースの本質は、FDAが「規制の速度が産業競争力を左右する」という現実を認識し、従来の硬直的な審査体制から脱却しようとする構造的変化を示している点にある。特にポスト・コロナの医薬品供給危機やGLP-1薬ブームを背景に、製造能力の迅速な拡張が国家的課題となっており、規制と産業が協調するモデルへのシフトを象徴する動きと言える。長期的には、このような「アジャイル規制」の概念が医薬品以外の先端産業（半導体・バイオ等）にも波及し、グローバルな産業政策の新たなスタンダードを形成していく可能性を示唆している。",
+    "collected_at": "2026-06-30T05:54:37.295631+09:00",
+    "market_impact": "イーライリリー（肥満・糖尿病治療薬の急需に対応）やリジェネロンなどの選定企業は、製造施設の承認が早まることで市場供給能力が向上し、株価へのポジティブな影響が期待される。製薬・バイオテク業界全体において規制コストの削減と市場投入までの時間短縮が見込まれ、セクター全体の競争力強化につながる可能性がある。特にイーライリリーはGLP-1薬の供給不足が課題となっており、この選定は業績改善への直接的な寄与が期待される。"
+  },
+  {
+    "title": "Darden Restaurants earnings beat estimates but Olive Garden growth weakens",
+    "japanese_title": "ダーデン・レストランツが市場予想を上回る決算も、オリーブガーデンの既存店売上高成長が鈍化",
+    "url": "https://www.cnbc.com/2026/06/25/darden-restaurants-dri-q4-2026-earnings.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国大手レストランチェーン運営会社ダーデン・レストランツは市場予想を上回る決算を発表したが、主力ブランド「オリーブガーデン」の既存店売上高成長率は期待を下回った。",
+      "2. ファインダイニング部門とオリーブガーデン部門の既存店売上高成長率がともに市場予想に届かず、消費者の外食需要に陰りが見え始めている。",
+      "3. 全体的な利益面では堅調さを維持しているものの、消費者支出の選別化が外食産業全体に波及しつつある兆候が確認された。"
+    ],
+    "points": [
+      "・ **既存店売上高の鈍化**：新規出店ではなく既存店の成長率低下は、真の需要減退を示す重要指標である",
+      "・ **二極化する消費行動**：ファインダイニングとカジュアルダイニング双方の不振は、外食全体での節約志向の広がりを示唆",
+      "・ **コスト圧力との板挟み**：人件費・食材費の高騰が続く中での売上鈍化は、利益率圧縮リスクを高める"
+    ],
+    "prediction": "米国消費者の「外食から内食へのシフト」が続くようであれば、マクドナルドやヤム・ブランズなどファストフード大手も含めた外食産業全体の業績見通しが下方修正される可能性がある。また、食品スーパーや宅配サービス企業への需要移転が起きることで、小売・流通セクターには追い風となる逆説的な構図も想定される。地政学的リスクや原油価格の動向次第では、食材コストの再上昇が追い打ちをかけ、業界再編の加速につながる可能性もある。",
+    "ai_interpretation": "このニュースの本質は、単一企業の業績問題にとどまらず、**米国中間層の消費体力の限界点**が近づきつつあることを示すシグナルとして解釈すべきである。コロナ禍後の「リベンジ消費」が完全に一巡し、高止まりする物価と金利負担の中で消費者が支出の優先順位を再設定している段階に入ったと見られる。グローバル経済的には、米国消費の鈍化は輸出依存度の高い新興国経済にとっても需要減退の連鎖リスクをはらんでおり、世界的な消費サイクルの転換点を示唆する重要な局面と言えるだろう。",
+    "collected_at": "2026-06-30T05:54:59.599827+09:00",
+    "market_impact": "米国消費者の外食支出抑制は、インフレ長期化による実質購買力の低下を反映しており、消費関連セクター全体の株価に下押し圧力をかける可能性がある。外食産業はGDPの個人消費動向を示す先行指標の一つとして機能するため、FRBの金融政策判断にも間接的な影響を与え得る。新興国通貨や円などへの影響は限定的だが、米国内需の減速シグナルとしてドルの軟化要因になる可能性も否定できない。"
+  },
+  {
+    "title": "Supreme Court cements Trump's power over agencies long considered independent",
+    "japanese_title": "最高裁がトランプ大統領の独立機関への人事権を認定――91年ぶり判例覆す歴史的判決",
+    "url": "https://www.npr.org/2026/06/29/nx-s1-5816232/supreme-court-ftc-independent-agencies-humphreys-executor",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米最高裁判所が6対3の賛成多数で、大統領が独立行政機関のメンバーを解任することを制限してきた91年間の先例（ハンフリーズ・エグゼキューター判決）を覆した。",
+      "2. これにより、FRB・FTC・SECなど、従来「独立機関」とされてきた規制当局に対し、トランプ大統領が大幅な人事権を行使できる法的根拠が確立された。",
+      "3. 保守系6人の判事が賛成し、リベラル系3人が反対するという、イデオロギー的に明確に分かれた判決となった。"
+    ],
+    "points": [
+      "・ FRBの独立性が実質的に脅かされ、金融政策への政治介入リスクが浮上",
+      "・ SEC（証券取引委員会）への影響により、暗号資産・IPO規制など金融市場ルールが大幅に変わる可能性",
+      "・ 行政国家（Administrative State）の解体を目指すトランプ政権の「DOGE」路線と整合し、規制緩和が一気に加速する恐れ"
+    ],
+    "prediction": "トランプ政権は本判決を追い風に、気候変動・金融・労働分野の独立規制機関の人事を刷新し、政策の方向性を急転換させる可能性が高い。国際社会からはアメリカの法の支配・制度的安定性への信頼が揺らぐとの懸念が示され、外国投資家による米国資産の評価見直しにつながるリスクもある。長期的には、政権交代ごとに規制環境が激変する「政策の振り子現象」が常態化し、企業の長期投資判断を複雑にする。",
+    "ai_interpretation": "この判決の本質は、単なる人事権の拡大ではなく、「三権分立における行政権の肥大化」という米国民主主義の根幹に関わる構造変化である。独立機関は本来、政治サイクルを超えた専門的・中立的な判断を担保する装置であり、その弱体化は短期的な規制緩和メリットを超えて、グローバル経済における「米国制度への信頼」というソフトパワーを毀損しかねない。世界経済にとっては、基軸通貨国・最大市場としての米国の政策安定性が損なわれるという、見えにくいが深刻なリスクを内包している。",
+    "collected_at": "2026-06-30T05:55:21.691420+09:00",
+    "market_impact": "FRBの独立性への懸念が高まることで、米国債市場や為替市場（ドル）に不安定要因が加わる可能性がある。SECやFTCへの政治的介入が現実味を帯び、金融規制・独占禁止分野での政策の予見可能性が低下し、株式市場のボラティリティが高まるリスクがある。特にテック・金融・エネルギーセクターは規制環境の激変に直面する可能性が高い。"
+  },
+  {
+    "title": "Red, white and glowing blue: Trump's push for new reactors reaches the finish line",
+    "japanese_title": "トランプ政権の小型原子炉推進計画が最終段階へ――安全性への懸念も浮上",
+    "url": "https://www.npr.org/2026/06/29/nx-s1-5847944/new-nuclear-reactors-america-250-safety-concerns",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. トランプ政権が主導したプログラムにより、複数の新型小型原子炉（SMR）デザインの試験が急加速し、小規模企業が開発競争に参入している。",
+      "2. 従来より大幅に短縮されたスケジュールで審査・試験が進められており、規制プロセスの迅速化が実現している。",
+      "3. 一方で、安全基準が犠牲にされているのではないかという懸念が専門家や規制当局の一部から上がっている。"
+    ],
+    "points": [
+      "・ トランプ政権による規制緩和・審査短縮が民間原子力開発の「ゲームチェンジャー」となる可能性",
+      "・ 安全審査の迅速化と安全性確保のトレードオフ問題――チェルノブイリ・福島後の国際的な安全基準との整合性",
+      "・ 中国・ロシアがSMR輸出で先行する中、米国が技術覇権を取り戻す地政学的意図が背景にある点"
+    ],
+    "prediction": "SMR技術の商業化が現実味を帯びることで、AIデータセンターや製造業向けの分散型電源需要と結びつき、エネルギー産業の構造変革が加速するだろう。地政学的には、米国がSMR技術を同盟国に輸出することで、中露のエネルギー外交に対抗する新たな外交ツールとなる可能性が高い。ただし、万一事故が発生した場合は規制回帰の動きが一気に強まり、業界全体への信頼が損なわれるリスクも内包している。",
+    "ai_interpretation": "このニュースの本質は、「エネルギー安全保障・脱炭素・経済成長」という三つの政策目標を一挙に達成しようとする米国の戦略的意図にある。規制の迅速化は表面上は産業振興だが、その裏には中国・ロシアへの技術的・地政学的対抗という強い動機が存在する。グローバル経済的には、SMRが普及すれば化石燃料依存国の交渉力低下や資源価格の長期的下落圧力につながり得る一方、安全性軽視が現実化すれば原子力ルネサンス全体が頓挫するという、ハイリスク・ハイリターンな賭けといえる。",
+    "collected_at": "2026-06-30T05:55:43.732484+09:00",
+    "market_impact": "小型モジュール炉（SMR）市場は今後急拡大が見込まれ、NuScale・X-energy・TerraPowerなどの関連企業や原子力関連株への投資資金流入が加速する可能性がある。エネルギー転換の加速に伴い、ウラン価格や核燃料サプライチェーンにも上昇圧力がかかるとみられる。また、米国のSMR技術が国際市場で競争力を持てば、原子力分野でのドル建て輸出拡大にもつながり得る。"
+  },
+  {
+    "title": "Burnham's 'Manchesterism' could change the UK, but is not yet a full economic plan",
+    "japanese_title": "アンディ・バーナムの「マンチェスタリズム」が英国を変えるか？地方分権型経済モデルの可能性と課題",
+    "url": "https://www.bbc.co.uk/news/articles/cpq3yxdyx9do?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. マンチェスター市長アンディ・バーナムが、英国の在り方と運営方法に関する新たなビジョン「マンチェスタリズム」を提唱する演説を行った。",
+      "2. このモデルは地方分権と地域主導の経済運営を中心に据えており、ロンドン一極集中からの脱却を目指す構想と見られる。",
+      "3. ただし、具体的な政策の詳細については多くの疑問点が残っており、完全な経済計画としてはまだ発展途上の段階にある。"
+    ],
+    "points": [
+      "・ロンドン一極集中打破を目指す「地方分権経済モデル」としての革新性",
+      "・具体的財源・権限委譲の仕組みが未整備であるという実現可能性への懸念",
+      "・労働党政権下における地方自治体の政治的影響力拡大という文脈での位置づけ"
+    ],
+    "prediction": "バーナム構想が英国の政策議論に影響を与えた場合、他の地方都市も同様の自律的経済モデルを求める動きが加速し、英国全体の財政・行政構造の見直しに発展する可能性がある。欧州や日本など中央集権的な先進国においても、地方主導型成長モデルへの政策転換議論を刺激する先行事例となり得る。一方で、詳細な財政計画の不在が政治的支持の広がりを制限するリスクも残る。",
+    "ai_interpretation": "このニュースの本質は、英国における「経済地理の再設計」という問いかけであり、単なる地方政治家の演説を超えた構造的問題提起を含んでいる。グローバル経済が都市・地域間競争の時代に突入する中、中央政府依存から脱却した地域自律型モデルの模索は、英国だけでなく多くの先進国が直面する共通課題を映し出している。ただし、ビジョンと実行可能な政策の間にあるギャップを埋められるかどうかが、「マンチェスタリズム」が真の経済変革モデルとなれるかの分水嶺となるだろう。",
+    "collected_at": "2026-06-30T05:56:03.073842+09:00",
+    "market_impact": "英国内では地方への投資分散や地域インフラ整備への関心が高まる可能性があり、不動産・建設・地方公共事業関連セクターに中長期的な注目が集まりやすい。ポンドへの直接的な影響は限定的だが、英国の財政・税制分権化が進めば国内投資配分の構造変化を招く恐れがある。グローバル市場においては、先進国共通の「脱中央集権型経済モデル」への関心を高めるきっかけとなり得る。"
+  },
+  {
+    "title": "Will Andy Burnham's devolution plan raise economic growth?",
+    "japanese_title": "アンディ・バーナム氏の地方分権計画はイギリスの経済成長を促進するか？BBC検証が分析",
+    "url": "https://www.bbc.co.uk/news/articles/c5yz4x9ew49o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. イギリスのアンディ・バーナム氏（大マンチェスター市長）が推進する地方分権（デボリューション）計画について、BBCのファクトチェック部門「BBC Verify」が経済的影響を検証した。",
+      "2. 地方分権のさらなる拡大がイギリス全体の経済成長にどの程度寄与するかが主要な論点となっている。",
+      "3. 中央集権的なロンドン一極集中からの脱却を目指す政策として、地域経済の活性化効果が注目されている。"
+    ],
+    "points": [
+      "・ロンドン一極集中の是正という構造的課題への政策的アプローチ",
+      "・地方政府への財政・行政権限移譲の範囲と実効性",
+      "・BBC Verifyによる客観的な経済効果の検証という「エビデンスベース政策」の重要性"
+    ],
+    "prediction": "イギリスの地方分権モデルが成功すれば、同様の中央集権課題を抱える日本やフランスなど他の先進国にとっても政策的参考事例となる可能性がある。一方、財源確保や地方間の競争激化といった課題が顕在化すれば、政策の後退リスクも否定できない。労働党政権下での「地域成長戦略」の柱として、今後の具体的な立法化の動向が焦点となる。",
+    "ai_interpretation": "このニュースの本質は、「成長の地理的再分配」という現代経済の核心的課題に対するイギリスの実験的取り組みである。グローバル経済において首都・大都市への集中は多くの国で共通の課題であり、地方分権による内需拡大モデルは、輸出依存からの脱却を模索する先進国経済への重要な示唆を含んでいる。BBCがファクトチェック機能を活用して政策効果を検証するアプローチは、ポピュリズム的政策論争に証拠主義を持ち込む試みとしても評価できる。",
+    "collected_at": "2026-06-30T05:56:20.978105+09:00",
+    "market_impact": "地方分権が進めば、イギリス国内の地域間経済格差が縮小し、国内消費や投資の分散化が促進される可能性がある。ポンド相場への直接的な影響は限定的だが、イギリス全体のGDP成長率が改善すれば中長期的にはポンド安定・強化につながり得る。不動産・インフラ・地域中小企業セクターが恩恵を受ける主要産業として注目される。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-06-30",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-06-30.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-06-30.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-06-29",
+    "href": "2026-06-29.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
