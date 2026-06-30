@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "The DeepMind trio who built a poker AI are now making money for quant hedge funds",
+    "japanese_title": "元DeepMind研究者3人が設立したポーカーAI企業、クオンツヘッジファンド向けAIで評価額500億円超に",
+    "url": "https://techcrunch.com/2026/06/30/the-deepmind-trio-who-built-a-poker-ai-are-now-making-money-for-quant-hedge-funds/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 元DeepMind研究者3名がプラハで設立したAIラボ「EquiLibre Technologies」が評価額5億ドル（約750億円）超を達成した。",
+      "2. 同社はもともとポーカーAIの開発で知られる研究者チームが創業した企業である。",
+      "3. 現在はクオンツ系ヘッジファンド向けにAI技術を提供し、金融分野で収益を上げている。"
+    ],
+    "points": [
+      "・ポーカーAIの核心技術である「ゲーム理論的最適解（GTO）」が金融トレーディングに直接応用可能である点",
+      "・DeepMind出身という強力なブランド力と研究実績が投資家・顧客の信頼獲得に寄与している点",
+      "・評価額5億ドル超という急成長が、AI×金融領域への市場期待の高さを示している点"
+    ],
+    "prediction": "クオンツファンド向けAIサービスの需要は今後も拡大が見込まれるため、同社はさらなる資金調達やサービス拡充を進める可能性が高い。また、競合するAIスタートアップや大手金融機関のAI部門との競争が激化することも予想される。IPOや大手テック・金融企業による買収候補としても注目を集めるだろう。",
+    "ai_interpretation": "このニュースの本質は、「基礎研究としてのゲームAI」が「実社会の高収益ビジネス」へと転換できることを示した好例である点にある。不完全情報下での最適意思決定というポーカーAIの本質的な課題は、金融市場という究極の不確実性環境と構造的に同一であり、研究と産業の橋渡しモデルとして今後の参照事例になり得る。さらに、DeepMindという「AI人材の輩出源」としての価値も改めて浮き彫りにしており、優秀な研究者の独立・起業トレンドが業界全体に与える影響も見逃せない。",
+    "collected_at": "2026-07-01T05:57:45.653413+09:00",
+    "background": "DeepMindはゲームAI研究（囲碁・チェス・ポーカーなど）で世界をリードしてきたが、その知見を持つ研究者たちが独立して起業する流れが加速している。ポーカーAIで培われた「不完全情報ゲームにおける意思決定最適化」の技術は、金融市場の戦略立案と高い親和性を持つ。プラハという欧州の技術拠点での設立は、優秀な人材確保とコスト面での合理的な選択と考えられる。"
+  },
+  {
+    "title": "Realta Fusion generates electricity directly from a fusion reaction, an apparent first",
+    "japanese_title": "世界初か？Realta Fusionが核融合反応から直接発電に成功——商業化へ向けた歴史的マイルストーン",
+    "url": "https://techcrunch.com/2026/06/30/realta-fusion-generates-electricity-directly-from-a-fusion-reaction-an-apparent-first/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 米スタートアップ「Realta Fusion」が、核融合反応から直接電力を取り出すことに成功したと発表した。",
+      "2. 同社の共同創業者兼CEOのキーラン・ファーロング氏は「プラズマから電力を取り出せる」と述べ、この成果が「可能性を示すもの」だと強調した。",
+      "3. これは核融合エネルギーの商業利用に向けた重要な概念実証とみられ、業界内で注目を集めている。"
+    ],
+    "points": [
+      "・「核融合反応から直接発電」という行為自体が業界初とみられており、技術的なブレークスルーの可能性がある",
+      "・プラズマから直接電力を取り出す手法は、従来の熱→蒸気タービン方式とは異なるアプローチである可能性がある",
+      "・スタートアップ企業がこの領域で先行したことで、核融合商業化レースに新たな変数が加わった"
+    ],
+    "prediction": "この成果が第三者機関によって検証・確認されれば、核融合エネルギー業界全体の信頼性向上と追加投資の呼び水になると予想される。Realta Fusion自身も次のステップとして、出力の安定化・スケールアップに向けた技術開発と資金調達を加速させるとみられる。また、競合他社も同様のアプローチへの研究を強化する可能性が高い。",
+    "ai_interpretation": "このニュースの本質は、核融合エネルギーが「反応を起こす」段階から「使える電気を生み出す」段階へと一歩踏み出した点にある。たとえ小規模であっても、核融合から直接電力を得るという実証は、これまで理論・実験の域にとどまっていた技術が現実の電力システムに近づきつつあることを示唆する。民間主導のイノベーションが公的研究機関を超えるスピードで進んでいるという点でも、エネルギー産業の構造変化を象徴するニュースと言えるだろう。",
+    "collected_at": "2026-07-01T05:58:02.924674+09:00",
+    "background": "核融合発電は「夢のエネルギー」として数十年にわたり研究が続けられてきたが、エネルギーの取り出し方（発電プロセス）は依然として大きな技術的課題であった。近年、民間スタートアップへの投資が急増し、Commonwealth FusionやHelion Energyなど多くの企業が商業化を目指して競争を繰り広げている。Realta Fusionはそうした競争の中で、発電という核心的なステップに踏み込んだとされる。"
+  },
+  {
+    "title": "Google introduces a faster, cheaper image generator with Nano Banana 2 Lite",
+    "japanese_title": "Google、新モデル「Nano Banana 2 Lite」で画像生成AIを高速化・低コスト化——クリエイター向け機能を強化",
+    "url": "https://techcrunch.com/2026/06/30/google-introduces-a-faster-cheaper-image-generator-with-nano-banana-2-lite/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. GoogleはAI画像生成ツールを更新し、新モデル「Nano Banana 2 Lite」を導入した。",
+      "2. 新モデルは従来より高速かつ低コストで動作し、利用効率が大幅に向上している。",
+      "3. AIコンテンツ制作を目指すクリエイターにとって、より実用的なツールとなることが期待される。"
+    ],
+    "points": [
+      "・「Lite」モデルの採用により、処理速度の大幅な向上が期待される",
+      "・コスト削減により、個人クリエイターや中小企業でも利用しやすくなる点",
+      "・GoogleがAI生成コンテンツ市場における存在感を強化しようとする戦略的意図"
+    ],
+    "prediction": "軽量モデルの普及により、Google製AIツールを活用したコンテンツ制作の裾野が広がり、より多くのユーザーが参入することが予想される。また、競合他社（OpenAIのDALL-EやAdobeのFireflyなど）も対抗してコスト・速度面での改善を迫られる可能性が高い。さらにGoogleは、このLiteモデルをベースに他のサービスやプラットフォームへの統合を加速させるとみられる。",
+    "ai_interpretation": "このニュースの本質は、AI画像生成技術の「民主化」がさらに進むという点にある。高性能モデルを軽量化・低価格化することで、専門家だけでなく一般クリエイターもAIツールを日常的に活用できる時代が加速している。これはAIが「特別な技術」から「インフラ」へと移行しつつあることを象徴しており、今後はコストと速度の競争がAI業界の主戦場の一つになっていくことを示唆している。",
+    "collected_at": "2026-07-01T05:58:18.758969+09:00",
+    "background": "AI画像生成ツールはMidjourneyやStable Diffusionなど競合サービスが急速に進化しており、Googleも市場での競争力維持が急務となっていた。これまでのモデルはコストや処理速度の面でクリエイターにとって障壁となるケースがあり、より実用的なソリューションへの需要が高まっていた。こうした市場ニーズに応える形で、今回の軽量・高速モデルの投入に至ったと考えられる。"
+  },
+  {
+    "title": "Trump's plan to redesign every .gov website leads to AI-designed horrors",
+    "japanese_title": "トランプ政権の.govサイト全面刷新計画、AI生成デザインの失敗作が続出―国家デザインスタジオが遅延",
+    "url": "https://arstechnica.com/tech-policy/2026/06/trumps-plan-to-redesign-every-gov-website-leads-to-ai-designed-horrors/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. トランプ政権が推進する全米政府ウェブサイト（.gov）の統一デザイン刷新計画が、発足から1年を経ても大幅な遅延に陥っている。",
+      "2. 国家デザインスタジオ（National Design Studio）が主導するプロジェクトで、AIを活用したデザイン生成が試みられたが、品質面で「惨状」とも言える結果を招いている。",
+      "3. 政府ウェブ標準のアップデート計画は依然として見通しが立たず、官民のデザイン・UX専門家からも批判の声が上がっている。"
+    ],
+    "points": [
+      "・ AIが生成したデザイン案が政府サイトの信頼性・視認性・アクセシビリティを損なうレベルの品質であると報告されている",
+      "・ 専門のデザイナーやUXエンジニアをAIで代替しようとした結果、かえって工程が複雑化し遅延を招いた可能性がある",
+      "・ 政府ウェブ標準（U.S. Web Design System等）の更新が止まることで、現場の各省庁サイト運営にも悪影響が波及するリスクがある"
+    ],
+    "prediction": "計画の抜本的な見直しが迫られる可能性が高く、AIツールへの過度な依存から人間の専門家を中心とした体制への回帰が議論されるとみられる。一方で、政権の「効率化・コスト削減」方針は変わらないため、中途半端な形でAI活用が継続され、品質問題が長引くシナリオも否定できない。最終的には議会や市民団体からの圧力が計画の方向性を左右する鍵となるだろう。",
+    "ai_interpretation": "このニュースは「AI万能論」への警鐘として象徴的な事例であり、専門的なデザイン・UX領域においてAIはまだ人間の判断を完全に代替できないことを政府規模で露呈した出来事と言える。特に公共サービスのウェブサイトは、アクセシビリティ・多様性・法的要件など複合的な制約を満たす必要があり、コスト優先のAI活用には本質的な限界がある。「技術の導入」と「技術の適切な活用」は別物であり、政策立案者がその違いを理解しているかが問われている。",
+    "collected_at": "2026-07-01T05:58:39.034658+09:00",
+    "background": "トランプ政権は政府DX推進の一環として、数千に及ぶ連邦政府ウェブサイトのデザインを統一・刷新する計画を打ち出した。その旗振り役として設立された国家デザインスタジオは、コスト削減と効率化を名目にAIツールを積極的に活用する方針を採用した。しかし、政府固有の厳格なアクセシビリティ基準やセキュリティ要件との整合性が取れず、計画は迷走を続けている。"
+  },
+  {
+    "title": "South Korea to spend $1T on more memory chip production and humanoid robots",
+    "japanese_title": "韓国、メモリチップ増産と人型ロボットに約150兆円を投資——2028年までに物理AI分野の世界トップを目指す",
+    "url": "https://arstechnica.com/ai/2026/06/south-korea-to-spend-1t-on-more-memory-chip-production-and-humanoid-robots/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. 韓国政府は、メモリチップの生産拡大と人型（ヒューマノイド）ロボット開発に総額1兆ドル（約150兆円）規模の投資を計画している。",
+      "2. 「物理AI（Physical AI）」分野での国際的なリーダーシップ獲得を国家戦略として掲げている。",
+      "3. 2028年までに商業用ヒューマノイドロボットの実用化を目標としている。"
+    ],
+    "points": [
+      "・「物理AI」という概念を国家戦略の中核に据えた点は、単なるソフトウェアAIにとどまらないハードウェア×AI融合戦略を示唆している",
+      "・2028年という具体的な期限を設定することで、官民一体での集中投資を促す狙いがある",
+      "・1兆ドルという巨額投資は、政府主導の産業政策と民間企業の投資を合算したものとみられ、国家総力戦の様相を呈している"
+    ],
+    "prediction": "韓国の大規模投資が実現すれば、半導体市場における台湾・米国との競争がさらに激化し、グローバルなメモリチップの供給構造に影響を与える可能性がある。ヒューマノイドロボット分野では、米テスラやボストン・ダイナミクス（韓国現代自動車傘下）との競合が加速し、2028年前後に商業化をめぐる国際競争が山場を迎えるとみられる。ただし、巨額投資の実効性は政権の継続性や民間企業の協力度合いに左右されるリスクも残る。",
+    "ai_interpretation": "このニュースの本質は、「AIの戦場がデジタル空間から物理空間へ移行しつつある」という時代認識を韓国が国家レベルで明確に示した点にある。メモリチップ（AIの演算基盤）とヒューマノイドロボット（AIの身体）を同時に押さえようとする戦略は、AIバリューチェーンの垂直統合を目指すものであり、単純な製造業投資とは一線を画す。各国が「AI覇権＝物理世界の制御力」と捉え始めた今、この動きは国際的な産業・安全保障戦略の新たなフェーズの到来を示唆している。",
+    "collected_at": "2026-07-01T05:58:59.076837+09:00",
+    "background": "韓国はサムスン電子やSKハイニックスを擁する半導体大国であるが、AI時代の到来により需要が急拡大するメモリチップ市場での競争が激化している。一方、米国・中国がAIロボティクス分野で急速に台頭しており、韓国としては既存の製造業強みを活かしながら次世代技術領域での国際競争力を確保する必要性に迫られている。また、少子高齢化による労働力不足という国内課題も、ロボット産業育成の強力な動機となっている。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-01",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-06-30",
+    "href": "2026-06-30.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
