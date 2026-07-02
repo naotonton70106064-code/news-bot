@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Sandwich chain Jersey Mike's files for IPO, reports 50% same-store sales growth in recent years",
+    "japanese_title": "サンドイッチチェーン「ジャージー・マイクス」がIPO申請――近年の既存店売上高50%増が示す外食産業の底力",
+    "url": "https://www.cnbc.com/2026/07/02/jersey-mikes-files-for-ipo.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国のサブウェイに次ぐ第2位のホーギーサンドイッチチェーン「ジャージー・マイクス」が新規株式公開（IPO）を申請した。",
+      "2. 全米に約3,300店舗を展開し、近年の既存店売上高成長率は50%という驚異的な数字を記録している。",
+      "3. 外食産業における消費者需要の堅調さと、フランチャイズビジネスモデルの投資家への訴求力が改めて注目されている。"
+    ],
+    "points": [
+      "・既存店売上高50%増という成長率は業界平均を大幅に上回る異例の数値であり、ブランド力の急速な拡大を示している",
+      "・約3,300店舗という規模はサブウェイに次ぐ業界第2位であり、スケールメリットによるコスト競争力が期待できる",
+      "・IPO申請のタイミングは米国金利の動向やIPO市場の回復局面と連動しており、資金調達環境の好転を見込んだ戦略的判断とみられる"
+    ],
+    "prediction": "ジャージー・マイクスのIPO成功は、米国外食産業への機関投資家の資金流入を促し、フランチャイズ展開を軸とした外食チェーンの上場ブームを再燃させる可能性がある。一方で、インフレ圧力や人件費上昇、消費者の節約志向といったリスク要因が収益性に影響を与えるかどうかが、上場後の株価パフォーマンスを左右する重要な鍵となる。グローバルには、米国の外食フランチャイズモデルが引き続き海外展開の参考事例として注目され、アジアや欧州市場での類似業態の成長戦略にも示唆を与えるだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる一企業のIPOにとどまらず、「高インフレ・高金利環境下でも成長できる外食ビジネスモデルの存在証明」という点にある。既存店売上高50%増という数字は、価格転嫁の成功とブランドロイヤリティの高さを同時に示しており、消費者行動の二極化（節約か体験重視か）という現代的テーマとも深く結びついている。グローバル経済においては、このような「リアル店舗×フランチャイズ×強固なブランド」の組み合わせが、デジタル偏重の投資トレンドへの対抗軸として再評価される潮流を象徴するニュースといえる。",
+    "collected_at": "2026-07-03T05:24:57.934160+09:00",
+    "market_impact": "ジャージー・マイクスのIPOは、米国外食・フランチャイズセクターへの投資家の関心を再活性化させる可能性があり、同業他社の株価にも波及効果をもたらし得る。消費者物価の高止まりが続く中でも既存店売上高が大幅に伸びていることは、外食業界における「プレミアムファストカジュアル」需要の強さを示しており、セクター全体の再評価につながる可能性がある。また、IPO市場全体にとっても活性化の好材料となり、他の外食・小売企業の上場判断にも影響を与えるだろう。"
+  },
+  {
+    "title": "Ford Q2 sales drop 10.3% due to F-Series supplier issue, falling EV demand",
+    "japanese_title": "フォードQ2販売が10.3%減——F-シリーズ供給問題とEV需要低迷が直撃",
+    "url": "https://www.cnbc.com/2026/07/02/ford-q2-sales.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. フォードの2024年第2四半期の販売台数が前年比10.3%減少し、主力トラック「F-シリーズ」の供給業者問題が主要因となった。",
+      "2. EV（電気自動車）販売は前年同期比40.7%減と大幅に落ち込み、電動化戦略の見直しを迫られる状況となっている。",
+      "3. 主力モデルであるF-150を含むF-シリーズトラックの販売も11%減少し、収益の柱が大きく揺らいでいる。"
+    ],
+    "points": [
+      "・ EV販売が40.7%減という急落は、消費者のEV移行ペースが業界予測を大きく下回っていることを示す重要なシグナル",
+      "・ F-シリーズという「米国最大の販売台数を誇るトラック」の供給問題は、単一サプライヤー依存リスクの脆弱性を露呈",
+      "・ ハイブリッド車（HEV）への需要シフトが加速している可能性があり、フォードの製品戦略の転換が求められる",
+      "・ 金利高止まりによる自動車ローン負担増が、消費者の高額EV購入意欲を削いでいる背景も見逃せない"
+    ],
+    "prediction": "フォードはEV投資計画の縮小・延期をさらに進める可能性が高く、業界全体でEVから内燃機関・ハイブリッドへの\"回帰\"トレンドが強まるとみられる。地政学的観点では、中国製EV（BYDなど）との競争激化の中でアメリカ国内自動車産業の保護主義的政策（関税強化など）が一層強化される議論が活発化するだろう。また、サプライチェーンの国内回帰（リショアリング）や調達先多様化への圧力が高まり、北米の自動車部品産業の再編が加速する可能性がある。",
+    "ai_interpretation": "このニュースの本質は、単なる一企業の業績悪化ではなく、「EVシフト神話の崩壊」と「伝統的サプライチェーンの脆弱性」という二重の構造的問題を同時に映し出している点にある。消費者の現実的な購買行動と政策・企業の描く電動化シナリオとの乖離が拡大しており、グローバル自動車産業全体の戦略的再定義を迫っている。これは同時に、急速なEV転換を前提に構築されてきたエネルギー・素材・インフラ投資の見直しを促す引き金となり得る、世界経済にとって重要なターニングポイントを示唆している。",
+    "collected_at": "2026-07-03T05:25:19.997048+09:00",
+    "market_impact": "フォード株への売り圧力が強まるとともに、自動車セクター全体の投資家心理が悪化し、GM・ステランティスなど競合他社の株価にも波及リスクがある。EV需要の鈍化は、バッテリー素材（リチウム・コバルト）の市況を下押しし、関連鉱山企業やサプライヤーの業績にも影響を与える可能性がある。また、サプライチェーン障害の再顕在化は、自動車部品の安定調達を巡るリスク再評価につながり得る。"
+  },
+  {
+    "title": "Premier Lacrosse League plans to bring in team owners by 2028 'or soon thereafter,' co-founder says",
+    "japanese_title": "プレミア・ラクロス・リーグ、2028年LA五輪を追い風に2028年までにチームオーナー制導入を計画",
+    "url": "https://www.cnbc.com/2026/07/02/premier-lacrosse-league-team-ownership.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. プレミア・ラクロス・リーグ（PLL）の共同創設者ポール・ラビルは、2028年までに（またはそれ以降まもなく）フランチャイズオーナー制の導入を計画していると明かした。",
+      "2. 2028年ロサンゼルス夏季五輪でラクロスが正式競技として復活することを、リーグ拡大・認知度向上の最大の起爆剤として位置づけている。",
+      "3. 五輪効果によるスポーツブランド価値の向上を背景に、投資家・オーナー候補の獲得を本格的に狙う戦略である。"
+    ],
+    "points": [
+      "・ 2028年LA五輪がラクロスのグローバル普及と商業化を加速させる「触媒」として機能する点",
+      "・ フランチャイズオーナー制の導入により、MLBやNFLのような安定的な収益構造への移行を目指している点",
+      "・ 投資家にとって、五輪前後のタイミングが参入コストと将来的なリターンのバランスを見極める重要な分岐点になる点"
+    ],
+    "prediction": "2028年五輪に向けてラクロスへのグローバルな注目度が高まることで、アジアや欧州市場における競技普及と関連ビジネスの拡大が期待される。PLLがオーナー制を確立できれば、他の新興スポーツリーグにとっても「五輪×フランチャイズ化」という成長モデルの先行事例となるだろう。一方、オーナー誘致の成否は米国内のスポーツ投資市場の動向や景気状況にも左右されるリスクがある。",
+    "ai_interpretation": "このニュースの本質は、「スポーツの国際的イベント（五輪）を梃子にした新興リーグのビジネスモデル転換」という点にある。五輪という4年に一度の巨大プラットフォームを活用してブランド価値を急速に引き上げ、投資家を呼び込むという戦略は、グローバル経済においてスポーツが単なる娯楽を超えた「資産クラス」として認知されていることを示している。新興スポーツリーグの商業化モデルとして、今後の投資家・メディア・スポンサー企業の意思決定に参考事例を提供するニュースといえる。",
+    "collected_at": "2026-07-03T05:25:40.135739+09:00",
+    "market_impact": "ラクロスの五輪復帰はニッチスポーツへの投資関心を高め、スポーツテック・メディア配信・スポンサーシップ市場に新たな資金流入をもたらす可能性がある。特に北米スポーツフランチャイズ市場において、新興リーグの資産価値評価モデルに影響を与えうる。為替や主要産業への直接的な影響は限定的だが、スポーツエンターテインメント関連株やメディア企業にはプラス材料となり得る。"
+  },
+  {
+    "title": "Trump earned more than $1 billion from crypto — but his investors didn't fare so well",
+    "japanese_title": "トランプ大統領、暗号資産で10億ドル超の利益——一般投資家は大損失の実態",
+    "url": "https://www.npr.org/2026/07/02/nx-s1-5878411/trump-earned-more-than-1-billion-from-crypto-but-his-investors-didnt-fare-so-well",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. トランプ大統領は2025年、暗号資産関連事業から10億ドル（約1,500億円）以上の収益を獲得した。",
+      "2. 一方で、トランプ関連の暗号通貨を購入した数千人の一般投資家は、多大な損失を被るリスクに直面している。",
+      "3. 大統領という公権力を持つ人物が個人的な暗号資産事業で巨利を得るという、前例のない利益相反問題が浮上している。"
+    ],
+    "points": [
+      "・ 現職大統領が直接的な金融利益を暗号資産から得るという、歴史上類を見ない利益相反の構造",
+      "・ 一般投資家（リテール層）が政治的ブランドに乗じた投機で損失を被る「情報非対称性」の問題",
+      "・ 米国内の暗号資産規制強化・緩和の方向性が、トランプ氏の個人利益と連動している可能性"
+    ],
+    "prediction": "米国議会や規制当局（SEC・CFTCなど）による調査・立法の動きが強まる可能性があり、暗号資産市場に対する規制リスクが短期的に高まると予測される。国際的には、G7・G20の場で政治指導者による暗号資産関与に関する倫理規定の議論が加速する可能性がある。一般投資家の損失が社会問題化すれば、米国内での反トランプ世論形成にも影響し、2026年中間選挙に向けた政治的変数となり得る。",
+    "ai_interpretation": "このニュースの本質は、「権力と金融の融合」という民主主義における根本的なリスクを象徴している点にある。大統領が規制権限を持ちながら同時に規制対象市場で巨利を得る構造は、市場の公正性だけでなく、法の支配そのものへの信頼を損なう。グローバル経済においては、米国発の暗号資産ガバナンスの混乱が、デジタル資産市場全体の制度的成熟を遅らせるという深刻な示唆を含んでいる。",
+    "collected_at": "2026-07-03T05:25:59.309200+09:00",
+    "market_impact": "暗号資産市場全体において、政治的影響力を背景にした「ミームコイン」や関連トークンへの投機熱が加速する懸念があり、市場の健全性と規制の信頼性が問われる。ドルおよび米国金融政策への信頼感にも間接的な影響を与え、機関投資家の暗号資産市場参入に対する慎重姿勢を強める可能性がある。また、暗号資産規制を巡るグローバルな議論において、米国の立場が複雑化するリスクがある。"
+  },
+  {
+    "title": "U.S. job market slows in June",
+    "japanese_title": "米雇用市場が減速－2025年6月の雇用者数5万7000人増・失業率4.2%に低下",
+    "url": "https://www.npr.org/2026/07/02/nx-s1-5877491/labor-department-to-release-latest-jobs-report-thursday",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米労働省の発表によると、2025年6月の非農業部門雇用者数は前月比5万7,000人増と、直近2ヶ月と比較して大幅に鈍化した。",
+      "2. 一方で失業率は4.2%へわずかに低下し、労働市場の完全な崩壊ではなく「軟化」段階にあることを示唆している。",
+      "3. 雇用増加数は市場予想を大きく下回る水準とみられ、米経済の勢い衰退に対する懸念が改めて浮上した。"
+    ],
+    "points": [
+      "・ 雇用増加数5万7,000人は、景気維持に必要とされる「最低ライン」とも言われる15万人前後を大幅に下回る水準",
+      "・ 失業率が4.2%へ低下したことは表面上はポジティブだが、労働参加率の変動（求職断念者の増加）が影響している可能性に注意が必要",
+      "・ FRBの次回FOMC（連邦公開市場委員会）での金融政策判断に対し、今回のデータが重要な根拠となる点"
+    ],
+    "prediction": "雇用鈍化の継続はFRBの利下げ時期を前倒しさせる可能性を高め、2025年後半にも複数回の利下げが実施されるシナリオが現実味を帯びてくる。一方で、インフレが完全に収束していない状況での早期利下げは「スタグフレーション」リスクを内包しており、FRBの政策判断は一層難しい局面を迎える。地政学的には、米ドル安の進行が新興国の対ドル債務負担を軽減する面もあるが、資本フローの変動が金融市場の不安定性を高める懸念もある。",
+    "ai_interpretation": "このニュースの本質は、米国経済が「過熱から正常化」ではなく「過熱から減速」へと想定以上のペースで移行しつつある可能性を示している点にある。失業率の小幅低下という矛盾した指標が示すように、労働市場の内部構造は単純な「強弱」では語れない複雑さを持ち始めており、政策判断の難易度が増している。グローバル経済への示唆としては、世界最大の消費市場である米国の需要鈍化が、輸出依存度の高いアジア・欧州経済にも波及する「需要の連鎖的縮小」リスクとして注視すべき局面と言えるだろう。",
+    "collected_at": "2026-07-03T05:26:20.700157+09:00",
+    "market_impact": "雇用の鈍化はFRB（米連邦準備制度）の利下げ観測を強め、米国債利回りの低下とドル安を招く可能性が高い。株式市場では景気敏感株・金融株が売られる一方、利下げ期待から成長株やテクノロジー株が下支えされる展開も想定される。また、ドル安の進行は円高・ユーロ高要因となり、日本や欧州の輸出企業の業績見通しに下押し圧力をかけるリスクがある。"
+  },
+  {
+    "title": "Pubs allowed to stay open until 5am for England Mexico match",
+    "japanese_title": "イングランド対メキシコ戦に合わせ、英パブの営業を午前5時まで延長許可——ワールドカップ特別措置",
+    "url": "https://www.bbc.co.uk/news/articles/c1kyr8747m9o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 英国政府は当初ワールドカップ向けのライセンス法（酒類販売・営業時間規制）緩和を行わない方針だったが、方針を転換しパブの深夜営業延長を承認した。",
+      "2. イングランド対メキシコ戦の開催時間帯に合わせ、パブは通常より大幅に遅い午前5時まで営業が認められる。",
+      "3. 政府の政策変更は、スポーツイベントに伴う経済的・社会的需要への柔軟な対応を示す事例となった。"
+    ],
+    "points": [
+      "・ 政府が一度表明した方針を覆したことで、経済的圧力や世論・業界ロビー活動の影響力が浮き彫りになった",
+      "・ 英国のライセンス法は通常厳格であり、今回の特例措置は規制緩和の先例として今後議論を呼ぶ可能性がある",
+      "・ パブ業界は近年コスト上昇・エネルギー価格高騰で苦境にあり、こうした特需は業界救済の一助となりうる"
+    ],
+    "prediction": "今回の措置が経済効果をもたらせば、今後の大規模スポーツイベント（欧州選手権・五輪など）でも同様の規制緩和要求が強まり、英国のライセンス法改革議論が加速する可能性がある。一方で、深夜営業延長に伴う公共秩序問題や医療コストの増加が政策的な反論材料となり、恒久的緩和には依然として高いハードルが残る。グローバルな観点では、スポーツイベントを経済活性化ツールとして活用する政策的トレンドが各国で継続するとみられる。",
+    "ai_interpretation": "このニュースの本質は、**スポーツの経済的・社会的求心力が国家規制をも動かす**という構造にある。政府の方針転換は単なる娯楽政策ではなく、消費低迷期における需要喚起策としての側面を持ち、規制と経済活性化のバランスという普遍的な政策ジレンマを象徴している。グローバル経済への示唆として、大型スポーツイベントが各国で「規制の一時的解除」という形の経済刺激策として機能しうることを改めて示しており、今後のイベント誘致・活用戦略において政策立案者が注目すべき事例といえる。",
+    "collected_at": "2026-07-03T05:26:42.771614+09:00",
+    "market_impact": "英国の飲食・ホスピタリティ業界にとって短期的な売上増加が見込まれ、ビール・飲料メーカーや小売業者にもプラスの影響が波及する可能性がある。ポンド相場への直接的影響は限定的だが、消費者支出の一時的押し上げ効果が英国内需指標にわずかながら反映されうる。スポーツ関連メディア・放映権ビジネスにとっても視聴者拡大の追い風となる。"
+  },
+  {
+    "title": "Ryanair warns of 'queue chaos' from new EU border system",
+    "japanese_title": "ライアンエアーがEU新国境システム「EES」導入に警告―夏季休暇前の混乱回避へ延期を要請",
+    "url": "https://www.bbc.co.uk/news/articles/c8x2y74wp9eo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 欧州格安航空会社ライアンエアーは、EUが導入予定の新入国管理システム「EES（Entry/Exit System）」が夏季観光シーズンに深刻な渋滞・混乱を引き起こすと警告した。",
+      "2. 同社はヨーロッパ各国政府に対し、夏季休暇期間が終了するまでEESの導入を延期するよう強く求めている。",
+      "3. EESは域外からの渡航者の指紋・顔認証データを収集する新システムで、国境通過時間の大幅な増加が懸念されている。"
+    ],
+    "points": [
+      "・ EESはパスポートスキャンだけでなく生体認証も必要とするため、1人あたりの国境通過時間が従来比で大幅に増加する見込み",
+      "・ ライアンエアーは欧州最大の格安航空会社であり、その警告は業界全体の懸念を代表するものとして影響力が大きい",
+      "・ EES導入はすでに複数回延期されており、今回の要請が政治的判断に影響を与える可能性がある"
+    ],
+    "prediction": "欧州各国政府がライアンエアーや他の航空会社・観光業界の圧力を受け、EES導入をさらに延期する可能性は十分にある。一方で導入が強行された場合、夏季ピーク時の空港・陸路国境での大規模混雑が現実化し、欧州観光産業の短期的な競争力低下につながるリスクがある。中長期的には、EESが完全稼働すれば欧州の国境管理の透明性・安全性向上に貢献し、不法入国抑止や治安強化の面でプラス評価を得る可能性もある。",
+    "ai_interpretation": "このニュースの本質は、**EUのデジタル国境管理強化という長期的安全保障政策と、短期的な経済・観光利益のトレードオフ**にある。民間企業（航空会社）が政策実施のタイミングに公然と異議を唱えるという構図は、EUの規制と産業界の関係における摩擦を象徴している。グローバル経済的には、国境のデジタル化・生体認証化は不可逆的なトレンドであり、今回の混乱は「技術導入の準備不足」という先進国共通の課題を改めて浮き彫りにしていると言える。",
+    "collected_at": "2026-07-03T05:27:04.058269+09:00",
+    "market_impact": "EESの導入による国境通過の遅延は、欧州の観光・航空・ホスピタリティ産業に直接的なダメージを与える可能性があり、夏季の旅行需要を冷え込ませるリスクがある。航空株や欧州観光関連銘柄（ホテル・旅行代理店）への売り圧力となりうる一方、混乱を避けるための旅行計画変更がユーロ圏内の消費動向にも影響を与える可能性がある。為替市場では、観光収入減少懸念がユーロの小幅な下押し要因となる場面も考えられる。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-03",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-07-03.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-07-03.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-07-02",
+    "href": "2026-07-02.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
