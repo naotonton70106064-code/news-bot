@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "The browser wars aren’t about search anymore — here are the best alternatives to Chrome and Safari",
+    "japanese_title": "Chrome・Safari不要？2024年注目のブラウザ戦争——最強の代替ブラウザ完全ガイド",
+    "url": "https://techcrunch.com/2026/07/03/as-the-browser-wars-heat-up-here-are-the-hottest-alternatives-to-chrome-and-safari-in-2026/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. ブラウザ競争の焦点は、かつての「検索エンジン覇権」から「プライバシー・AI・ユーザー体験」へと大きくシフトしている。",
+      "2. ChromeとSafariが市場を独占する中、多様な代替ブラウザが独自の強みを武器に挑戦状を叩きつけている。",
+      "3. 本記事では現在注目すべき代替ブラウザを網羅的に紹介・比較している。"
+    ],
+    "points": [
+      "・ブラウザ競争の軸が「検索」から「プライバシー保護」「AI統合」「UI革新」へと変化している",
+      "・ChromeはGoogleの個人情報収集問題、SafariはAppleエコシステムへの閉鎖性がそれぞれ弱点となっている",
+      "・代替ブラウザ各社は広告ブロック・トラッキング防止・独自AI機能などで差別化を図っている"
+    ],
+    "prediction": "AIアシスタント機能をブラウザに組み込む競争が加速し、単なる「ページ表示ツール」を超えた知的エージェントとしてのブラウザ像が主流になっていくと考えられる。また、米司法省によるGoogleへの独占禁止法訴訟の結果次第では、ChromeのデフォルトブラウザとしてのOS搭載が制限される可能性があり、代替ブラウザにとって大きなチャンスとなり得る。プライバシー規制の強化が世界的に進む中、透明性の高いオープンソース系ブラウザへの移行が緩やかに進むだろう。",
+    "ai_interpretation": "このニュースの本質は、「ブラウザ」というインターネットの入り口を誰がコントロールするかという権力構造の変化を示している。検索広告収益モデルへの依存から脱却しようとするブラウザ各社の動きは、ビッグテック依存からの自立を求めるユーザー意識の変化と完全に一致している。つまりこれは単なる技術競争ではなく、「デジタル主権」をめぐるユーザーと巨大プラットフォームの静かな攻防を映し出している。",
+    "collected_at": "2026-07-04T05:16:56.539882+09:00",
+    "background": "かつてのブラウザ戦争はMicrosoftのIEとNetscapeの争い、その後GoogleのChromeが市場を席巻するという形で展開されてきた。しかし近年、個人情報保護意識の高まりやAI機能の台頭、さらにGoogleの独占禁止法問題などを背景に、ユーザーが既存ブラウザに対して抱く不信感や不満が増大している。こうした状況を受け、Brave・Arc・Vivaldi・Firefoxなどの代替ブラウザが改めて注目を集めている。"
+  },
+  {
+    "title": "The Dune keypad device can be your meeting controller and more",
+    "japanese_title": "会議やアプリを自在にコントロール！3ボタンのスマートキーパッド「Dune」が登場",
+    "url": "https://techcrunch.com/2026/07/03/the-dune-keypad-device-can-be-your-meeting-controller-and-more/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 「Dune」は3つのボタンを搭載したコンパクトなキーパッドデバイスで、会議コントローラーとして活用できる。",
+      "2. 使用中のアプリやサイトに応じてボタンの機能が自動的に切り替わるコンテキスト対応型の設計が特徴。",
+      "3. 会議アプリでは、マイクのオン/オフ、カメラのオン/オフ、ウィンドウの前面表示などの操作が可能。"
+    ],
+    "points": [
+      "・ 3つのボタンという極めてシンプルな構成ながら、アプリに応じて機能が動的に変化するコンテキスト認識機能を搭載",
+      "・ Zoom・Teams・Meetなど複数の会議プラットフォームに対応できる汎用性の高さ",
+      "・ 会議用途に限らず、さまざまなアプリで異なる機能として活用できる拡張性"
+    ],
+    "prediction": "対応アプリやカスタマイズ機能が拡充されることで、クリエイターや開発者など幅広いユーザー層への普及が期待される。Stream DeckなどのマルチボタンコントローラーとDuneのようなミニマルデザインのデバイスが市場で競合し、ユーザーのニーズによって棲み分けが進むだろう。また、AIとの連携により、コンテキスト認識の精度がさらに向上する可能性もある。",
+    "ai_interpretation": "このデバイスが示す本質は「シンプルさと賢さの融合」であり、ボタン数を絞りながらも知的な文脈理解によって多機能を実現するという新しいUI設計思想を体現している。ハードウェアのミニマル化とソフトウェアのインテリジェント化を組み合わせることで、ユーザーの認知負荷を下げる方向性は、今後のデバイス開発のトレンドを先取りしていると言える。リモートワーク時代における「操作体験の最適化」という課題に対する一つの有力な回答として注目に値する。",
+    "collected_at": "2026-07-04T05:17:14.010409+09:00",
+    "background": "リモートワークやハイブリッドワークの普及により、オンライン会議の頻度が大幅に増加し、操作の煩雑さが課題となっていた。マイクやカメラのコントロールをキーボードやマウスで行う手間を省く専用デバイスへのニーズが高まっている。こうした背景を受け、シンプルかつ多機能なハードウェアソリューションとしてDuneが開発されたと考えられる。"
+  },
+  {
+    "title": "Chevy built an all-American EV truck — why is nobody buying it?",
+    "japanese_title": "シボレー・シルバラードEVが売れない理由とは？アメリカ製EVトラックが直面する課題",
+    "url": "https://techcrunch.com/2026/07/03/chevy-built-an-all-american-ev-truck-why-is-nobody-buying-it/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. シボレーはアメリカ製EVピックアップトラック「シルバラードEV」を発売したが、販売不振に陥っている。",
+      "2. 製品自体は「初稿としては及第点」と評価されており、基本性能は一定水準を満たしている。",
+      "3. 価格・充電インフラ・競合環境など複数の課題が購買意欲を阻んでいると見られる。"
+    ],
+    "points": [
+      "・ 価格が依然として高く、一般的なトラックユーザー層にとって購入ハードルが高い",
+      "・ 充電インフラの整備不足が、実用性を重視するトラックユーザーの不安要素となっている",
+      "・ 競合（テスラ、フォード、リビアン）との差別化が不十分で、独自の魅力が伝わりきっていない"
+    ],
+    "prediction": "GMは価格調整やソフトウェアのアップデート、航続距離の改善などを通じて競争力強化を図るとみられる。アメリカのEV税控除制度（IRAの恩恵）を活用したコスト訴求が販売回復の鍵になる可能性がある。ただし、ガソリン・ハイブリッドトラックへの根強い需要が続く限り、EVトラック市場全体の成長ペースは緩やかなものにとどまるだろう。",
+    "ai_interpretation": "このニュースが示す本質は、「技術的に優れた製品」と「市場に受け入れられる製品」の間にある深いギャップである。トラックユーザーは実用性・コスト・信頼性を最優先する保守的な層が多く、EVの「新しさ」はむしろ障壁になり得る。シルバラードEVの苦戦は、EV普及において技術革新だけでなく、ユーザー心理・インフラ・価格戦略の三位一体の整備が不可欠であることを改めて示している。",
+    "collected_at": "2026-07-04T05:17:31.615822+09:00",
+    "background": "アメリカではフォード「F-150ライトニング」やテスラ「サイバートラック」などEVピックアップトラック市場が活性化する中、GMはシボレーブランドの看板車種「シルバラード」をEV化して参入した。EVシフトへの政府支援や消費者の環境意識の高まりを追い風に期待されたが、実際の市場反応は期待を下回っている。ガソリン車のシルバラードが長年培ってきたブランド力をEVで再現することの難しさも浮き彫りになっている。"
+  },
+  {
+    "title": "Rocket Report: Indian startup nears first launch; SpaceX's millenary milestone",
+    "japanese_title": "NASAがロケットラボに3回の専用打ち上げ契約を締結——インド新興企業の初打ち上げやSpaceXの節目も話題",
+    "url": "https://arstechnica.com/space/2026/07/rocket-report-indian-startup-nears-first-launch-spacexs-millenary-milestone/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. NASAはロケットラボ社のElectronロケットを使用した3回の専用打ち上げ契約を締結した。",
+      "2. インドの宇宙スタートアップが初の打ち上げに向けて最終段階に近づいていると報告されている。",
+      "3. SpaceXも重要なマイルストーン（1000回台の節目）を達成しつつあり、宇宙産業全体が活況を呈している。"
+    ],
+    "points": [
+      "・ NASAがロケットラボに対して3回分の専用打ち上げ契約を付与したことで、同社の収益基盤がさらに安定化",
+      "・ インドの宇宙スタートアップが初打ち上げ間近というニュースは、アジア新興国の宇宙産業台頭を示す象徴的な出来事",
+      "・ SpaceXの「1000回」という節目は、民間宇宙企業の量産・運用能力が前例のない水準に達したことを示す"
+    ],
+    "prediction": "ロケットラボはNASAとの契約を足がかりに、さらなる政府系顧客の獲得を目指すとみられ、小型衛星打ち上げ市場での地位を強固にするだろう。インドのスタートアップが打ち上げに成功すれば、同国の民間宇宙産業への投資が加速する可能性が高い。一方、SpaceXは圧倒的な打ち上げ実績をもとに市場シェアをさらに拡大し、競合他社との差を広げていくと予想される。",
+    "ai_interpretation": "このニュースが示す本質は、宇宙産業における「民主化」と「競争激化」の同時進行である。かつて国家機関だけが担っていた宇宙開発が、今やスタートアップレベルの企業でも参入可能な領域となりつつある。NASAのような伝統的宇宙機関が民間企業を積極活用する流れは不可逆的であり、今後は技術力・コスト競争力・信頼性を兼ね備えた企業が宇宙ビジネスの覇権を握る時代が本格化することを示唆している。",
+    "collected_at": "2026-07-04T05:17:48.807387+09:00",
+    "background": "NASAは小型衛星の打ち上げニーズに対応するため、民間企業との契約を積極的に拡大してきた。ロケットラボのElectronロケットは小型衛星専用の打ち上げ機として実績を積んでおり、NASAの信頼を獲得している。こうした官民連携の流れは、米国の宇宙政策における「商業宇宙活用」戦略の一環である。"
+  },
+  {
+    "title": "Inside the Luddite festival harnessing Gen Z’s rage against Big Tech",
+    "japanese_title": "Z世代のビッグテック批判が加速——ニューヨーク「ラッダイト祭り」がオフライン生活を伝授",
+    "url": "https://arstechnica.com/culture/2026/07/inside-the-luddite-festival-harnessing-gen-zs-rage-against-big-tech/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. ニューヨーク市で開催された「Summer of Ludd」フェスティバルが、テクノロジーに依存しない生活様式をZ世代に向けて発信している。",
+      "2. 同イベントはスマートフォンやSNSなどのビッグテックへの反発・怒りをエネルギー源とし、デジタルデトックスの具体的手法を参加者に教えている。",
+      "3. 現代の「新ラッダイト運動」として、若い世代の間でテクノロジー批判的なライフスタイルへの関心が高まっていることを示している。"
+    ],
+    "points": [
+      "・「ラッダイト」という歴史的概念をZ世代が現代風に再解釈し、文化運動として昇華させている点",
+      "・単なるデジタルデトックスに留まらず、ビッグテック企業への構造的な批判・怒りを政治的メッセージとして掲げている点",
+      "・フェスティバルというリアルな場での「オフライン体験」そのものが、コミュニティ形成と反テック思想の普及に機能している点"
+    ],
+    "prediction": "AI・スマートフォン・SNSへの社会的依存が深まる中、このような反テック運動はニューヨークにとどまらず、他都市や他国にも波及していく可能性がある。特にメンタルヘルス問題や個人情報プライバシーへの関心が高まる欧米圏を中心に、若者主導のデジタル離脱コミュニティが増加すると予測される。一方で、ビッグテック企業側もこうした批判に対応する形で規制強化や製品改善を迫られる圧力が高まるだろう。",
+    "ai_interpretation": "このニュースの本質は、テクノロジーの「利便性」と「支配性」のせめぎ合いに対するZ世代なりの回答であり、単なる流行ではなく構造的な問いかけを含んでいる。デジタルネイティブであるはずのZ世代が自らテクノロジーを「拒絶」しようとする逆説は、過剰な最適化・監視・依存設計に対する人間的自律性の回復運動として読み解ける。この動きは、今後のテクノロジー倫理や規制政策の議論にも影響を与える、時代の気分を象徴する重要なシグナルと言えるだろう。",
+    "collected_at": "2026-07-04T05:18:08.957080+09:00",
+    "background": "19世紀の産業革命期に機械打ち壊し運動を行った「ラッダイト」になぞらえ、現代のZ世代がSNS中毒・データ搾取・アルゴリズム支配への反発として新たなラッダイト運動を展開している。スマートフォンの普及とSNSの過剰利用が若者のメンタルヘルスや自律性を損なっているという問題意識が、この動きの根底にある。こうした流れを受け、ニューヨークではオフライン生活を実践・学ぶための具体的なコミュニティイベントが生まれた。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-04",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-07-03",
+    "href": "2026-07-03.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
