@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Manhattan luxury real estate sales hold firm despite fears of a 'Mamdani effect'",
+    "japanese_title": "マンハッタン高級不動産、「マムダニ効果」懸念をよそに売上堅調維持",
+    "url": "https://www.cnbc.com/2026/07/03/manhattan-luxury-real-estate-sales-mamdani.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ニューヨーク市でセカンドホームへの新税が導入されてから約1ヶ月が経過したが、高級不動産市場への深刻な影響は見られていない。",
+      "2. 不動産ブローカーや市場アナリストらは、当初懸念されていた「マムダニ効果」（政策による市場冷却）は現時点では顕在化していないと報告している。",
+      "3. 富裕層向け高級不動産の需要は依然として底堅く、税制変更に対する市場の耐性が示された形となっている。"
+    ],
+    "points": [
+      "・「マムダニ効果」とは、進歩派政策立案者による課税強化が高級不動産市場を冷却させるという懸念を指す",
+      "・セカンドホーム課税という累進的な税制措置が富裕層の行動変容を促せるかどうかが試されている",
+      "・ニューヨーク市の財政収入増加を狙った政策が、実際には期待通りの効果を上げていない可能性がある"
+    ],
+    "prediction": "短期的には市場の堅調さが続く可能性が高いが、税制の累積効果や他都市への高級不動産需要のシフトが中長期的に顕在化する可能性がある。他の大都市（ロサンゼルス、マイアミ、ロンドン等）も同様の課税政策を検討しており、ニューヨークの事例はグローバルな政策立案の参考事例となる見込みだ。地政学的不確実性が高まる中、富裕層は依然として主要都市の不動産を安全な価値保存手段と見なしており、この傾向は当面継続するとみられる。",
+    "ai_interpretation": "このニュースの本質は、**富裕層の経済行動が単純な税制変更に対して短期的に非弾力的である**という現実を示している点にある。政府が格差是正を目的として不動産課税を強化しても、超富裕層の需要を抑制するには不十分である可能性を示唆しており、政策の実効性に疑問を投げかけるものだ。グローバル経済への示唆としては、所得・資産格差の縮小には課税強化だけでなく、より構造的なアプローチが必要であることを改めて示しており、先進国全体の政策論争に影響を与える可能性がある。",
+    "collected_at": "2026-07-05T05:14:22.991091+09:00",
+    "market_impact": "マンハッタンの高級不動産市場の堅調さは、超富裕層の資産需要が税制変更程度では揺らがないことを示しており、グローバルな富の集中傾向を改めて浮き彫りにしている。為替面では、強いドルを背景に海外投資家にとってニューヨーク不動産の割高感はあるものの、安全資産としての需要は根強い。不動産セクター関連のREITや建設・インテリア産業にとっては短期的にポジティブなシグナルとなる。"
+  },
+  {
+    "title": "Rivian raises 2026 delivery outlook while Lucid misses Wall Street expectations for second quarter",
+    "japanese_title": "リビアン、2026年EV納車見通しを上方修正——ルーシッドは第2四半期で市場期待を下回る",
+    "url": "https://www.cnbc.com/2026/07/02/rivian-lucid-q2-deliveries-demand.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. リビアンは2026年のEV納車見通しを従来の62,000〜67,000台から65,000〜70,000台へと上方修正し、事業拡大への自信を示した。",
+      "2. 一方、同じEVスタートアップのルーシッドは第2四半期においてウォール街の期待値を下回る結果となり、明暗が分かれた。",
+      "3. 両社の対照的な業績は、EV新興メーカー間における競争力・生産能力・資金力の格差を浮き彫りにしている。"
+    ],
+    "points": [
+      "・リビアンの納車目標引き上げは、フォルクスワーゲンとの提携効果や生産効率改善が背景にある可能性",
+      "・ルーシッドの期待外れな業績は、高価格帯EVへの消費者需要が依然として限定的であることを示唆",
+      "・EVスタートアップ全体として、採算性確保と生産スケールアップの両立が最大の課題として残る"
+    ],
+    "prediction": "リビアンが納車目標を着実に達成できれば、黒字化への道筋が明確になり、追加資本調達や戦略的提携においても有利な立場を得られるだろう。ルーシッドはサウジアラビア政府系ファンド（PIF）の支援を背景に存続しているが、量産体制の構築と市場拡大が急務であり、中東市場への依存が続く見通しだ。また、米国のEV補助金政策の行方や関税動向が両社の成長軌道に大きく影響するリスクも残る。",
+    "ai_interpretation": "このニュースの本質は、EV産業が「夢を語るフェーズ」から「実行力で選別されるフェーズ」へと移行していることを象徴している点にある。リビアンとルーシッドという同世代のスタートアップが正反対の評価を受けたことは、技術力だけでなくサプライチェーン管理・資本効率・販売戦略の総合力が企業生存を左右するという現実を示している。グローバル経済への示唆としては、EV覇権争いが既存自動車メーカーと新興企業の二極化をさらに加速させ、勝者総取り構造へと収斂していく可能性を強く示唆している。",
+    "collected_at": "2026-07-05T05:14:43.001542+09:00",
+    "market_impact": "リビアンの上方修正はEV市場への投資家信頼を部分的に回復させ、同社株および関連サプライチェーン銘柄にポジティブな影響を与える可能性がある。ルーシッドの不振は高級EVセグメントの需要鈍化懸念を強め、テスラをはじめとする競合他社との競争激化を示唆する。為替面では、米国EV産業の動向が日本円・韓国ウォンなど自動車輸出国通貨に間接的な影響を及ぼしうる。"
+  },
+  {
+    "title": "Ford CEO wants level playing field with Toyota, GM imports as USMCA trade talks reopen",
+    "japanese_title": "フォードCEO、USMCA再交渉でトヨタ・GMとの公平な競争環境を要求｜米国自動車業界の貿易摩擦が激化",
+    "url": "https://www.cnbc.com/2026/07/02/ford-jim-farley-usmca.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. フォードは昨年、米国内で200万台以上を生産（うち輸出31.1万台）し、全自動車メーカー中最多の国内生産を達成したと報告した。",
+      "2. USMCA（米国・メキシコ・カナダ協定）の再交渉が再開される中、フォードCEOはトヨタやGMなど競合他社との「公平な競争条件（レベルプレイングフィールド）」の確保を強く求めている。",
+      "3. 自国生産への多大な投資を背景に、フォードは貿易ルールの見直しにおいて米国内製造業者が優遇される枠組みを訴えている。"
+    ],
+    "points": [
+      "・ フォードが「国内最多生産」を強調することで、政治的・政策的正当性を訴求している点",
+      "・ トヨタ（日本企業）とGM（同じ米国企業）を同列に並べている点が、競争軸の複雑さを示唆",
+      "・ USMCA再交渉のタイミングが、トランプ政権の関税強硬姿勢と重なっている政治的背景"
+    ],
+    "prediction": "USMCA再交渉では原産地規則や労働条項の厳格化が議論される見通しで、メキシコでの生産比率が高い企業（GMや日系メーカー）ほど不利な条件を迫られるリスクがある。米国が自国製造業保護を強化する方向に舵を切れば、日本・欧州との通商摩擦が再燃し、WTOを巡る多国間の対立構造が深まる可能性もある。中長期的には、北米における自動車生産の「リショアリング（国内回帰）」がさらに加速するだろう。",
+    "ai_interpretation": "このニュースの本質は、貿易協定の再交渉を「ビジネス競争のルール設定の場」として活用しようとするフォードの戦略的ロビー活動にある。「公平な競争」という言葉の裏には、国内生産への巨額投資を政治的レバレッジに転換し、輸入依存度の高い競合他社を不利な立場に追い込む意図が読み取れる。グローバル経済全体への示唆としては、自由貿易の原則よりも「誰がどこで作るか」という生産地主義が通商政策の主軸になりつつある潮流を象徴している。",
+    "collected_at": "2026-07-05T05:15:04.006999+09:00",
+    "market_impact": "USMCA再交渉の行方は、北米自動車サプライチェーン全体に直接影響を与えるため、自動車株・部品メーカー株の変動要因となり得る。特にトヨタ・ホンダなど日系メーカーの北米生産・輸出戦略にも波及する可能性があり、円ドル相場や日本の製造業株にも間接的な影響が及ぶ。また、関税政策の変更次第ではメキシコペソの動向にも注目が集まるだろう。"
+  },
+  {
+    "title": "A hot summer trend in the sharing economy? Rental swimming pools",
+    "japanese_title": "シェアリングエコノミーの新潮流！プライベートプール貸し出しサービス「Swimply」が夏に急成長",
+    "url": "https://www.npr.org/2026/07/02/nx-s1-5838050/a-hot-summer-trend-in-the-sharing-economy-rental-swimming-pools",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 猛暑が続く夏に、プライベートプールを時間単位でレンタルできるプラットフォーム「Swimply」が注目を集めている。",
+      "2. Swimplyはプール所有者と利用希望者をマッチングするシェアリングエコノミー型のサービスである。",
+      "3. 自宅にプールを持たない消費者に対し、手軽にプール体験を提供する新たな需要が生まれている。"
+    ],
+    "points": [
+      "・「遊休資産の収益化」というシェアリングエコノミーの本質を体現したビジネスモデル",
+      "・気候変動による夏季の高温化が、こうしたサービスへの需要を構造的に押し上げる追い風となっている",
+      "・AirbnbやUberに続く、ニッチ資産のマッチングプラットフォームとして投資家の関心を集める可能性"
+    ],
+    "prediction": "Swimplyのようなモデルは米国に留まらず、猛暑が深刻化するアジアや欧州でも展開が加速する可能性が高く、グローバルなシェアリングエコノミー市場の多様化が進むと予測される。また、プラットフォームビジネスへの投資が再活性化する中、ニッチ特化型サービスが新たなユニコーン企業を生み出す土壌となり得る。規制面では、安全基準や保険制度の整備が各国で課題となってくるだろう。",
+    "ai_interpretation": "このニュースの本質は、**「あらゆる私有資産が収益資産に変わる時代」** の到来を象徴している点にある。プールという従来は「維持費のかかる贅沢品」が、プラットフォームを通じて「収益を生む資産」へと転換されるモデルは、資本主義における所有概念そのものを変革しつつある。グローバル経済への示唆としては、インフレや生活コスト上昇を背景に、個人が資産を最大限活用しようとする行動が加速しており、シェアリングエコノミーは景気変動に強い持続的な経済モデルとして定着しつつあると言える。",
+    "collected_at": "2026-07-05T05:15:22.960360+09:00",
+    "market_impact": "シェアリングエコノミー市場のさらなる拡大を示す事例として、レジャー・観光産業に新たな競争圧力を与える可能性がある。既存のプール施設や水上レジャー施設にとっては代替サービスとして需要が分散するリスクがある。一方、個人資産の収益化という観点から、不動産価値の新たな評価軸を生み出す可能性も示唆している。"
+  },
+  {
+    "title": "Tackle workplace sickness to unlock hidden growth, former John Lewis boss says",
+    "japanese_title": "元ジョン・ルイス会長が警告：職場の病欠問題解決が英国経済成長の隠れた鍵",
+    "url": "https://www.bbc.co.uk/news/articles/cq61j11r577o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 元ジョン・ルイス会長が主導する「英国を働かせよう（Get Britain Working）」タスクフォースに、英国の大企業250社以上が署名・参加した。",
+      "2. 職場における従業員の健康問題・病欠への対策が、英国経済の潜在的成長を引き出す重要な施策として位置づけられている。",
+      "3. 民間主導で労働参加率の改善と生産性向上を目指す取り組みとして、官民連携の新たなモデルを示している。"
+    ],
+    "points": [
+      "・ 英国では新型コロナ後遺症や精神疾患による長期病欠者が急増し、経済の「隠れた損失」として深刻化している",
+      "・ 250社以上の大企業が自発的に参加するという民間主導アプローチが、政府規制に依存しない新モデルとして注目される",
+      "・ 労働生産性の低迷はG7諸国共通の課題であり、英国の取り組みが国際的な政策立案の参考事例となる可能性がある"
+    ],
+    "prediction": "英国政府はスターマー政権下で経済成長を最優先課題としており、本タスクフォースの成果が労働政策の中核に組み込まれていく可能性が高い。欧州各国でも同様の「職場ウェルネス」政策への関心が高まっており、グローバルなESG投資の文脈でも企業の健康経営への注目度が増すだろう。長期的には、予防医療・メンタルヘルス産業への民間投資加速が見込まれる。",
+    "ai_interpretation": "このニュースの本質は、「経済成長の障壁が供給側ではなく、人的資本の健康管理にある」という認識の転換を示している。少子高齢化・慢性疾患増加・メンタルヘルス問題は日本を含む先進国共通の構造問題であり、英国の民間主導モデルはグローバルな政策議論に重要な示唆を与える。企業が福利厚生を「コスト」ではなく「生産性投資」として捉え直す動きは、今後の資本配分や企業評価基準にも影響を与えうる本質的なパラダイムシフトといえる。",
+    "collected_at": "2026-07-05T05:15:40.891409+09:00",
+    "market_impact": "英国の労働参加率改善は、慢性的な労働力不足の緩和につながり、英ポンドや英国株式市場にとってプラス材料となり得る。特に医療・ヘルスケア産業や企業向け福利厚生サービス分野への需要拡大が期待される。一方、労働コスト構造の変化が中小企業の収益性に影響を与える可能性もある。"
+  },
+  {
+    "title": "Burnham says there is some room for movement on tax",
+    "japanese_title": "バーナム氏「税制に若干の調整余地あり」－次期英首相候補、主要3税は据え置き公約を堅持",
+    "url": "https://www.bbc.co.uk/news/articles/c5yz9j7v0z6o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 次期首相候補として有力視されるアンディ・バーナム氏が、税制において「一定の動く余地がある」と示唆した。",
+      "2. ただし労働党の公約である付加価値税（VAT）・所得税・国民保険料の3税については引き上げを行わない方針を明言した。",
+      "3. 財政再建と公約遵守のバランスをとりながら、限定的な税制見直しの可能性を含むニュアンスある姿勢を示した。"
+    ],
+    "points": [
+      "・「調整余地がある」という表現の対象が法人税や資産課税など他の税目に及ぶ可能性",
+      "・労働党の既存公約との整合性をどう維持するか、政治的信頼性が問われる",
+      "・英国の財政赤字・公的債務水準を背景に、増税圧力が今後どの程度高まるかという構造的問題"
+    ],
+    "prediction": "英国は高インフレと低成長の狭間で財政運営の余地が限られており、主要3税を据え置く一方で隠れた形での財源確保（歳出削減や間接課税強化）が進む可能性がある。バーナム氏が首相に就任した場合、EU離脱後の経済再建と財政健全化という二重課題に直面し、欧州市場との関係再構築が英国の経済成長の鍵を握るだろう。地政学的にも英国の政策スタンスは大西洋両岸の投資家心理に影響を与えることが予想される。",
+    "ai_interpretation": "このニュースの本質は、英国政治における「公約の柔軟性と信頼性のジレンマ」を体現している点にある。主要税目の据え置きを掲げながらも「動く余地」に言及することは、財政現実と選挙公約の乖離が深刻化していることを示唆する。グローバル経済的には、主要先進国が軒並み財政再建と増税回避の板挟みに直面している構図の縮図であり、英国の政策選択は他国の財政戦略にとっても一つの試金石となりうる。",
+    "collected_at": "2026-07-05T05:16:00.782569+09:00",
+    "market_impact": "英国ポンドは政治的不確実性への感応度が高く、主要3税の据え置き明言はポンド安定への安心材料となり得る。一方で「調整余地あり」という曖昧な表現は、英国債（ギルト債）市場において一定の警戒感を招く可能性がある。グローバル投資家にとっては英国の財政規律維持への信頼性が問われる局面であり、FDI（対英外国直接投資）の動向にも注視が必要だ。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-05",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-07-05.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-07-05.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-07-04",
+    "href": "2026-07-04.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
