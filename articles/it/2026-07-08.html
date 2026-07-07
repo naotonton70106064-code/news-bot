@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Why the rise of open source AI isn’t hurting Anthropic … yet",
+    "japanese_title": "オープンソースAIの台頭がAnthropicに打撃を与えない理由——フロンティアモデルと共存する構造的メカニズムとは",
+    "url": "https://techcrunch.com/2026/07/07/why-the-rise-of-open-source-ai-isnt-hurting-anthropic-yet/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. オープンソースAIモデルの急成長は、AnthropicなどのフロンティアAI企業のビジネスを現時点では侵食していない。",
+      "2. オープンソースとプロプライエタリ（独自開発）モデルは競合関係ではなく、ユーザーや企業のAI活用ライフサイクルの異なる段階をそれぞれ担っている。",
+      "3. 両者は市場を食い合うのではなく、互いに補完し合う共存構造を形成している可能性が示唆されている。"
+    ],
+    "points": [
+      "・ オープンソースモデルは「実験・プロトタイプ段階」で採用されやすく、フロンティアモデルは「本番運用・高精度要求段階」で選ばれる傾向がある",
+      "・ 企業がAIに習熟するにつれ、より高性能なプロプライエタリモデルへ移行するライフサイクルが観察されている",
+      "・ 「yet（まだ）」という留保表現が示すように、将来的にはオープンソースの進化が競合関係を生む可能性も否定できない"
+    ],
+    "prediction": "オープンソースモデルの性能がさらに向上し、フロンティアモデルとのギャップが縮小すれば、現在の共存構造が崩れ、Anthropicなどへの本格的な競争圧力が生じる可能性がある。一方で、フロンティアラボは常に技術的優位を保ちつつ、エンタープライズ向けの安全性・信頼性・サポート体制で差別化を図る戦略を強化していくと見られる。AIモデルの「コモディティ化」が進む中で、付加価値の源泉がどこに移行するかが業界の焦点になるだろう。",
+    "ai_interpretation": "このニュースの本質は、AI市場が「技術の民主化」と「高度専門化」という二つの力が共存するエコシステムへと成熟しつつあることを示している点にある。オープンソースは裾野を広げることでAI活用の入口を拡大し、結果的にフロンティアモデルの潜在顧客を育てる「予備軍形成装置」として機能しているとも解釈できる。つまり現時点では競争ではなく「市場の拡大」という恩恵をフロンティアラボも享受しており、これはAI産業全体の健全な成長サイクルを示す重要なシグナルと言える。",
+    "collected_at": "2026-07-08T05:50:44.607220+09:00",
+    "background": "Meta（Llama）やMistralなどのオープンソースLLMの性能が急速に向上し、商用クローズドモデルへの脅威になるとの見方が広がっていた。一方でAnthropicやOpenAIなどのフロンティアラボは依然として高い収益成長を維持しており、市場の懸念とは裏腹に業績への影響が限定的であることが明らかになってきた。この背景には、企業のAI導入プロセスにおける段階的な使い分けという構造的な要因が存在すると分析されている。"
+  },
+  {
+    "title": "Microsoft joins AI cost-cutting trend by relying more on its own models",
+    "japanese_title": "マイクロソフトが自社AIモデルを活用してAIコスト削減に舵を切る――シリコンバレーに広がる節約トレンド",
+    "url": "https://techcrunch.com/2026/07/07/microsoft-joins-ai-cost-cutting-trend-by-relying-more-on-its-own-models/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. マイクロソフトは自社開発のAIモデルへの依存度を高めることで、AI関連コストの削減に乗り出した。",
+      "2. この動きはシリコンバレーの大手テック企業の間で広がりつつあるAIコスト削減トレンドの一環である。",
+      "3. 外部モデル（OpenAIなど）への依存を減らし、自社モデルで代替することでコスト効率の改善を図っている。"
+    ],
+    "points": [
+      "・マイクロソフトが自社製AIモデルを積極的に活用することで、OpenAIへの依存度・支払いコストを抑制しようとしている点",
+      "・シリコンバレー全体で「AI投資の選択と集中」が進んでいるという業界トレンドを象徴している点",
+      "・自社モデルの性能向上がコスト削減戦略を現実的にした技術的な成熟度の向上という点"
+    ],
+    "prediction": "マイクロソフトは引き続き自社AIモデル（Phiシリーズなど小型・高効率モデル）の強化を進め、用途に応じて外部モデルと使い分ける「ハイブリッド戦略」を深化させるだろう。これにより短期的にはOpenAIへの発注量が減少し、両社のビジネス関係に微妙な変化が生じる可能性がある。業界全体でも同様の動きが加速し、AIモデルの「内製化競争」が新たな局面を迎えると予測される。",
+    "ai_interpretation": "このニュースの本質は、AIバブル的な「とにかく投資・外部調達」フェーズから、**「ROI（投資対効果）重視の成熟フェーズ」への移行**を象徴している点にある。自社モデルの活用拡大は単なるコスト削減ではなく、AIケイパビリティの内製化による競争優位の確立という戦略的意図も内包している。長期的には、外部AIベンダーへの依存リスクを低減しながら、自社エコシステムの付加価値を高めるという、テック大手の本質的なビジネス戦略の表れと言える。",
+    "collected_at": "2026-07-08T05:51:01.837251+09:00",
+    "background": "生成AIブームを受け、マイクロソフトをはじめ多くのテック企業がAIインフラや外部モデルの利用に莫大な投資を行ってきた。しかし、AIへの支出が急増する中で収益性への懸念が高まり、費用対効果の見直しが業界全体で始まっている。特にマイクロソフトはOpenAIとの緊密なパートナーシップを持つ一方で、自社モデルの開発にも注力しており、両者のバランスを再調整する段階に入ったと見られる。"
+  },
+  {
+    "title": "Discord admits AI moderation bug wrongfully banned users over harmless images",
+    "japanese_title": "Discord、AIモデレーションのバグで無害な画像を投稿したユーザーを誤BANと認める",
+    "url": "https://techcrunch.com/2026/07/07/discord-admits-ai-moderation-bug-wrongfully-banned-users-over-harmless-images/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. DiscordのAIモデレーションシステムにバグが発生し、無害な画像を投稿したユーザーが誤ってアカウント停止（BAN）される事態が起きた。",
+      "2. この問題は5月から継続して発生しており、問題発覚前の週末だけで新たに約200人のユーザーが誤BANされていた。",
+      "3. Discordのチームはその後、問題を特定し修正を完了したことを公式に認めた。"
+    ],
+    "points": [
+      "・ 問題が5月から発生していたにもかかわらず、発見・修正が大幅に遅れた点はAI監視体制の不備を示す",
+      "・ 無害な画像が誤検知される「偽陽性（False Positive）」の問題は、AI自動モデレーションが抱える構造的な課題である",
+      "・ 誤BANされたユーザーへの救済措置（アカウント復旧・謝罪・補償）の対応内容が今後の信頼回復の鍵となる"
+    ],
+    "prediction": "Discordは誤BANされたユーザーのアカウント復旧対応を進めるとともに、AIモデレーションシステムの精度向上と人間による二重チェック体制の強化を迫られるだろう。ユーザーやコミュニティからの信頼回復のため、透明性のある説明と再発防止策の公表が求められる。また、この事例はプラットフォーム業界全体に対し、AI自動化への過度な依存リスクを改めて問いかけるきっかけとなる可能性がある。",
+    "ai_interpretation": "このニュースの本質は、「AIの効率性」と「ユーザーへの公正な扱い」の間に生じるトレードオフの問題である。AI自動モデレーションはコスト削減とスピードの面では優れるが、誤判定が発生した際の被害はユーザーに直接・即座に及ぶという非対称なリスクを孕んでいる。プラットフォーム企業がAIに判断を委ねる際には、ヒューマンオーバーサイト（人間による監督）と迅速な異議申し立て手段の整備が不可欠であることを、この事例は改めて浮き彫りにしている。",
+    "collected_at": "2026-07-08T05:51:20.814476+09:00",
+    "background": "Discordは大規模なコミュニティプラットフォームとして、違反コンテンツの増加に対応するためAIを活用した自動モデレーションシステムを導入・強化してきた。しかし、AIによる自動判定は精度の限界があり、正常なコンテンツを有害と誤検知するリスクを常に抱えている。今回のバグはその脆弱性が顕在化した事例であり、少なくとも数ヶ月間にわたって問題が見過ごされていた点が深刻さを増している。"
+  },
+  {
+    "title": "Bethesda, id Software reportedly hit hard by Microsoft layoffs",
+    "japanese_title": "マイクロソフトの大規模レイオフでベセスダ・id Softwareが壊滅的打撃、一部チームは50%削減",
+    "url": "https://arstechnica.com/gaming/2026/07/bethesda-id-software-reportedly-hit-hard-by-microsoft-layoffs/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. マイクロソフトによる人員削減の波が、傘下のゲームスタジオであるベセスダおよびid Softwareを直撃した。",
+      "2. 一部のチームでは最大50%もの人員が削減されるという深刻な規模の縮小が報告されている。",
+      "3. さらなる追加レイオフの可能性も示唆されており、業界全体に緊張が走っている。"
+    ],
+    "points": [
+      "・ 一部チームで最大50%という極めて高い削減率が報告されており、スタジオの開発能力への影響が懸念される",
+      "・ 『Fallout』『The Elder Scrolls』『DOOM』など看板フランチャイズの今後の開発スケジュールに支障が出る可能性がある",
+      "・ 「さらなる削減が来る可能性」が示唆されており、現場の士気や人材流出のリスクも高まっている"
+    ],
+    "prediction": "今後は開発中タイトルの延期やプロジェクトのキャンセルが発表される可能性があり、特に長期開発が続く『The Elder Scrolls VI』などへの影響が注目される。また、レイオフされた優秀な人材が競合他社やインディースタジオへ流れることで、業界の勢力図が変わる可能性もある。マイクロソフトはゲームパス戦略との整合性を改めて問われることになるだろう。",
+    "ai_interpretation": "このニュースは、大型買収によるゲーム帝国の構築という戦略が、収益化の難しさという現実の壁に直面していることを象徴している。かつて「買収によるコンテンツ強化」を掲げたマイクロソフトが、その中核スタジオを大幅縮小するという矛盾は、ゲーム業界における規模拡大戦略そのものへの疑問を提起する。クリエイティブ産業において人材こそが最大の資産であることを踏まえると、今回の削減は短期的なコスト削減以上の長期的損失をもたらすリスクをはらんでいる。",
+    "collected_at": "2026-07-08T05:51:37.502923+09:00",
+    "background": "マイクロソフトは2021年にベセスダの親会社ZeniMaxを約75億ドルで買収し、ゲーム事業を強化してきた。しかし近年、ゲーム業界全体でコスト削減の圧力が高まっており、マイクロソフトも例外ではなく、複数のスタジオを対象とした段階的なレイオフを実施してきた。今回の削減はその流れの中で最も深刻なものの一つとなっている。"
+  },
+  {
+    "title": "The Weather Channel increases streaming subscription prices by up to $20",
+    "japanese_title": "ウェザーチャンネルがストリーミング料金を最大20ドル値上げ——月額5ドルから新プラン開始",
+    "url": "https://arstechnica.com/gadgets/2026/07/the-weather-channels-streaming-app-gets-a-67-percent-price-hike/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. 米国の気象専門チャンネル「The Weather Channel」がアプリ経由のライブストリーミング購読料金を値上げした。",
+      "2. 新料金は月額5ドルからスタートし、プランによっては最大20ドルの値上げとなる。",
+      "3. 視聴者はアプリを通じてリアルタイムの気象情報チャンネルを引き続き利用できるが、負担増は避けられない。"
+    ],
+    "points": [
+      "・ 月額5ドルという新たな最低価格設定は、ライトユーザーへの間口を一定程度維持しつつ収益化を図る戦略とみられる",
+      "・ 最大20ドルという値上げ幅は既存ユーザーにとって大きな負担となり、解約・離脱リスクが懸念される",
+      "・ 気象情報というニッチかつ実用性の高いコンテンツが、有料課金に見合う価値を提供できるかが問われる"
+    ],
+    "prediction": "値上げにより一部の既存ユーザーが解約する可能性があり、特に無料の気象アプリや競合サービスへの移行が加速するかもしれない。一方で、ハリケーンや竜巻など緊急気象情報へのニーズは根強く、コアユーザーの定着は期待できる。The Weather Channelが付加価値のある新機能やコンテンツを提供できるかどうかが、今後の利用者数維持の鍵を握るだろう。",
+    "ai_interpretation": "このニュースは、単なる値上げを超えて「気象情報にお金を払う文化」が米国でどこまで定着するかを試す試金石といえる。無料の代替手段が豊富に存在する中でサブスクリプション価格を引き上げるのは高リスクな判断であり、コンテンツの差別化と信頼性がビジネスの生死を分ける。メディア全体が「量より質・無料より有料」へシフトする時代における、ニッチメディアの持続可能性モデルとして注目される事例だ。",
+    "collected_at": "2026-07-08T05:51:56.173126+09:00",
+    "background": "近年、動画ストリーミング業界全体でコスト増加や収益改善を目的とした値上げの波が続いており、The Weather Channelもその流れに乗った形と考えられる。同チャンネルは従来のケーブルテレビ離れ（コードカッティング）に対応するためデジタルシフトを進めてきたが、運営コストや技術インフラの維持費が増大している。また、広告収入だけに依存するビジネスモデルからサブスクリプション収益の拡大へと軸足を移す動きも背景にある。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-08",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-07-07",
+    "href": "2026-07-07.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>

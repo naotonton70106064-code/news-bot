@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Stellantis to sell small Fiat Topolino EV for $13,995 in U.S.",
+    "japanese_title": "ステランティス、小型EV「フィアット・トポリーノ」を米国で約140万円で販売開始――超小型モビリティ市場に新風",
+    "url": "https://www.cnbc.com/2026/07/07/stellantis-fiat-topolino-ev.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ステランティスは、フィアット・トポリーノをアメリカ市場で13,995ドル（約140万円）で販売すると発表した。",
+      "2. 外観は小型車のフィアット500に似ているが、実態はゴルフカートに近い「四輪軽車両（クアドリサイクル）」に分類される。",
+      "3. 欧州では既に普及しているカテゴリーだが、米国市場への本格投入は超小型EV分野における新たな挑戦となる。"
+    ],
+    "points": [
+      "・ 13,995ドルという低価格設定は、EV普及における「価格の壁」を打ち破る戦略的な意図を持つ",
+      "・ クアドリサイクル区分により、一般の自動車安全基準を満たす必要がなく、製造コストを大幅に抑制可能",
+      "・ 欧州で成熟した超小型モビリティ文化を米国都市部・郊外へ輸出する試みであり、ライフスタイル訴求型マーケティングが焦点"
+    ],
+    "prediction": "米国での超小型EV・クアドリサイクル市場は都市部の短距離移動需要や観光・リゾート用途を中心に緩やかに拡大すると予想されるが、道路走行制限や安全基準の問題が普及の足かせになるリスクが高い。中国メーカー（宏光MINIなど）が低価格超小型EVで新興国市場を席巻している中、ステランティスのこの動きは西側ブランドによる「手頃なEV」市場への本格参入を示すシグナルとなり得る。規制当局や競合他社の動向次第では、米国における超小型モビリティの法的枠組み整備が加速する可能性もある。",
+    "ai_interpretation": "このニュースの本質は、「EVの民主化」と「モビリティ概念の再定義」という二つの潮流が交差する点にある。高価格帯に偏りがちなEV市場において、ゴルフカート的な割り切りで低価格を実現する手法は、イノベーションの方向性をスペックではなくアクセシビリティへと転換させるものだ。グローバル経済的には、欧州発の超小型モビリティ文化が米国市場に根付くかどうかが、今後の都市交通政策・エネルギー消費パターン・自動車産業の構造変化を読み解く重要な試金石となるだろう。",
+    "collected_at": "2026-07-08T05:54:41.339598+09:00",
+    "market_impact": "超小型EV市場は価格競争力が鍵となるため、約1.4万ドルという価格設定はエントリーレベルの消費者層へ訴求し、既存の小型EV市場（特にテスラのローエンドや中国製EV）に一定の競争圧力をかける可能性がある。一方、クアドリサイクルという特殊な車両区分は米国の道路交通法規との整合性に課題を残しており、販売規模の拡大には規制対応が不可欠となる。為替面では、ユーロ圏で製造・設計されたモデルのドル建て価格戦略が注目され、ステランティスのグローバルコスト管理能力が試される。"
+  },
+  {
+    "title": "Rivian stock falls 18% as company sells 75 million shares to raise capital",
+    "japanese_title": "リビアン株が18%急落——7500万株売却による資本調達がEV市場に波紋",
+    "url": "https://www.cnbc.com/2026/07/07/rivian-stock-rivn-capital-raise.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. リビアン（Rivian）は7500万株を売却する形で資本調達を実施し、株価は時間外取引で約18%の大幅下落を記録した。",
+      "2. 資本調達の発表前、リビアン株は月曜日に8.1%上昇しており、先週も19.2%の上昇を見せていた直後の出来事だった。",
+      "3. 株式希薄化への市場の懸念が即座に売り圧力として反映され、短期的な株価上昇分を一気に打ち消す結果となった。"
+    ],
+    "points": [
+      "・ わずか数日間で急騰した直後の増資発表という「高値での資金調達」戦略が意図的であった可能性",
+      "・ EV企業の慢性的なキャッシュバーン問題が依然として解消されていないことを示す資本調達の必要性",
+      "・ 株式希薄化に対する市場の敏感な反応は、EV業界全体への投資家信頼度の脆弱さを示唆"
+    ],
+    "prediction": "リビアンは調達した資金を生産能力の拡大や運転資金に充てると見られるが、収益化までの道筋が不透明なため、機関投資家の慎重姿勢は続く可能性が高い。EV業界全体では、金利高止まり環境下での資金調達コスト上昇が各社の財務戦略に影響を及ぼし続け、業界再編の加速につながる可能性もある。地政学的観点からは、中国系EV企業（BYDなど）との競争激化の中で、米国EV企業の財務的脆弱性が国家安全保障上の議論にも発展しうる。",
+    "ai_interpretation": "このニュースの本質は、リビアンという個別企業の問題にとどまらず、「成長期待で買われるEVセクター」と「収益化の現実」との間に存在する根本的なギャップを象徴している点にある。株価急騰直後の増資という構図は、経営陣が市場の楽観論を資金調達機会として活用したとも解釈でき、投資家との信頼関係に課題を残す。グローバル経済へのより広い示唆として、高金利・資本コスト上昇の時代においては「夢と技術だけでは生き残れない」というEV産業の転換点を示しており、今後は収益モデルの確立が企業評価の主軸になると考えられる。",
+    "collected_at": "2026-07-08T05:55:03.331106+09:00",
+    "market_impact": "EV（電気自動車）セクター全体への投資家心理に悪影響を与え、テスラやルーシッドなど競合他社の株価にも波及する可能性がある。株式希薄化による下落はリスクオフ心理を強め、成長株・ハイテク株全般への売り圧力につながりうる。為替市場への直接的な影響は限定的だが、米国株式市場全体のセンチメント悪化を通じてドル相場にも間接的な影響を与える可能性がある。"
+  },
+  {
+    "title": "Far more real estate agents now report seeing a balanced market, CNBC Housing Market Survey finds",
+    "japanese_title": "米国住宅市場が「均衡局面」へ転換——CNBCの不動産エージェント調査で値下げ件数が激減",
+    "url": "https://www.cnbc.com/2026/07/07/cnbc-housing-market-survey-balanced-market.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. CNBCの住宅市場調査で、「均衡市場」と報告する不動産エージェントの割合が以前の調査と比べて大幅に増加した。",
+      "2. 売り出し中の物件で少なくとも1件の値下げを経験したと回答したエージェントの割合が、過去調査から劇的に低下した。",
+      "3. これは売り手市場・買い手市場の極端な偏りが緩和され、米国住宅市場が安定局面に移行しつつあることを示唆している。"
+    ],
+    "points": [
+      "・値下げ物件数の激減は、供給不足が依然として住宅価格を下支えしていることを示す重要指標",
+      "・「均衡市場」への移行は、過熱していたパンデミック後の売り手市場から正常化へ向かうシグナル",
+      "・不動産エージェントという現場最前線からのデータであり、公式統計より先行性が高い点に注目"
+    ],
+    "prediction": "FRBが利下げに転じた場合、住宅ローン金利の低下によって需要が再び刺激され、均衡市場から売り手市場へ振れ戻すリスクがある。一方で、潜在的な売り手の「ロックイン効果（低金利ローン保有者が売却を躊躇する現象）」が続く限り、供給不足は解消されず価格の下押し圧力は限定的なままとなろう。グローバルには、米国住宅市場の安定が消費マインドを下支えし、世界経済のソフトランディングシナリオを補強する要因となり得る。",
+    "ai_interpretation": "このニュースの本質は、高金利環境下でも米国住宅市場が「崩壊」ではなく「適応」を選んだという事実にある。値下げ圧力の後退は、需給バランスの改善よりもむしろ売り手側の「価格維持戦略」と供給制約の組み合わせによるものであり、見かけ上の安定に過ぎない側面も否定できない。グローバル経済への示唆としては、金融引き締めが不動産バブルを即座に崩壊させるとは限らず、市場構造によっては価格の粘着性（スティッキーネス）が長期化するという教訓を改めて提示している。",
+    "collected_at": "2026-07-08T05:55:22.958384+09:00",
+    "market_impact": "米国住宅市場の均衡化は、住宅ローン金利の高止まりにもかかわらず価格が底堅く推移していることを示唆しており、インフレ長期化懸念を通じてFRBの利下げ判断に影響を与える可能性がある。住宅関連株（ホームビルダー・不動産仲介業者）にとっては短期的にポジティブな材料となり得る。また、ドル相場や米国債利回りの動向にも間接的な波及効果が予想される。"
+  },
+  {
+    "title": "Meet 'Project 2029' — and its war on the annoyance economy",
+    "japanese_title": "民主党「プロジェクト2029」が迷惑経済に宣戦布告——自動音声・隠れた手数料撤廃へ",
+    "url": "https://www.npr.org/sections/planet-money/2026/07/07/g-s1-131879/meet-project-2029-and-its-war-on-the-annoyance-economy",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米民主党が共和党の「プロジェクト2025」に対抗する政策青写真「プロジェクト2029」を策定中で、消費者保護を柱の一つに据えている。",
+      "2. ロボコール（自動勧誘電話）、長時間の保留、隠れた手数料など消費者の日常的な不満を「迷惑経済（annoyance economy）」と定義し、その撤廃を目指す。",
+      "3. これは単なる消費者保護政策を超え、2028年選挙を見据えた民主党の政治的ブランド再構築戦略の一環と位置づけられる。"
+    ],
+    "points": [
+      "・「迷惑経済」という新しいフレーミングで消費者の感情的共感を狙った政治戦略の巧みさ",
+      "・バイデン政権下でFTCが推進した「ジャンクフィー（不当手数料）」規制の流れを継承・拡張する政策的連続性",
+      "・共和党の長期政権構想（プロジェクト2025）に対する民主党の対抗ナラティブ構築の本格化"
+    ],
+    "prediction": "2028年の米大統領選に向けて、消費者保護・反独占政策は民主党の主要争点となる可能性が高く、テック・金融・通信大手への規制圧力が中長期的に強まる見通しだ。また、こうした政策潮流はEUや日本など他の主要経済圏の消費者保護規制強化にも影響を与え、グローバルなビジネス慣行の変革を促す触媒となりうる。地政学的には、米国内の経済的不満の可視化が国内政治の分極化を和らげるカードとして機能するか注目される。",
+    "ai_interpretation": "このニュースの本質は、**経済政策と感情政治の融合**にある。「迷惑経済」というコンセプトは、有権者が日常生活で感じるミクロな不満をマクロな政策課題へと昇華させる戦略的フレーミングであり、経済格差論よりも広い層に訴求できる点で政治的有効性が高い。グローバル経済への示唆としては、デジタル化が進む中で「透明性と公正性」が企業の競争優位を左右する新たな時代に入っており、規制対応力そのものがビジネスモデルの持続可能性を決定づける要因になりつつあることを示唆している。",
+    "collected_at": "2026-07-08T05:55:44.672084+09:00",
+    "market_impact": "通信・フィンテック・航空・ホテル業界など「隠れた手数料」ビジネスモデルに依存する企業にとっては収益構造の見直しを迫られるリスクがある。一方で、消費者の可処分所得や購買意欲の向上につながるため、小売・EC市場にはプラスの波及効果も期待される。規制強化の動きは外国企業も含めた米国市場参入コストの透明化を促し、国際競争の公平性向上にも寄与しうる。"
+  },
+  {
+    "title": "One million more UK homeowners set  to face higher mortgages",
+    "japanese_title": "英国で100万人超の住宅ローン保有者が今後2年間で返済額増加に直面――月平均45ポンドの負担増",
+    "url": "https://www.bbc.co.uk/news/articles/cze9kpxx6d8o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 英国では今後2年間で100万人以上の住宅ローン保有者が新しい契約条件へ移行し、返済負担が増加する見通しである。",
+      "2. 新契約への切り替え後、平均で月額45ポンド（約8,500円）の追加負担が生じると試算されている。",
+      "3. 高金利環境が長期化する中、英国家計への圧迫が幅広い層に波及するリスクが高まっている。"
+    ],
+    "points": [
+      "・ 固定金利の契約満了を迎える層が集中する「2025〜2026年問題」が英国版モーゲージクリフとして顕在化",
+      "・ イングランド銀行の利下げペースが遅れれば、影響を受ける世帯数がさらに拡大する可能性",
+      "・ 低所得層・若年層ほど可処分所得に占める住宅ローン比率が高く、格差拡大への懸念も浮上"
+    ],
+    "prediction": "住宅ローン負担の増大は英国の個人消費を構造的に押し下げ、景気後退（リセッション）リスクを高める要因となり得る。BoEは利下げへの圧力を受けつつも、根強いインフレとの綱引きが続くため、政策判断の難易度は一層増すと見られる。英国の住宅市場の動向は、同様に高金利政策を維持する欧米諸国の先行指標としても注目されるだろう。",
+    "ai_interpretation": "このニュースの本質は、コロナ禍以降の超低金利時代に固定された住宅ローン契約が「時限爆弾」として家計に爆発し始めている点にある。金融引き締めの効果が「遅延」して実体経済に波及するラグ効果の典型例であり、中央銀行政策の副作用が一般市民レベルで可視化された象徴的な事例といえる。グローバル経済全体においても、高金利の長期化が住宅市場・消費・金融安定性に与える複合的リスクを改めて示しており、各国の政策当局にとって重要な警告信号となっている。",
+    "collected_at": "2026-07-08T05:56:04.575001+09:00",
+    "market_impact": "英国の個人消費が一段と冷え込む可能性があり、小売・外食・観光などの内需関連セクターへの下押し圧力が強まることが懸念される。英ポンドは住宅市場の悪化懸念から売り圧力に晒される場面も想定されるが、イングランド銀行（BoE）の利下げ判断を左右する指標として市場の注目度は高い。不動産セクターおよびモーゲージ関連金融機関の収益環境にも不透明感が漂う。"
+  },
+  {
+    "title": "Online gamblers betting more than £1,000 to face new checks",
+    "japanese_title": "英国オンラインギャンブル規制強化：24時間で£1,000超の賭けに審査義務化",
+    "url": "https://www.bbc.co.uk/news/articles/cqj1xvy44xno?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 英国ギャンブル規制当局（Gambling Commission）は、オンラインギャンブラーが24時間以内に£1,000（約19万円）以上を賭けた場合、財務審査を受けることを義務付ける新規制を発表した。",
+      "2. この規制は問題ギャンブリングの防止と消費者保護を目的としており、プレイヤーの資金源や賭け金の妥当性を確認するものである。",
+      "3. オンラインカジノや賭博サイトの運営者は、対象ユーザーに対し収入・資産証明などの提出を求めることが求められる。"
+    ],
+    "points": [
+      "・ £1,000という閾値設定が厳格すぎるとして業界団体が強く反発しており、規制の最終形に不確実性が残る",
+      "・ユーザーの個人財務情報収集に伴うプライバシー問題やデータ管理リスクが新たな懸念事項として浮上",
+      "・規制を回避するため、英国ユーザーが規制の緩い海外オフショアサイトへ流出するリスクが存在する"
+    ],
+    "prediction": "英国市場における規制強化は、オンラインギャンブル業界のビジネスモデルの抜本的見直しを迫り、中長期的には業界再編・M&Aの引き金になり得る。EU諸国やオーストラリアなど他の主要市場でも類似規制の導入が検討される可能性が高く、グローバルなギャンブル産業全体が転換期を迎えると予想される。一方で、規制の厳格化がフィンテック・本人確認（KYC）技術企業には新たなビジネス機会をもたらす側面もある。",
+    "ai_interpretation": "このニュースの本質は、単なるギャンブル規制にとどまらず、「デジタル経済における消費者保護と産業自由化のバランス」という普遍的な政策課題を反映している点にある。高額ベッターは業界収益の大部分を占めるとされており、この規制は業界の収益構造そのものを揺るがす可能性を持つ。グローバル経済的には、デジタルサービスへの政府介入が強まる世界的潮流の一例であり、フィンテック・暗号資産・SNSなど他のデジタル産業にも規制波及する先行指標として注目すべきニュースである。",
+    "collected_at": "2026-07-08T05:56:24.842442+09:00",
+    "market_impact": "英国の主要オンラインギャンブル企業（Bet365、Flutter Entertainment、William Hillなど）の株価や収益に下押し圧力がかかる可能性があり、特に高額ベッターへの依存度が高い企業ほどその影響は大きい。英ポンドへの直接的な影響は限定的だが、規制産業としてのギャンブルセクターへの投資家心理が悪化する恐れがある。また、欧州各国も同様の規制強化を検討する動きが加速する可能性がある。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-08",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-07-08.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-07-08.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-07-07",
+    "href": "2026-07-07.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
