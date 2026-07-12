@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "TechCrunch Mobility: A robotaxi ultimatum",
+    "japanese_title": "ロボタクシーに突きつけられた最後通牒：AI時代のモビリティ革命の分岐点",
+    "url": "https://techcrunch.com/2026/07/12/techcrunch-mobility-a-robotaxi-ultimatum/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. TechCrunch Mobilityが、ロボタクシー業界に対する「最後通牒」とも言える重大な局面を報じている。",
+      "2. 自動運転タクシー（ロボタクシー）の普及において、AIの役割がこれまで以上に重要な焦点となっている。",
+      "3. モビリティの未来を巡る競争と規制・技術・市場の緊張関係が高まっていることが示唆されている。"
+    ],
+    "points": [
+      "・ 「最後通牒（ultimatum）」という強い表現が示す、ロボタクシー業界における緊迫した競争・規制環境",
+      "・ AIが単なる補助技術から、モビリティの核心的な意思決定エンジンへと進化している点",
+      "・ 技術企業・規制当局・消費者の三者間における信頼と安全性を巡る綱引き"
+    ],
+    "prediction": "ロボタクシー業界は今後、規制当局からの厳しい審査と市場からの収益化圧力の双方に晒され、淘汰と再編が加速する可能性が高い。AIの性能向上が続く一方で、一つの重大事故が業界全体の信頼を損なうリスクも依然として存在する。数年以内に「勝者」となる企業と撤退を余儀なくされる企業との差が明確になると予測される。",
+    "ai_interpretation": "このニュースの本質は、ロボタクシーが単なる「便利な乗り物」ではなく、AI社会における人間と機械の信頼関係そのものを試す実験場になっているという点にある。「最後通牒」という表現は、技術的理想論だけでは市場・社会・規制を納得させられない現実を象徴している。モビリティの未来は技術力だけでなく、社会的受容性とガバナンスの成熟度によって決定されるという重要な示唆を含んでいる。",
+    "collected_at": "2026-07-13T05:06:32.264884+09:00",
+    "background": "自動運転技術は長年にわたり開発が進められてきたが、商業化に向けた道のりは規制・安全性・コスト面で多くの障壁に直面してきた。WaymoやCruise、Teslaなどの企業がロボタクシー市場への参入を進める一方、事故や規制当局との摩擦も相次いでいる。AIの急速な進化がこの分野に新たな可能性と課題をもたらし、業界全体が重要な転換期を迎えている。"
+  },
+  {
+    "title": "Reed Jobs would rather talk about curing cancer than his last name",
+    "japanese_title": "リード・ジョブズが語る「名字より癌治療」――AIとバイオテックで急成長するYosemite Venturesの今",
+    "url": "https://techcrunch.com/2026/07/11/reed-jobs-would-rather-talk-about-curing-cancer-than-his-last-name/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. スティーブ・ジョブズの息子リード・ジョブズが率いるベンチャーファンド「Yosemite」は設立約3年でチーム17名に拡大し、急速な成長を遂げている。",
+      "2. 複数のブロックバスター薬の特許切れが同時期に重なるという市場機会が生まれており、バイオテック投資に追い風となっている。",
+      "3. AIがYosemiteの事業の中核を担うまでに進化しており、リード自身もその速度に驚きを示している。"
+    ],
+    "points": [
+      "・ 著名な「ジョブズ」という苗字よりも、がん治療などの社会的インパクトを前面に出す姿勢が際立つ",
+      "・ 複数の大型医薬品の特許切れが同時期に集中するという稀有な市場機会が到来している",
+      "・ AIをバイオテック投資・創薬プロセスに積極活用しており、単なるトレンド追随ではなく事業の根幹に組み込んでいる"
+    ],
+    "prediction": "特許切れによるジェネリック・バイオシミラー市場の拡大と、AI創薬の加速が重なることで、Yosemiteはさらなる投資案件の拡充とファンド規模の拡大を図るとみられる。AIと生命科学の融合領域はグローバルで競争が激化しており、同社が差別化を維持できるかが今後の焦点となる。リード自身の知名度と哲学的なブランディングが、優秀な起業家や研究者を引き寄せる求心力にもなり得る。",
+    "ai_interpretation": "このニュースの本質は、「有名な父親の影」を意図的に脱し、社会課題解決型のインパクト投資家として自らのアイデンティティを確立しようとするリードの戦略的な自己定義にある。同時に、AIとバイオテックの融合という時代の変曲点において、小規模ながら機動力のあるファンドが大手VCとは異なる独自のポジションを狙う動きとして読み取れる。「がんを治す」という明確なミッションを掲げることは、投資リターン以上の価値を求める次世代の起業家・投資家文化の台頭を象徴している。",
+    "collected_at": "2026-07-13T05:06:53.050863+09:00",
+    "background": "パンデミック後のバイオテック市場は急速に冷え込み、多くの投資家が慎重姿勢を取る中、リード・ジョブズは2022年頃にYosemite Venturesを立ち上げた。当初は厳しい市場環境での船出だったが、その後AIの急速な普及とブロックバスター薬の特許切れラッシュという二つの追い風が重なり、バイオテック領域への投資環境は大きく改善した。約3年前にTechCrunch Disruptで初めて注目された同社は、現在では規模・戦略ともに大きく進化している。"
+  },
+  {
+    "title": "This slushie machine was a lifesaver during NYC’s heat wave",
+    "japanese_title": "NYC熱波を乗り切った救世主！「Ninja Slushi Twist」スラッシュマシンレビュー",
+    "url": "https://techcrunch.com/2026/07/11/this-slushie-machine-was-a-lifesaver-during-nycs-heat-wave/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. ニューヨーク市を襲った猛烈な熱波の中、筆者は自宅でNinja最新のスラッシュマシン「Ninja Slushi Twist」を試用した。",
+      "2. 毎日午後になると冷たい飲み物が欲しくなるが、暑い中を外出せずに自宅で作れる点が大きな魅力となった。",
+      "3. 本製品はNinjaの旧モデルの人気を踏まえた新機種であり、「Twist」機能を搭載したアップグレード版である。"
+    ],
+    "points": [
+      "・ 猛暑という社会的状況が家電製品の実用性を際立たせるレビューの文脈として機能している",
+      "・ 「7-Elevenへ歩いて行く」という行動と比較することで、自宅調理の利便性・快適性を強調している",
+      "・ 旧モデルの人気を継承しつつ「Twist」という新機能を追加した製品進化が見どころ"
+    ],
+    "prediction": "気候変動による夏の猛暑が常態化する中、家庭用冷却飲料マシンの需要は今後さらに拡大していくと予想される。Ninjaブランドはすでにキッチン家電市場で強固な地位を築いており、このカテゴリーでの競争激化が見込まれる。他メーカーも類似製品を投入する可能性があり、スラッシュマシン市場全体が活性化するだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる製品レビューを超えて「気候変動と消費行動の変化」を映し出している点にある。熱波という環境的ストレスが、外食・外出から自宅完結型の消費へとシフトさせる行動変容を促しており、家電市場にとって新たなビジネスチャンスを生み出している。「快適さを自宅で完結させたい」というニーズは今後も強まる一方であり、テクノロジーとライフスタイルの融合を示す象徴的な事例といえる。",
+    "collected_at": "2026-07-13T05:07:08.833544+09:00",
+    "background": "先週末、ニューヨーク市では記録的な熱波が到来し、市民の日常生活に大きな影響を与えた。高温が続く中、冷たい飲み物への需要が急増し、外出を避けて自宅で涼を取る人が増えている。こうした状況を背景に、家庭用スラッシュマシンのような家電製品への注目が高まっている。"
+  },
+  {
+    "title": "OpenAI’s Chief Futurist Is Leaving the Company",
+    "japanese_title": "OpenAIの「チーフ・フューチャリスト」ジョシュア・アチアム氏が約9年間の在籍後に退社",
+    "url": "https://www.wired.com/story/openai-chief-futurist-joshua-achiam-is-leaving-the-company/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. OpenAIのチーフ・フューチャリスト（最高未来戦略責任者）を務めるジョシュア・アチアム氏が同社を離れることが明らかになった。",
+      "2. アチアム氏はAIの安全性研究を中心に約9年間OpenAIに貢献してきた重要な人物である。",
+      "3. 同氏はイーロン・マスク対サム・アルトマンの裁判においても注目すべき証言・出廷を行ったことでも知られる。"
+    ],
+    "points": [
+      "・AIの安全性研究という中核的役割を担ってきた人物の離脱であり、組織のプライオリティの変化を示唆する可能性がある",
+      "・「チーフ・フューチャリスト」という特異な肩書きが廃止・後継されるかどうかが今後の組織方針を占う指標となる",
+      "・マスク対アルトマン裁判への関与により、OpenAI内部の文化や意思決定に関する貴重な証言者でもあった点が注目される"
+    ],
+    "prediction": "アチアム氏がAI安全性や未来戦略に関する独自の活動（研究機関立ち上げや他社への参画など）を始める可能性が高い。OpenAI側は後継ポジションの設置や安全性チームの再編を余儀なくされ、対外的な説明責任が求められるだろう。AI安全性を重視する研究者コミュニティからは、OpenAIの方向性に対する懸念の声がさらに高まることも予想される。",
+    "ai_interpretation": "このニュースは、OpenAIが「AGI（汎用人工知能）の安全な開発」という創業理念から「商業的AIプラットフォーム企業」へと重心を移しつつあるプロセスの象徴的な出来事と読み取れる。安全性研究のキーパーソンが相次いで離脱する流れ（イリヤ・サツケバー氏らの前例も含め）は、組織文化の本質的な変質を示唆している。AIガバナンスや安全性をめぐる社会的議論が高まる中、こうした人材流出はOpenAIの信頼性・透明性に対する問いを改めて突きつけるものである。",
+    "collected_at": "2026-07-13T05:07:28.840711+09:00",
+    "background": "OpenAIはここ数年で急速に商業化・事業拡大を進めており、創業当初の「非営利・安全重視」という理念と現実のビジネス戦略との間に緊張関係が生じている。アチアム氏はAI安全性研究の第一線を担ってきた人物であり、その退社はこうした組織的変化の文脈で注目される。また、マスク対アルトマンの訴訟はOpenAIの設立理念や組織運営をめぐる内部事情を白日のもとにさらした出来事であり、アチアム氏も渦中の人物の一人であった。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-13",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-07-12",
+    "href": "2026-07-12.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
