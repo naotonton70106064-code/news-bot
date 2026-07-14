@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "The AI boom just found two new winners: Goldman Sachs and JPMorgan Chase",
+    "japanese_title": "AIブームの新たな勝者：ゴールドマン・サックスとJPモルガンが過去最高収益を記録",
+    "url": "https://www.cnbc.com/2026/07/14/goldman-sachs-and-jpmorgan-chase-are-emerging-as-ai-winners.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ゴールドマン・サックスとJPモルガン・チェースは、AIブームの恩恵を受けるウォール街の主要受益者として台頭し、記録的な収益を達成した。",
+      "2. 収益拡大の主な原動力は、AIへの投資需要増加に伴うトレーディング部門と投資銀行部門の急激な活性化である。",
+      "3. テクノロジー企業だけでなく、金融インフラを担うウォール街もAIブームの恩恵を享受する構図が明確になった。"
+    ],
+    "points": [
+      "・ AIブームの経済効果がテック企業から金融セクターへと「波及」している構造的変化",
+      "・ トレーディング収益の急増は、AI関連投資における市場ボラティリティの高まりを反映している可能性",
+      "・ 投資銀行部門の復活は、AI分野におけるIPO・M&A案件の増加を示す先行指標として注目すべき点"
+    ],
+    "prediction": "AIへの設備投資拡大が続く限り、資金調達や企業再編を仲介する大手金融機関の収益成長トレンドは当面継続するとみられる。一方で、AI投資バブルへの警戒感が高まれば、市場の急激な調整リスクが金融機関の収益を直撃する「もろ刃の剣」的側面も存在する。地政学的緊張やFRBの金融政策次第では、この好循環が突然断ち切られるシナリオにも留意が必要だ。",
+    "ai_interpretation": "このニュースの本質は、**AIブームが「技術革新」から「金融経済の活性化」へと波及段階に入った**ことを示している点にある。従来のテックバブルと異なり、今回はゴールドマンやJPモルガンという金融システムの根幹を担うプレイヤーが収益を上げており、経済全体への実需の広がりを示唆している。グローバル経済への示唆として、AIが単なるテクノロジートレンドを超え、**資本市場・雇用・産業構造を再編する「経済インフラ」として機能し始めている**ことを、この決算結果は力強く裏付けている。",
+    "collected_at": "2026-07-15T05:18:29.238292+09:00",
+    "market_impact": "大手金融機関の好決算は投資家心理を押し上げ、金融セクター株および米国株式市場全体の上昇圧力となる可能性が高い。また、投資銀行業務の活発化はIPOやM&A市場の回復を示唆しており、グローバルな資本フローの拡大につながる。為替市場においては、米国金融セクターへの資金流入増加がドル強含みを支援する要因となり得る。"
+  },
+  {
+    "title": "Lucid dismisses report that it is weighing filing for bankruptcy or going private after shares plunge",
+    "japanese_title": "ルーシッド、株価急落後の破産申請・非公開化検討報道を否定――EV業界に激震",
+    "url": "https://www.cnbc.com/2026/07/14/lucid-stock-lcid-bankruptcy-report.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 電気自動車メーカーのルーシッド（Lucid）が、破産申請または非公開化（going private）を検討しているとの報道が浮上し、株価が急落した。",
+      "2. ルーシッド社はこの報道を即座に否定し、公式に事実無根であると声明を発表した。",
+      "3. 同社が検討していた選択肢には、プライベートエクイティによる買収や連邦破産法の適用申請が含まれていたと報じられていた。"
+    ],
+    "points": [
+      "・ルーシッドの主要株主はサウジアラビアのPIF（公共投資ファンド）であり、財務支援の継続可否が焦点",
+      "・EV市場全体で需要鈍化・競争激化が続く中、資金調達に苦しむスタートアップEVメーカーの経営危機が顕在化しつつある",
+      "・「報道否定」自体が市場の不信感を払拭しきれず、株価のボラティリティが継続するリスクがある"
+    ],
+    "prediction": "ルーシッドが独立企業として存続するには、追加資本調達またはPIFによる増資支援が不可欠であり、短期的な財務安定策の発表が株価回復の鍵となる。中長期的には、テスラや中国BYDとの競争激化を背景に、資金力の乏しいEVスタートアップの淘汰・再編が世界的に加速する可能性が高い。地政学的観点では、サウジアラビアの対米投資戦略の試金石としても、同社の行方が注目される。",
+    "ai_interpretation": "このニュースの本質は、EV産業の「夢から現実への転換期」を象徴する出来事であり、潤沢な資金調達と高い株式評価額に支えられた成長神話が崩壊しつつあることを示している。ルーシッドの苦境は個社の問題にとどまらず、金利高止まりと競争激化という構造的逆風の中でEVスタートアップ全体のビジネスモデルの持続可能性に疑問を投げかけるものだ。グローバル経済への示唆として、「脱炭素×テクノロジー」への過剰投資の調整局面が続く中、政府系ファンドの役割と民間資本の撤退リスクのバランスが今後の産業政策の重要課題となるだろう。",
+    "collected_at": "2026-07-15T05:18:49.906608+09:00",
+    "market_impact": "今回の報道はEVセクター全体への投資家心理を悪化させ、競合他社の株価にも一時的な下押し圧力をかける可能性がある。特にNASDAQ上場のEVスタートアップ銘柄は流動性リスクへの懸念が再燃しやすく、リスクオフの動きが強まりやすい。また、サウジアラビアの政府系ファンド（PIF）が筆頭株主であるため、中東系投資資金の動向にも注目が集まる。"
+  },
+  {
+    "title": "T. rex sells for $50 million, becoming the most expensive dinosaur fossil ever auctioned",
+    "japanese_title": "ティラノサウルスの化石が約76億円で落札！恐竜化石オークション史上最高額を更新",
+    "url": "https://www.cnbc.com/2026/07/14/trex-fossil-auction-sothebys.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ティラノサウルス・レックスの化石が5,000万ドル（約76億円）で落札され、恐竜化石オークションの世界最高落札額を更新した。",
+      "2. 従来の記録は、億万長者のヘッジファンド運営者ケン・グリフィンが2024年に4,460万ドルで購入したステゴサウルスの骨格が保持していた。",
+      "3. 超富裕層による希少な自然史コレクターズアイテムへの投資需要が、記録的なペースで高騰し続けている。"
+    ],
+    "points": [
+      "・わずか1年未満で最高記録が更新されるほど、化石オークション市場が急速に過熱していること",
+      "・ケン・グリフィンのような著名ヘッジファンドマネージャーが積極的に参加していることで、化石市場の「資産クラス化」が進行中",
+      "・超富裕層のオルタナティブ資産への需要が、インフレや金融市場の不確実性を背景にさらに拡大している可能性"
+    ],
+    "prediction": "超富裕層のオルタナティブ資産需要は今後も拡大が見込まれ、化石・アート・ワイン・スポーツカードなどのコレクタブル市場はさらなる高騰局面に入る可能性が高い。一方で、化石の商業的売買に関する倫理的・学術的な批判も高まることが予想され、各国政府による規制強化の議論が加速するリスクもある。地政学的緊張や株式市場の不安定化が続く限り、実物資産へのシフトは世界的なトレンドとして定着する見通しだ。",
+    "ai_interpretation": "このニュースの本質は、単なる「珍しいオークション記録」ではなく、超富裕層が従来の金融資産では得られない「唯一無二性」と「ステータス」を持つ資産に巨額資金を投じている構造的変化を象徴している。記録が1年以内に塗り替えられたという事実は、この市場への資金流入が投機的な加速段階に入ったことを示唆しており、バブル的様相を帯びるリスクにも注意が必要だ。グローバル経済における富の集中と格差拡大が極限に達しつつある現代において、こうした超高額取引は富裕層経済（Wealth Economy）が実体経済と乖離して独自の論理で動いていることを端的に示している。",
+    "collected_at": "2026-07-15T05:19:11.152104+09:00",
+    "market_impact": "超高額オークション市場や希少資産（オルタナティブ資産）への富裕層の資金流入が引き続き旺盛であることを示しており、伝統的な金融資産以外への分散投資トレンドを裏付けている。アート・骨董・希少化石などのコレクタブル市場全体に強気ムードを与える可能性がある。為替・株式市場への直接的な影響は限定的だが、富裕層の消費動向や資産配分戦略の変化を示す先行指標となり得る。"
+  },
+  {
+    "title": "Inflation slowed sharply -- but it may not last",
+    "japanese_title": "インフレ急減速も束の間？イランとの紛争再燃でエネルギー価格高騰リスクが再浮上",
+    "url": "https://www.npr.org/2026/07/14/nx-s1-5893379/inflation-economy-consumer-prices-federal-reserve",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 6月の年間インフレ率は3.5%に低下し、3年超ぶりの高水準を記録した5月から大幅に鈍化した。",
+      "2. インフレ沈静化の兆しが見えた矢先、イランとの軍事的対立が再燃し、エネルギーコストの急騰リスクが再び高まっている。",
+      "3. 地政学的リスクが経済指標の改善を相殺する可能性があり、インフレの先行きは依然として不透明な状況にある。"
+    ],
+    "points": [
+      "・ インフレ率3.5%への低下は中央銀行（FRB等）の利下げ判断に一時的にポジティブなシグナルを与える",
+      "・ イランとの紛争再燃という地政学リスクが、データ改善による楽観論を打ち消す構図",
+      "・ エネルギーコストは「第二波インフレ」の主要トリガーとなり得る最重要変数"
+    ],
+    "prediction": "中東情勢の緊迫化が長期化した場合、エネルギー価格の上昇を通じてインフレが再加速し、主要中央銀行の利下げ転換シナリオが大幅に後退する可能性がある。世界的なサプライチェーンへの圧力も再燃し、輸送コストや資源価格の上昇が製造業・消費者物価全般に波及するリスクがある。地政学的緊張が解消されない限り、グローバル経済は「インフレとの戦い」の第二ラウンドに直面する局面も想定される。",
+    "ai_interpretation": "このニュースの本質は、「経済指標の改善」と「地政学的リスク」が常に綱引きをするという現代グローバル経済の構造的脆弱性を象徴している点にある。インフレ鈍化という前向きなデータも、一つの地政学イベントによって瞬時に無力化されるリスクは、政策立案者にとって極めて困難な意思決定環境を生み出している。市場参加者にとっては、経済データだけでなく中東・エネルギー地政学を同時にモニタリングする「複合的リスク管理」がこれまで以上に不可欠となっている。",
+    "collected_at": "2026-07-15T05:19:29.872970+09:00",
+    "market_impact": "原油・天然ガス価格の再高騰懸念から、エネルギー関連株や商品市場に上昇圧力がかかる可能性が高い。為替市場ではリスク回避姿勢が強まりドルや円などの安全資産への資金流入が予想され、新興国通貨には下落圧力が生じる恐れがある。航空・物流・製造業など燃料コストに敏感な産業は特に業績への悪影響が懸念される。"
+  },
+  {
+    "title": "'The Trojan Teddy Bear': The promise and peril of childhood in the age of AI",
+    "japanese_title": "AI搭載おもちゃが子どもの友達に——「トロイの木馬テディベア」が示す可能性と危険性",
+    "url": "https://www.npr.org/sections/planet-money/2026/07/14/g-s1-133066/the-trojan-teddy-bear-the-promise-and-peril-of-childhood-in-the-age-of-ai",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. AIはチャットボットの枠を超え、子ども向けの玩具・人形・ロボットへと急速に展開しており、子どもの「友人」として機能する製品が登場している。",
+      "2. 著名な児童発達専門家は、AI玩具が教育や発達支援において真の可能性を持つ一方、人間同士の関係構築を阻害するリスクがあると警鐘を鳴らしている。",
+      "3. テクノロジーが子どもの情緒・社会的発達に与える影響について、倫理的・政策的議論が世界的に高まりつつある。"
+    ],
+    "points": [
+      "・ AI玩具は子どもの個人データ（会話・感情・行動パターン）を収集するため、プライバシー・データセキュリティ上の重大なリスクを抱えている",
+      "・ 子どもの社会性・共感能力・人間関係構築スキルへの長期的影響は、まだ科学的に十分検証されていない未知の領域である",
+      "・ 「トロイの木馬」という比喩が示すように、無害に見える製品が子どもの心理・価値観形成に対して意図せぬ影響を与える可能性がある"
+    ],
+    "prediction": "欧米を中心に子ども向けAI製品に対する規制フレームワーク（年齢確認・データ保護・アルゴリズム透明性）の整備が急ピッチで進み、2025〜2026年にかけて市場の再編が起きるとみられる。地政学的には、AIおもちゃの製造拠点が中国に集中していることから、米中技術覇権争いの新たな戦場として子ども向けデバイスが浮上する可能性がある。長期的には、AI依存が進む世代と人間関係を重視する世代との間で、社会的価値観の分断が生じるリスクも無視できない。",
+    "ai_interpretation": "このニュースの本質は、**テクノロジーの浸透速度が人間の倫理的・政策的対応能力を上回りつつある**という現代社会の構造的課題を、最も脆弱な存在である「子ども」を通して映し出している点にある。AI玩具市場の成長はグローバル経済における新たな収益機会を創出する一方で、次世代の人的資本（Human Capital）の質——共感力・協調性・創造性——に影響を与えるならば、それは数十年後の労働市場・社会保障・経済生産性にまで波及する超長期リスクとなり得る。投資家・企業・政策立案者はいずれも、短期的な市場拡大の恩恵と、見えにくい社会的コストのトレードオフを真剣に評価する時期に来ている。",
+    "collected_at": "2026-07-15T05:19:53.016274+09:00",
+    "market_impact": "グローバル玩具市場（約1,000億ドル規模）にAI統合が加速することで、トイザらスやレゴといった従来型メーカーとテック企業との競争構造が大きく変化する可能性がある。EdTech（教育テクノロジー）市場との融合により、関連銘柄への投資需要が高まり、特に米国・中国・日本の製造・IT企業の株価に上昇圧力がかかることが予想される。一方、規制強化の動きが欧州を中心に広がれば、市場参入コストの増大や製品回収リスクが生じる可能性もある。"
+  },
+  {
+    "title": "Billionaire Warren Buffett stops donations to Bill Gates charity",
+    "japanese_title": "ウォーレン・バフェット、ビル・ゲイツ財団への寄付を停止——エプスタイン問題が富豪間の連携に亀裂",
+    "url": "https://www.bbc.co.uk/news/articles/c8x2x549vgdo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 著名投資家ウォーレン・バフェットが、長年支援してきたビル・アンド・メリンダ・ゲイツ財団への寄付を打ち切ることを決定した。",
+      "2. この決断は、ゲイツ氏が性犯罪者ジェフリー・エプスタインとの関係を巡り米国議会に召喚された数週間後に下された。",
+      "3. 世界最大級の慈善活動の一つを支えてきた巨額資金源が失われることで、財団の今後の運営に重大な影響が生じる可能性がある。"
+    ],
+    "points": [
+      "・ バフェット氏はこれまでゲイツ財団に約500億ドル超を寄付しており、最大の外部支援者であった",
+      "・ エプスタイン問題がゲイツ氏の社会的信用・財団のガバナンスに与えるレピュテーションリスクの深刻さを示している",
+      "・ 世界の慈善資金の流れが、個人の倫理・法的リスクによって左右される「慈善資本主義」の脆弱性が露呈した"
+    ],
+    "prediction": "ゲイツ財団は資金調達戦略の抜本的な見直しを迫られ、他の富裕層投資家や国際機関からの資金確保に動く可能性が高い。エプスタイン問題の議会審議が続く中、ゲイツ氏個人および財団への社会的・法的圧力はさらに強まる恐れがあり、グローバルな保健・農業支援プログラムの継続性に不確実性が生じる。富裕層による私的慈善活動への規制強化を求める声が、欧米の政策議論で高まる契機となり得る。",
+    "ai_interpretation": "このニュースの本質は、単なる個人間の決別を超え、「民間慈善資本による公共財の提供」という現代モデルそのものの信頼性が問われている点にある。エプスタイン問題は、超富裕層のネットワークと倫理的ガバナンスの欠如が、グローバルな公益活動の持続可能性を根底から揺るがすリスクを示している。世界経済への示唆として、国家・国際機関に依存しない民間主導の開発支援モデルが、個人のスキャンダルという非経済的要因で容易に瓦解し得るという構造的脆弱性を改めて浮き彫りにした。",
+    "collected_at": "2026-07-15T05:20:14.338440+09:00",
+    "market_impact": "ゲイツ財団は農業・医療・感染症対策分野に数百億ドル規模の投資を行っており、資金縮小は途上国向け支援関連企業や製薬セクターの一部に下押し圧力となり得る。バフェット氏が保有するバークシャー・ハサウェイへの直接的な財務影響は限定的だが、同氏の慈善方針の転換は市場の象徴的なシグナルとして受け取られる可能性がある。ESG投資やフィランソロピー関連ファンドの信頼性評価にも波及する懸念がある。"
+  },
+  {
+    "title": "Trump scraps threat of 20% fee on Hormuz cargo as US resumes blockade of Iran ports",
+    "japanese_title": "トランプ大統領、ホルムズ海峡の通行料20%課税を撤回―米国はイランの海上封鎖作戦を継続",
+    "url": "https://www.bbc.co.uk/news/articles/cy0608wy8pro?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. トランプ大統領は、ホルムズ海峡を通過する貨物船に20%の通行料を課すと表明してからわずか24時間で、その方針を撤回した。",
+      "2. 一方で米国は、イランの海上覇権を切り崩すべく、イラン港湾への海上封鎖（blockade）作戦を継続している。",
+      "3. 政策の一貫性欠如が改めて露呈した形となり、市場や同盟国の間で米国の信頼性に対する懸念が高まっている。"
+    ],
+    "points": [
+      "・ **政策の信頼性問題**：24時間以内の方針撤回は、トランプ政権の対外経済政策の予測困難性を象徴しており、国際的な外交・通商交渉に悪影響を与えるリスクがある",
+      "・ **ホルムズ海峡の戦略的重要性**：中東産原油の輸送の要衝であり、ここでの米・イラン対立激化はアジア（日本・中国・韓国）への原油供給に直接的な打撃を与える可能性がある",
+      "・ **イラン封鎖の継続**：通行料撤回とは対照的に、対イラン圧力政策そのものは維持されており、軍事的緊張がさらにエスカレートするリスクが残る"
+    ],
+    "prediction": "米国のイラン封鎖政策が継続される限り、中東における地政学的リスクプレミアムは原油市場に織り込まれ続け、エネルギー輸入依存度の高い日本や欧州にとって経済的負担が増大する可能性がある。トランプ政権の政策の「撤回・修正」パターンが繰り返されることで、OPEC諸国やロシアが市場の不確実性を逆手に取った生産調整を行うシナリオも考えられる。中長期的には、欧州・アジア諸国によるホルムズ海峡の代替ルート（オマーン経由パイプラインなど）整備の議論が加速する可能性がある。",
+    "ai_interpretation": "このニュースの本質は、「政策の実体」よりも「政策シグナルの混乱」がいかに国際秩序に影響を与えるかを示している点にある。通行料撤回という結果だけを見れば市場にとってポジティブだが、わずか24時間での方針転換は、米国の対外政策が交渉カードとして乱発されているという認識を世界に広め、長期的な同盟国の信頼を損なうリスクをはらんでいる。グローバル経済の視点では、エネルギー安全保障の脆弱性が再び浮き彫りになったことで、各国が脱炭素・エネルギー多様化投資を加速させる政治的動機がさらに強まるという逆説的な示唆も含んでいる。",
+    "collected_at": "2026-07-15T05:20:37.909339+09:00",
+    "market_impact": "原油価格は、ホルムズ海峡（世界の原油輸送量の約20%が通過）をめぐる地政学的緊張の高まりを受けて、引き続きボラティリティが高い状態が予想される。通行料課税の撤回自体は短期的に海運・エネルギー市場の安堵感をもたらす可能性があるが、イランへの封鎖継続が供給懸念を下支えし、原油価格の高止まり要因となり得る。ドルは地政学リスクを背景に安全資産としての動きを示す一方、日本円や金なども逃避需要が意識される展開となろう。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-15",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-07-15.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-07-15.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-07-14",
+    "href": "2026-07-14.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
