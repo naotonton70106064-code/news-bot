@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Daniel Ek’s body-scanning startup Neko Health raises another $700M",
+    "japanese_title": "Spotifyの創業者ダニエル・エクの健康スキャン新興企業「Neko Health」が約1,050億円の追加資金調達に成功",
+    "url": "https://techcrunch.com/2026/07/15/daniel-eks-body-scanning-startup-neko-health-raises-another-700m/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Spotify創業者ダニエル・エクが共同設立した健康スキャンスタートアップ「Neko Health」が、新たに7億ドル（約1,050億円）の資金調達を実施した。",
+      "2. 同社は独自の全身スキャン技術と血液検査を組み合わせ、個人の健康状態を包括的に評価するサービスを展開している。",
+      "3. 今回の大型調達により、予防医療・ヘルステック分野への投資家の高い期待が改めて示された。"
+    ],
+    "points": [
+      "・ 全身スキャンと血液検査を統合した独自の「ワンストップ健康診断」モデルが差別化の核心",
+      "・ テック業界の著名起業家が医療分野に参入することで、業界の慣習や規制へのチャレンジが加速",
+      "・ 7億ドルという巨額調達は、予防医療・ヘルステック市場の成長性に対する市場の強い確信を示す"
+    ],
+    "prediction": "Neko Healthは調達資金を活用して欧米を中心に拠点を拡大し、スキャン施設のネットワーク構築を加速させるとみられる。AIや機械学習を活用したデータ分析能力の強化により、診断精度と個別化医療の質がさらに向上する可能性が高い。一方で、医療規制当局との折衝やプライバシー保護への対応が、グローバル展開の鍵を握る課題となるだろう。",
+    "ai_interpretation": "このニュースが示す本質は、「医療の重心が治療から予防へ」というパラダイムシフトが、資本市場においても明確に認識され始めたことである。テクノロジー起業家が医療に参入することで、ユーザー体験重視・データ活用・スケーラビリティという視点が従来の医療産業に持ち込まれ、業界全体の変革を促す触媒となっている。Neko Healthの成功可否は、ヘルステック業界全体の未来像を左右する試金石ともなり得る。",
+    "collected_at": "2026-07-16T05:12:22.474882+09:00",
+    "background": "予防医療への関心が世界的に高まる中、病気の早期発見・早期対処を可能にするテクノロジーへの需要が急増している。ダニエル・エクはSpotifyで音楽産業を変革した実績を持ち、その知名度と実行力がNeko Healthへの投資家信頼を高める要因となっている。同社はすでに以前の資金調達ラウンドを経ており、今回はさらなる事業拡大を目指す段階に入っている。"
+  },
+  {
+    "title": "Amid hardware legal battle, OpenAI releases a $230 keyboard for Codex",
+    "japanese_title": "OpenAI、Appleとの法的紛争の最中に2万円超の光るキーボード「Codex」向けに発売",
+    "url": "https://techcrunch.com/2026/07/15/amid-hardware-legal-battle-openai-releases-a-230-keyboard-for-codex/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. OpenAIはAppleとのハードウェア企業秘密窃取に関する法的紛争の渦中にある。",
+      "2. その最中、OpenAIはエージェント型コーディングアプリと連携する230ドルのバックライト付きキーボードを発売した。",
+      "3. ソフトウェア企業として知られるOpenAIが、ハードウェア事業へと積極的に進出している姿勢を示している。"
+    ],
+    "points": [
+      "・ OpenAIが純粋なソフトウェア企業の枠を超え、ハードウェア製品販売に踏み込んだ点",
+      "・ 230ドル（約3.5万円）という強気の価格設定が、開発者・エンジニア層をターゲットとしていることを示唆",
+      "・ Appleとの法的紛争というネガティブな状況下でも製品リリースを強行した戦略的タイミング"
+    ],
+    "prediction": "OpenAIはハードウェアとソフトウェアを統合したエコシステムの構築を加速させるとみられ、Codex向け周辺機器はその第一弾に過ぎない可能性がある。Appleとの法的紛争の行方次第では、ハードウェア戦略に影響が出る可能性もあるが、投資家や開発者コミュニティの反応を見ながら展開を調整するだろう。長期的にはAppleやGoogleといった垂直統合モデルを持つ企業との競争が一層激化することが予想される。",
+    "ai_interpretation": "このニュースの本質は、OpenAIが「AIのインフラ企業」から「AIライフスタイルブランド」へと変貌しようとしているという野心の表れである。法的紛争の最中にハードウェアを発売するという行為は、リスクを承知の上でAppleが長年築いてきたハードウェア×ソフトウェアの垂直統合モデルに真っ向から挑戦する意思表示とも読める。AI時代において「誰がユーザーとのタッチポイントを握るか」という覇権争いが、いよいよ物理的なデバイス領域にまで拡大してきたことを象徴するニュースと言えるだろう。",
+    "collected_at": "2026-07-16T05:12:40.894265+09:00",
+    "background": "OpenAIはAI技術のリーダーとして急成長を遂げる中、ソフトウェアにとどまらずハードウェア領域への参入を模索してきた。一方で、Appleとの間でハードウェアに関連する企業秘密の窃取疑惑をめぐる法的紛争が発生しており、両社の関係は緊張状態にある。こうした複雑な状況の中でも、OpenAIはCodexというエージェント型コーディングツールのエコシステム拡充を推進している。"
+  },
+  {
+    "title": "Microsoft patches bug in video game Age of Empires II",
+    "japanese_title": "マイクロソフト、名作ゲーム「エイジ オブ エンパイア II」の重大セキュリティ脆弱性を修正パッチで対処",
+    "url": "https://techcrunch.com/2026/07/15/microsoft-patches-bug-in-video-game-age-of-empires-ii/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. マイクロソフトは、長年愛されてきたゲーム「エイジ オブ エンパイア II」に存在するセキュリティ脆弱性を修正した。",
+      "2. この脆弱性を悪用されると、攻撃者が悪意のあるゲーム招待を送るだけで被害者のコンピューターを乗っ取れる危険性があった。",
+      "3. マイクロソフトは公式パッチをリリースし、この問題に対処した。"
+    ],
+    "points": [
+      "・ 攻撃手法が「ゲームの招待状」という日常的なアクションを悪用するため、被害者が気づきにくい点が特に危険",
+      "・ 数十年前に開発されたレガシーゲームソフトでも現代のサイバー攻撃の標的になり得ることが改めて証明された",
+      "・ ゲームプラットフォームがサイバー攻撃の新たな侵入経路として注目されつつある現状を示している"
+    ],
+    "prediction": "セキュリティ研究者によるレガシーゲームソフトへの脆弱性調査が今後さらに活発化することが予想される。マイクロソフトをはじめとするゲームパブリッシャーは、長期運用タイトルに対するセキュリティ監査・定期的なパッチ提供の体制強化を迫られるだろう。また、ユーザー側でも見知らぬ相手からのゲーム招待に対する警戒意識の向上が求められる。",
+    "ai_interpretation": "このニュースが示す本質は、「古いソフトウェア＝安全ではない」という現代のサイバーセキュリティにおける重要な教訓である。ゲームというエンターテインメント領域も今やサイバー攻撃の主戦場となっており、ユーザーが無防備になりやすい場であるだけに攻撃者にとって格好のターゲットといえる。企業はレガシー製品であっても継続的なセキュリティ対応を怠らない責任があることを、今回の事例は強く示唆している。",
+    "collected_at": "2026-07-16T05:12:59.590523+09:00",
+    "background": "「エイジ オブ エンパイア II」は1999年にリリースされた歴史的名作ゲームであり、現在もSteamなどのプラットフォームで多くのプレイヤーに親しまれている。長年稼働しているレガシーソフトウェアには見落とされがちな脆弱性が潜在していることが多く、今回もその典型的なケースといえる。マイクロソフトは近年、同ゲームのリマスター版「Definitive Edition」を提供しており、オンラインプレイヤー人口が一定数維持されていたことで、脆弱性の影響範囲が広がるリスクがあった。"
+  },
+  {
+    "title": "AI Isn’t Smarter Than a Baby—Yet",
+    "japanese_title": "AIはまだ赤ちゃんより賢くない――乳児の脳構造がAI進化の鍵を握る",
+    "url": "https://www.wired.com/story/ai-isnt-smarter-than-a-baby-yet/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. 赤ちゃんは驚異的な学習能力を持つ存在であり、現在のAIはその能力にまだ及んでいない。",
+      "2. 乳児の脳のアーキテクチャ（構造・仕組み）がAI技術の次なる飛躍のヒントになる可能性がある。",
+      "3. 認知科学・発達心理学とAI研究の融合が、今後の重要なアプローチとして注目されている。"
+    ],
+    "points": [
+      "・ 赤ちゃんはわずかな経験から概念や因果関係を学ぶ「少数ショット学習」を自然に行っており、現在のAIが大量データに依存する点と対照的である",
+      "・ 乳児の脳における神経回路の発達プロセスや「好奇心駆動型学習」がAI設計の新たなモデルになり得る",
+      "・ 認知科学・発達心理学・神経科学とAI工学の学際的な連携が、この分野の進展において不可欠となっている"
+    ],
+    "prediction": "乳児の認知発達を参考にした新世代のAIアーキテクチャの研究が加速し、少ないデータで汎用的に学習できるモデルの開発が進むと予想される。これにより、現在の大規模言語モデルが抱える「データハングリー」問題の克服につながる可能性がある。数年以内に、発達科学に基づくAI手法が主要な研究トレンドとして確立されるかもしれない。",
+    "ai_interpretation": "このニュースの本質は、「知性とは何か」という根本的な問いをAI開発の文脈で再提起している点にある。現在のAIが持つ能力の印象的さにもかかわらず、人間の乳児が生後数ヶ月で習得するような直感的・適応的な学習能力には程遠いという現実は、AI開発の方向性そのものを見直す契機となっている。つまりこれは単なる技術論ではなく、「人間らしい知性」をどう定義し、どう再現するかという哲学的・科学的挑戦でもある。",
+    "collected_at": "2026-07-16T05:13:17.630776+09:00",
+    "background": "ChatGPTなどの大規模言語モデルが急速に普及し、AIの能力への期待が高まる一方で、常識的推論や少ないデータからの学習など、人間の乳児が自然に行うことをAIが苦手としている点が研究者の間で問題視されてきた。従来のAI開発は膨大なデータと計算資源に依存してきたが、その限界が見えつつあり、生物学的な学習メカニズムへの関心が再び高まっている。こうした背景から、乳児の脳を模倣・参考にした新しいAIアーキテクチャの研究が加速しつつある。"
+  },
+  {
+    "title": "Third-party app stores coming to Google Play next week as Epic settlement withdrawn",
+    "japanese_title": "Epicとの和解撤回でGoogleに独占禁止法の全制裁措置――来週からサードパーティアプリストアがGoogle Playに参入へ",
+    "url": "https://arstechnica.com/gadgets/2026/07/third-party-app-stores-coming-to-google-play-next-week-as-epic-settlement-withdrawn/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. EpicとGoogleの訴訟における和解が撤回され、裁判所が命じた独占禁止法に基づく完全な是正措置がGoogleに適用されることになった。",
+      "2. その結果、来週からサードパーティ製アプリストアがGoogle Playプラットフォーム上で利用可能になる見通しである。",
+      "3. これはGoogleのアプリ配信市場における独占的支配に対する法的制裁の具体的な実施を意味する。"
+    ],
+    "points": [
+      "・ Googleは和解による「軟着陸」を失い、裁判所の命じた最大限の競争是正措置に従わざるを得なくなった",
+      "・ サードパーティストアの参入により、30%とされてきたGoogle Play手数料（いわゆる「Googleタックス」）への圧力が高まる可能性がある",
+      "・ 開発者にとってはアプリ配信の選択肢が広がり、収益分配条件の改善が期待できる"
+    ],
+    "prediction": "Googleは控訴や新たな法的手段を通じて是正措置の範囲を限定しようと試みる可能性が高い。一方で、サードパーティストアが実際に普及するかどうかはユーザーの認知度や信頼性に依存するため、短期的な市場変化は限定的にとどまるかもしれない。ただし、同様の規制圧力がEUのDMA（デジタル市場法）とも連動する形で強まれば、Googleのビジネスモデル全体に中長期的な変革を迫る可能性がある。",
+    "ai_interpretation": "このニュースの本質は、プラットフォーム企業が「門番（ゲートキーパー）」として市場を支配する構造への司法・規制当局の本格的な介入が現実化した点にある。和解撤回という展開は、表面的な妥協では済まないという裁判所・Epic側の強い意志を示しており、AppleのApp Storeをめぐる争いとも相まってアプリ経済全体のパワーバランスが転換期を迎えていることを示唆している。デジタルプラットフォームの「税関」的役割が問われる今、この判決は世界各国の規制当局にとっても重要な先例となりうる。",
+    "collected_at": "2026-07-16T05:13:39.495197+09:00",
+    "background": "EpicゲームズはGoogleのPlay Storeにおける独占的な手数料体系や競合アプリストアの排除が反競争的であるとして訴訟を起こし、陪審員はGoogleに不利な評決を下していた。その後双方は和解交渉を進めていたが、今回その和解が撤回されたことで、裁判所が当初命じた強力な是正措置がそのまま効力を持つ形となった。これにより、Googleは競合他社のアプリストアをPlayエコシステム内で受け入れることを法的に義務付けられることになった。"
+  },
+  {
+    "title": "OpenAI's first branded hardware is... a light-up keyboard?",
+    "japanese_title": "OpenAI初のブランドハードウェアは光るキーボード「Codex Micro」—AIエージェント監視に特化した革新デバイス",
+    "url": "https://arstechnica.com/ai/2026/07/openais-first-branded-hardware-is-a-light-up-keyboard/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. OpenAIが初めて自社ブランドのハードウェア製品として、光るキーボード「Codex Micro」を発表した。",
+      "2. このデバイスは複数のAIエージェントスレッドを一目で監視・把握できる機能を持つ。",
+      "3. ソフトウェア企業として知られるOpenAIが、ハードウェア領域へと事業を拡張する歴史的な一歩となる。"
+    ],
+    "points": [
+      "・ OpenAIにとって初の自社ブランドハードウェア製品という歴史的な転換点である",
+      "・ 「光るキーボード」というユニークな形状で、AIエージェントの状態をビジュアルで直感的に把握できる設計",
+      "・ マルチエージェント管理という新しいユースケースに特化した専用デバイスである点が斬新"
+    ],
+    "prediction": "Codex Microの反響次第では、OpenAIはさらに多様なハードウェア製品ラインナップを展開する可能性がある。AppleやGoogleのようにソフトとハードを垂直統合するエコシステム戦略へのシフトも考えられる。また、競合他社（GoogleやAnthropicなど）も同様のハードウェア開発に参入するきっかけとなるかもしれない。",
+    "ai_interpretation": "このニュースの本質は、AIが「使うもの」から「共に働くもの」へと進化した結果、人間側のインターフェースも根本的に再設計される時代が到来したことを示している。複数エージェントを「監視する」という概念は、AIが単なるツールではなく管理すべき「作業者」として認識され始めたことの象徴だ。OpenAIがハードウェアに踏み込んだことは、AIとの共存における新たなUX（ユーザー体験）の標準を自ら定義しようとする戦略的意図の表れといえる。",
+    "collected_at": "2026-07-16T05:13:56.084390+09:00",
+    "background": "OpenAIはこれまでChatGPTをはじめとするソフトウェア・APIサービスに注力してきたが、近年はAIエージェント（自律的にタスクをこなすAI）の普及が急速に進んでいる。複数のエージェントを同時並行で管理するニーズが高まる中、既存のインターフェースでは対応が難しくなってきた。こうした課題を解決するべく、専用ハードウェアという新たなアプローチが生まれたとみられる。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-16",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-07-15",
+    "href": "2026-07-15.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
