@@ -14,6 +14,7 @@ RSS フィードから取得したニュース記事を Anthropic Claude API で
 - インデックス再生成: `python generate_index.py` — `articles/` を走査して `index.html` を作り直す
 - 週次サマリー生成: `python weekly.py` — 前週分の記事を集約して `articles/{category}/weekly-YYYY-WNN.html` を作成
 - 既存記事への関連リンク再注入 (ワンショット): `python update_related_links.py` — 既存の `articles/{category}/*.html` に内部リンクセクションを冪等に挿入/更新
+- 既存記事へのフッターリンク注入 (ワンショット): `python add_footer_links.py` — 既存の `articles/` 以下全 HTML (旧構造含む) にプライバシーポリシー等へのフッターリンクを冪等に挿入/更新。新規生成分は `dashboard.html` / `weekly.py` のテンプレートに同ブロックが組み込み済み
 - 依存: `pip install feedparser anthropic python-dotenv` (CI と同じ)
 - `ANTHROPIC_API_KEY` を `.env` か環境変数で渡す必要がある (`summarizer.py` が起動時にロード)
 
