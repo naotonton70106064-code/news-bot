@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Chinese automakers are taking on the UK — and many Brits are embracing it",
+    "japanese_title": "中国メーカーが英国自動車市場に参入加速——現地消費者が中国車を受け入れる理由とは",
+    "url": "https://www.cnbc.com/2026/07/17/chinese-automakers-uk.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 中国の自動車輸出が近年急増しており、その矛先が英国市場にも向けられている。",
+      "2. 国内需要の冷え込みにより余剰生産能力を抱えた中国メーカーが、海外市場開拓を積極化している。",
+      "3. 多くの英国消費者がコストパフォーマンスの高い中国製EVを好意的に受け入れ始めている。"
+    ],
+    "points": [
+      "・中国国内需要の飽和が輸出攻勢の主要因であり、過剰生産能力の「輸出」が世界市場を揺るがしている",
+      "・英国消費者が中国ブランドへの心理的抵抗感を薄れさせており、ブランド・プレミアムの概念が変容しつつある",
+      "・EUが中国製EVに追加関税を課す中、英国市場はより「開かれた市場」として中国メーカーに狙われやすい状況にある"
+    ],
+    "prediction": "英国政府が貿易・産業保護の観点から関税や規制強化に動く可能性があり、米国・EUに続く保護主義的措置が取り沙汰されるだろう。一方、中国メーカーは現地生産や合弁戦略でその障壁を回避しようとする動きを強めると見られる。地政学的緊張が続く中、自動車産業は貿易摩擦の新たな火種となる可能性が高い。",
+    "ai_interpretation": "このニュースの本質は、「中国の製造業過剰能力がグローバル市場の競争構造を根本から書き換えつつある」という点にある。EV化という技術的転換点を巧みに利用した中国メーカーの躍進は、単なる価格競争を超え、既存の自動車産業秩序への構造的挑戦を意味する。グローバル経済においては、技術力・価格・地政学リスクが複雑に絡み合う「新たな産業覇権争い」の縮図として、今後も注視すべき重要なトレンドである。",
+    "collected_at": "2026-07-19T05:08:57.800245+09:00",
+    "market_impact": "中国メーカーの台頭により、英国市場では欧米・日本の既存自動車メーカーがシェアを脅かされる可能性が高まっている。特にEVセグメントにおける価格競争が激化し、各社の収益性に下押し圧力がかかることが予想される。また、人民元や英ポンドの為替動向が中国車の価格競争力を左右する重要な変数となる。"
+  },
+  {
+    "title": "How big is the great wealth transfer? It could be over $100 trillion or $36 trillion",
+    "japanese_title": "大規模な富の世代間移転、総額は100兆ドル超か36兆ドルか？2つの調査が示す衝撃の試算",
+    "url": "https://www.cnbc.com/2026/07/17/great-wealth-transfer-estimates.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 近く到来する「大規模な富の世代間移転」の規模について、2つの異なる調査が100兆ドル超と36兆ドルという大きく異なる推計を提示し、議論を呼んでいる。",
+      "2. この富の移転は主にベビーブーマー世代からミレニアル世代・Z世代への相続・贈与として発生し、今後数十年にわたり段階的に進行する見通しである。",
+      "3. 試算の差異は調査手法・対象資産の範囲・時間軸の違いによるものとみられ、実際の規模の把握が困難であることを示している。"
+    ],
+    "points": [
+      "・ 試算の乖離（100兆ドル超 vs 36兆ドル）が示すデータの不透明性と、資産把握の難しさ",
+      "・ 相続税・贈与税制度の各国差異が、実質的な富の移転規模と分配に大きく影響する点",
+      "・ 若い世代の投資行動・消費パターンが従来と異なるため、移転後の資本の使途が経済構造を変える可能性"
+    ],
+    "prediction": "富の世代間移転が本格化するにつれ、各国政府は相続税や富裕税の見直しを迫られる可能性が高く、財政政策・税制改革をめぐる政治的対立が激化することが予想される。また、資産を受け取る若い世代がサステナビリティや新興テクノロジーを重視する傾向があるため、グリーンエネルギーやAI関連産業への投資が長期的に拡大し、産業構造の転換が加速するとみられる。地政学的には、富裕層資産のオフショア移転や租税回避をめぐる国際的な規制強化議論が一層活発化するだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる「富の移転」という経済現象にとどまらず、資本主義社会における世代間の経済的権力構造の大転換を示している点にある。試算の大きな乖離は、隠れた資産・未把握の富が世界規模で存在することを示唆しており、経済格差是正の政策立案を一層困難にしている。グローバル経済への示唆として、この移転の行方が消費・投資・税収・産業革新のすべてに連鎖的影響を与えるため、各国の経済政策立案者・中央銀行・機関投資家にとって最重要モニタリング事項の一つとなるだろう。",
+    "collected_at": "2026-07-19T05:09:20.744590+09:00",
+    "market_impact": "資産の大規模移転は、株式・不動産・債券市場における需要構造を根本的に変化させる可能性があり、若い世代の投資嗜好（ESG・テクノロジー株・暗号資産など）への資金シフトが加速するとみられる。また、富裕層資産の再配分により、プライベートバンクやウェルスマネジメント業界への需要が急拡大し、金融サービス産業の勢力図が塗り替えられる可能性がある。為替面では、相続資産の国際分散投資の動向が新興国通貨や主要通貨の資本フローに影響を与えることも予想される。"
+  },
+  {
+    "title": "UnitedHealth blows past estimates, hikes earnings outlook as it reins in costs",
+    "japanese_title": "ユナイテッドヘルス、コスト削減とAI投資で業績予想を上方修正――医療保険大手が収益改善加速",
+    "url": "https://www.cnbc.com/2026/07/16/unitedhealth-group-unh-earnings-q2-2026.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米医療保険最大手ユナイテッドヘルス・グループが市場予想を大幅に上回る決算を発表し、通期の業績見通しを引き上げた。",
+      "2. 不採算契約からの撤退や会員数の意図的な縮小によってマージン（利益率）の安定化を図っている。",
+      "3. 収益構造の改善策として15億ドル規模のAI投資を推進し、医療コスト管理の効率化を加速させている。"
+    ],
+    "points": [
+      "・**戦略的会員数削減**：短期的な規模縮小を選択し、利益率優先へと経営方針を転換している点が異例",
+      "・**AI投資15億ドル**：医療費審査・不正検知・コスト予測など業務効率化へのAI活用が競争優位の鍵となる",
+      "・**不採算契約の整理**：メディケイドなど公的保険分野での契約見直しが業界再編を促す可能性がある"
+    ],
+    "prediction": "米国の医療費インフレが続く中、他の医療保険会社も同様にコスト管理とAI活用を強化する動きが加速するとみられる。また、不採算契約の大規模撤退は医療アクセスの格差問題を政治的争点として再燃させるリスクがあり、規制当局の動向に注意が必要だ。グローバルには、ヘルスケアテック分野へのAI投資拡大が他国の医療産業にも波及する可能性がある。",
+    "ai_interpretation": "このニュースの本質は、「成長から収益の質への転換」という米ヘルスケア産業の構造的シフトを象徴している点にある。AI投資による業務効率化と不採算事業の切り離しは、医療保険業界が従来の「加入者数拡大モデル」から「高品質・高利益率モデル」へと進化していることを示す。グローバル経済的には、医療×AIの融合が新たな産業競争軸となり、テクノロジー企業と医療企業の境界がさらに曖昧になる時代の到来を予告している。",
+    "collected_at": "2026-07-19T05:09:39.674461+09:00",
+    "market_impact": "ユナイテッドヘルスの好決算はヘルスケアセクター全体の株価を押し上げる可能性があり、米国医療保険株への投資家信頼回復につながる。同社はS&P500やダウ平均の構成銘柄であるため、指数全体にもポジティブな影響を与えるとみられる。一方、不採算契約の打ち切りは医療サービス提供者（病院・クリニック）側の収益圧力を高める懸念もある。"
+  },
+  {
+    "title": "The 2000s called. They want their digital camera back",
+    "japanese_title": "2000年代のデジタルカメラが若者に大ブーム——テイラー・スウィフト効果とスマホ疲れが牽引するレトロテック市場の台頭",
+    "url": "https://www.npr.org/2026/07/18/nx-s1-5896117/retro-digital-camera-analog-reboot",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 25年前に流行した低解像度のデジタルカメラ（コンデジ）が、当時生まれてすらいなかったZ世代・α世代の若者の間で爆発的な人気を集めている。",
+      "2. テイラー・スウィフトのビジュアル演出やSNSトレンド、スマートフォンへの疲弊感、さらには「持っていない時代」へのノスタルジーが購買動機となっている。",
+      "3. 完璧すぎるスマホカメラへのアンチテーゼとして、あえて「荒い画質」や「不完全さ」に審美的価値を見出す新しい消費行動が定着しつつある。"
+    ],
+    "points": [
+      "・ **テイラー・スウィフト効果**：彼女のビジュアルコンテンツや公式写真でのレトロ風デジタル表現が、若年層のトレンド形成に直接影響している",
+      "・ **スマホ疲れ（Smartphone Fatigue）**：過剰に美化・加工されたスマホ写真への反動として、「リアルで不完全な画像」を好む価値観が台頭している",
+      "・ **トレンドサイクルの加速**：SNS（特にTikTok）によってトレンドの世代間ギャップが縮小し、体験していない時代への憧れ「疑似ノスタルジア」という新現象が生まれている"
+    ],
+    "prediction": "レトロテック需要はデジタルカメラにとどまらず、フィルムカメラ・ポラロイド・MDプレーヤーなど他のアナログ・準アナログ機器にも波及し、持続的なサブカルチャー市場を形成するとみられる。メーカー各社はこのトレンドを受け、あえて「低解像度モード」や「Y2Kフィルター」を搭載した新製品を投入する逆張り戦略を採用する可能性がある。ただしトレンドサイクル自体がSNSによって急速に消費されるため、市場の持続性は限定的で、2〜3年以内に次の「懐古対象」へと移行する可能性が高い。",
+    "ai_interpretation": "このニュースの本質は、単なるレトロブームではなく**「テクノロジーの過剰進化に対する文化的反発」**という深層トレンドを示している点にある。スマートフォンがAIで写真を自動補正する時代において、消費者——特に若者——は「本物らしさ・偶然性・不完全さ」に希少価値を見出すようになっており、これは高品質・高機能を競い合うテック産業のパラダイムに根本的な疑問を投げかける。グローバル経済的には、新品よりも中古・ヴィンテージ商品への支出シフトが循環型経済（サーキュラーエコノミー）の拡大と相まって加速しており、製造業よりもキュレーション・プラットフォームビジネスに新たな価値が移行していることを示唆している。",
+    "collected_at": "2026-07-19T05:10:06.619107+09:00",
+    "market_impact": "中古カメラ・フリマ市場（eBay、メルカリ等）での2000年代製コンデジの価格が急騰しており、ニッチながらも無視できないセカンダリー市場が形成されている。カシオ・オリンパス・ソニーなど旧来のデジカメメーカーにはブランド再評価の機会が生まれる一方、現行スマートフォンメーカーにとっては「高性能化一辺倒」の戦略への警鐘となりうる。また、レトロ家電全般への需要拡大はエレクトロニクス中古市場のグローバルな成長を後押しする可能性がある。"
+  },
+  {
+    "title": "Federal Reserve looks for 'secret sauce' behind a successful Wisconsin toolmaker",
+    "japanese_title": "米連邦準備銀行が注目！ウィスコンシン州の工具メーカー「スナップオン」の成長の秘訣とは",
+    "url": "https://www.npr.org/2026/07/17/nx-s1-5894730/federal-reserve-looks-for-secret-sauce-behind-a-successful-wisconsin-tool-maker",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ウィスコンシン州の老舗工具メーカー「スナップオン」が好調な業績を維持しており、プロの整備士向け工具製造で100年以上の実績を誇る。",
+      "2. シカゴ連邦準備銀行のトップが同社を直接訪問し、成功の要因を調査するという異例の動きが話題となっている。",
+      "3. 製造業の復活と国内産業の底力を探るFRBの姿勢が、米国経済政策の方向性を示唆している。"
+    ],
+    "points": [
+      "・ FRB高官が特定の民間企業を直接訪問するという異例のアプローチは、現場データ収集を重視する政策転換を示唆",
+      "・ 100年以上続く「ものづくり企業」の持続的競争力が、脱工業化が進む米国において改めて評価されている",
+      "・ 高度技能職（プロメカニック）向け専門工具という「ニッチ高付加価値戦略」がインフレ・人件費高騰時代でも有効であることを証明"
+    ],
+    "prediction": "FRBが製造業の成功事例を政策立案に活かすことで、米国の産業政策は金融緩和頼みから実体経済支援型へシフトする可能性がある。スナップオンのビジネスモデルは、「メイド・イン・アメリカ」政策の具体的な成功例として、今後の通商政策や製造業補助金議論でも引用される可能性が高い。グローバルには、日本やドイツの高品質製造業との競争・協調関係を再考するきっかけにもなり得る。",
+    "ai_interpretation": "このニュースの本質は、中央銀行が「なぜ一部の企業は繁栄し続けるのか」という根本的な問いに向き合い始めたという点にある。金利や金融指標だけでは捉えきれない「実体経済の競争力」を直接探ろうとするFRBの姿勢は、従来の金融政策の限界を自ら認識している表れとも読める。スナップオンの事例は、ブランド力・専門性・職人文化という「数値化しにくい資産」こそがグローバル経済における真の競争優位である、という重要な示唆をグローバル経済全体に発信している。",
+    "collected_at": "2026-07-19T05:10:26.586489+09:00",
+    "market_impact": "米国製造業セクターへの関心が高まる中、スナップオンのような高付加価値メーカーの成功モデルは、米国株式市場における工業株の再評価につながる可能性がある。FRBが製造現場に直接足を運ぶことは、金融政策立案における実体経済重視の姿勢を示しており、ドルや債券市場にも間接的な影響を与えうる。また、自動車整備・工具産業サプライチェーン全体への投資家の注目度が上昇する可能性がある。"
+  },
+  {
+    "title": "'My buyers dropped their offer by £15,000 the day before exchange': Gazundering and how to avoid it",
+    "japanese_title": "「契約直前に150万円の値下げ要求」—英国不動産市場で広がる\"ガズンダリング\"問題とその対策",
+    "url": "https://www.bbc.co.uk/news/articles/c3d39r338m0o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 英国の不動産市場で「ガズンダリング（Gazundering）」と呼ばれる、契約直前に買い手が意図的に購入価格を引き下げる行為が増加している。",
+      "2. 売り手は契約交換直前という心理的・経済的に弱い立場を突かれ、値下げを受け入れざるを得ないケースが多発している。",
+      "3. 専門家は法的拘束力が生じる前の交渉段階における制度的脆弱性を指摘し、売り手保護のための対策を推奨している。"
+    ],
+    "points": [
+      "・ 英国の不動産売買は「契約交換（Exchange of Contracts）」まで法的拘束力がなく、直前の価格変更が合法的に可能という制度的抜け穴が問題の根本にある",
+      "・ 高金利・インフレ環境下で買い手の資金調達コストが増大し、ガズンダリングを戦略的手段として用いるケースが増加している",
+      "・ 対策としては「予約料制度（Reservation Agreements）」の活用や、不動産エージェントへの早期の意向明示が有効とされている"
+    ],
+    "prediction": "英国政府は以前から不動産取引プロセスの透明化・迅速化を検討しており、今後ガズンダリング規制を含む制度改革が加速する可能性がある。一方、世界的な金利高止まりが続く限り、英国以外の国でも類似した買い手優位の交渉戦術が広がるリスクがあり、各国の不動産市場制度の見直しが求められる局面に入りつつある。",
+    "ai_interpretation": "このニュースは表面上は英国の不動産慣行の問題だが、本質的には「情報非対称性と制度的不備が生み出す市場の歪み」というより普遍的な経済問題を示唆している。高金利・資産価格調整局面において、法的保護が不十分な取引構造は買い手による機会主義的行動を誘発しやすく、市場全体の信頼性と流動性を損なう。グローバル経済においても、不動産セクターの制度設計が市場安定に直結するという重要な教訓を提示している。",
+    "collected_at": "2026-07-19T05:10:45.674733+09:00",
+    "market_impact": "英国の住宅市場では金利上昇や生活費高騰を背景に買い手優位の市場環境が続いており、ガズンダリングの増加はその象徴的現象といえる。住宅取引の不確実性が高まることで、売り手の市場参加意欲が低下し、住宅供給のさらなる停滞を招く可能性がある。英ポンドや英国REIT（不動産投資信託）市場にも間接的なネガティブセンチメントをもたらしかねない。"
+  },
+  {
+    "title": "Brewdog founder faces data complaints over efforts to buy back firm",
+    "japanese_title": "BrewDogの創業者ジェームズ・ワット、自社買収交渉で個人データ無断接触か――英国データ監視機関に苦情殺到",
+    "url": "https://www.bbc.co.uk/news/articles/c4gw9pp0xlno?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. クラフトビール大手BrewDogの創業者ジェームズ・ワット氏が、同社を買い戻そうとする過程で元株主に個人的に連絡を取ったとして、英国のデータ保護監視機関（ICO）に複数の苦情が寄せられた。",
+      "2. 元株主への無断接触は、GDPR（一般データ保護規則）をはじめとする英国のデータプライバシー法に違反する可能性があり、規制当局が調査対象として注目している。",
+      "3. BrewDogはかつてクラウドファンディング型の「エクイティ・フォー・パンクス」制度で多数の小口株主を獲得しており、今回の問題はその株主データの取り扱いに関わる疑惑である。"
+    ],
+    "points": [
+      "・ 創業者による自社買収（MBO的動き）という異例のシナリオが、コーポレートガバナンスの観点から注目される",
+      "・ クラウドファンディングで集めた一般投資家の個人データを、買収交渉に流用した疑いがある点がGDPR違反の核心",
+      "・ ICOへの苦情件数や調査の進展次第では、ワット氏個人および同社への制裁・罰則金が科せられる可能性がある"
+    ],
+    "prediction": "ICOが正式調査に踏み切った場合、英国のデータ保護規制の実効性を示す象徴的な事例となり、クラウドファンディングプラットフォーム全体に対してより厳格なデータガバナンス基準の導入が求められるようになるだろう。BrewDogの企業価値や買収計画そのものにも不透明感が増し、外部投資家の参入意欲が低下するリスクがある。また、創業者と株主コミュニティの信頼関係が毀損されることで、ブランドイメージへの長期的なダメージも懸念される。",
+    "ai_interpretation": "このニュースの本質は、「ファンベース型資本調達」の光と影を体現している点にある。クラウドファンディングは熱狂的な支持者を株主に取り込む手法として革新的だったが、その個人データが創業者の私的な経営戦略に利用される可能性は、投資家保護の根幹を揺るがす問題だ。グローバル経済への示唆として、データ主権とコーポレートガバナンスの融合が今後の企業経営における必須要件となりつつあり、規模の大小を問わずすべての企業がデータを「経営資源」ではなく「委託された個人の権利」として扱う意識変革を迫られていると言える。",
+    "collected_at": "2026-07-19T05:11:09.569515+09:00",
+    "market_impact": "クラフトビール業界や中小スケールの株式クラウドファンディング市場において、投資家データの管理・保護に対する信頼性への懸念が高まる可能性がある。英国ポンドや食品・飲料セクターへの直接的な為替・株価インパクトは限定的だが、非上場企業によるデータ管理のあり方が改めて問われる契機となり得る。GDPRおよびその英国版（UK GDPR）の厳格な適用事例として、欧州全域のスタートアップ・成長企業にとっても規制リスクの再認識につながるだろう。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-19",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-07-19.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-07-19.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-07-18",
+    "href": "2026-07-18.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>

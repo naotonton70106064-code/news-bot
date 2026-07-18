@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Waymo says San Francisco service has resumed after one-hour pause",
+    "japanese_title": "Waymoの自動運転タクシー、停電による1時間のサービス停止後にサンフランシスコで運行再開",
+    "url": "https://techcrunch.com/2026/07/18/waymo-appears-to-pause-san-francisco-service-amidst-power-outage/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Waymoの自動運転タクシーサービスがサンフランシスコで約1時間にわたりサービスを一時停止した。",
+      "2. 停止の原因は停電によるシステムへの影響とみられており、復旧後にサービスを再開した。",
+      "3. 今回は初めてのケースではなく、Waymoは過去にも停電によるサービス障害を経験している。"
+    ],
+    "points": [
+      "・ 自動運転サービスが都市インフラ（電力）の安定性に強く依存しているという脆弱性が改めて露呈した",
+      "・ 「初めてではない」という記述から、停電による障害が繰り返し発生しており、根本的な対策が取られていない可能性がある",
+      "・ わずか1時間での復旧はWaymoの障害対応能力を示す一方、サービスの信頼性に対するユーザー不安を高めるリスクがある"
+    ],
+    "prediction": "Waymoはバックアップ電源の強化やオフライン動作能力の向上など、インフラ障害への耐性を高める技術的対応を迫られる可能性が高い。競合他社（Cruise、Tesla等）との競争が激化する中、サービスの安定性・信頼性はブランド価値に直結するため、再発防止策の公表が求められるだろう。また、規制当局がこうした障害事例を蓄積し、自動運転サービスの運用基準見直しに動く可能性もある。",
+    "ai_interpretation": "このニュースの本質は、自動運転技術の「完成度」よりも「インフラ依存性」という見落とされがちなリスクを浮き彫りにしている点にある。どれだけAIが高度であっても、物理的なインフラが不安定であればサービスは成立しないという現実は、スマートシティ構想全体への警鐘でもある。自動運転の普及には技術革新だけでなく、都市インフラとの一体的な強靭化設計が不可欠であることを示唆している。",
+    "collected_at": "2026-07-19T05:04:44.250668+09:00",
+    "background": "Waymoはサンフランシスコを主要拠点の一つとして自動運転タクシーサービスを展開しており、都市インフラへの依存度が高い。自動運転車両はセンサーやクラウドとの通信など、安定した電力・通信環境を前提として動作するため、停電の影響を受けやすい構造にある。サンフランシスコはカリフォルニアの電力事情やインフラ老朽化の問題を抱えており、過去にも断続的な停電が発生している。"
+  },
+  {
+    "title": "Kimi: Threat or menace?",
+    "japanese_title": "中国AI「Kimi」新バージョン公開――\"AIの共産主義化\"懸念が浮上、脅威かそれとも好機か？",
+    "url": "https://techcrunch.com/2026/07/18/kimi-threat-or-menace/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 中国のMoonshot AIが自社の大規模言語モデル「Kimi」の新バージョンを今週リリースした。",
+      "2. このリリースにより、AIの開発・普及モデルに関する「完全なAI共産主義」への懸念が浮上している。",
+      "3. 中国発のAIモデルが国際的な競争環境に与える影響について、改めて議論が巻き起こっている。"
+    ],
+    "points": [
+      "・「AIの共産主義化」という表現が示す、中国のAI戦略に対する西側諸国の根深い警戒感",
+      "・Moonshot AIというスタートアップが、国家的バックグラウンドを持ちながら急速に技術力を向上させている点",
+      "・オープンで低コストなAI提供が、既存のOpenAIやGoogle等のビジネスモデルを脅かす可能性"
+    ],
+    "prediction": "Kimiの新バージョンが市場に浸透するにつれ、米国や欧州はさらなる技術規制・輸出制限の強化を検討する可能性が高い。一方で、開発者コミュニティや新興国市場では低コストの中国製AIモデルへの需要が高まり、AIの「陣営分断」が加速するだろう。地政学的緊張とAI覇権争いが絡み合う中、国際的なAIガバナンスの枠組み構築が急務となる。",
+    "ai_interpretation": "このニュースの本質は、AIが単なる技術競争を超え、「経済モデル・イデオロギーの競争」の場になりつつあるという点にある。「AI共産主義」という刺激的な表現は、中国が国家主導でAIを無償・廉価提供することで市場を席巻しようとする戦略への恐怖を反映しており、資本主義的なAIビジネスモデルへの根本的な挑戦を意味する。技術の優劣だけでなく、AIがどのような価値観・体制のもとで世界に普及するかという問いが、今後の国際秩序を左右する核心的テーマになりつつある。",
+    "collected_at": "2026-07-19T05:05:03.245213+09:00",
+    "background": "DeepSeekなど中国発のAIモデルが相次いで高い性能を示し、欧米のAI業界に衝撃を与えてきた流れの中で、Moonshot AIもKimiを継続的にアップデートしてきた。中国政府のAI産業への強力な支援と、オープンソース戦略を組み合わせた開発モデルが、「西側主導のAI秩序」を揺るがしつつある。「AI共産主義」という表現は、AIの成果物や技術が国家主導で広く無償・低コスト提供されることへの警戒感を象徴している。"
+  },
+  {
+    "title": "All the EVs that were discontinued or killed off in the U.S. this year",
+    "japanese_title": "2024年に米国市場から撤退・販売終了したEV車種まとめ：ホンダ プロローグも生産中止へ",
+    "url": "https://techcrunch.com/2026/07/18/all-the-evs-that-were-discontinued-or-killed-off-in-the-u-s-this-year/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. ホンダの電気自動車「プロローグ」が米国市場での販売を終了することが発表された。",
+      "2. プロローグは2024年に米国市場から撤退するEVモデルの増加リストに加わる形となった。",
+      "3. 複数のEVモデルが相次いで米国市場から姿を消すという業界トレンドが鮮明になっている。"
+    ],
+    "points": [
+      "・ホンダ プロローグを含む複数のEVモデルが2024年中に米国市場から撤退するという異例の状況",
+      "・EV市場の需要と供給のミスマッチが自動車メーカーの戦略転換を加速させている点",
+      "・大手メーカーでさえEVモデルの存続が困難になるほど、市場環境が厳しいという現実"
+    ],
+    "prediction": "EV市場の淘汰はさらに進み、資本力と技術力を持つ一部メーカーのみが生き残る「選択と集中」の時代が到来すると予測される。各社はEV専用モデルの拡充よりも、ハイブリッド車との併売戦略や収益性の高いセグメントへの絞り込みにシフトする可能性が高い。また、米国の政策動向（補助金や規制）次第でEV普及のペースが大きく左右される局面が続くだろう。",
+    "ai_interpretation": "このニュースの本質は、EV市場が「普及期の幻想」から「現実との調整局面」へと移行していることを象徴している。自動車メーカーが脱炭素化を目指す大義と、短期的な収益確保という現実の間で苦悩する構図が浮き彫りになっており、単なる一車種の撤退を超えた業界全体の構造的課題を示している。消費者・インフラ・政策の三位一体の整備なしには、EVの本格普及は依然として険しい道のりであることを改めて示唆するニュースと言える。",
+    "collected_at": "2026-07-19T05:05:19.909611+09:00",
+    "background": "米国のEV市場は当初の爆発的な成長期待とは裏腹に、充電インフラの未整備や価格の高さ、消費者需要の伸び悩みといった課題に直面してきた。各自動車メーカーはEV投資を拡大したものの、販売台数が期待値を下回るケースが続出し、採算の取れないモデルの整理・統合が進んでいる。特にホンダのプロローグはGMとの提携で開発されたモデルであり、その撤退は両社の戦略見直しを示唆している。"
+  },
+  {
+    "title": "Why Apple Sued OpenAI, New York Takes on Data Centers, and What to Know about Cyclosporiasis",
+    "japanese_title": "AppleがOpenAIを提訴？ニューヨーク州データセンター規制とOpenAIの法的・評判危機を徹底解説",
+    "url": "https://www.wired.com/story/uncanny-valley-podcase-apple-sued-openai-new-york-data-center-moratorium-cyclosporiasis-outbreak/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. ポッドキャスト「Uncanny Valley」がOpenAIをめぐる法的トラブルおよび評判上の問題を取り上げ、同社の現状を分析している。",
+      "2. これらの問題がAnthropicとの競争においてOpenAIに不利に働く可能性があると指摘されている。",
+      "3. ニューヨーク州によるデータセンター規制の動きや、サイクロスポーラ症（食中毒）に関する情報も同エピソードで扱われている。"
+    ],
+    "points": [
+      "・AppleによるOpenAIへの訴訟の詳細とその法的影響",
+      "・ニューヨーク州がデータセンターに対する規制強化に乗り出した動きとその業界への波及効果",
+      "・OpenAIとAnthropicの競争構図において、今回の一連の問題がどちらに有利/不利に作用するか"
+    ],
+    "prediction": "OpenAIが法的・評判上の問題を早期に解決できなければ、企業顧客や優秀な人材がAnthropicやGoogle DeepMindなどの競合に流れる可能性が高まる。また、ニューヨーク州のデータセンター規制が先例となり、他州でも同様の動きが広がることで、AI企業全体のインフラコストが上昇する懸念がある。規制・法律・競争の三重苦がOpenAIの2025年の戦略に大きな影響を与えるだろう。",
+    "ai_interpretation": "このニュースの本質は、AI業界の「覇権争い」が技術力だけでなく、法的リスク管理・企業倫理・社会的信頼という非技術的要素によっても左右される時代に突入したことを示している。OpenAIへの相次ぐ逆風は、急成長したAI企業がガバナンスの整備を怠った場合のリスクを象徴する事例となりつつある。さらに、国家・自治体レベルの規制介入が本格化しており、AIビジネスは今後「技術×法規制×倫理」の複合的な文脈で評価される時代へと移行している。",
+    "collected_at": "2026-07-19T05:05:41.421222+09:00",
+    "background": "OpenAIはここ最近、企業統治のあり方をめぐる内部対立や、非営利から営利企業への転換問題など、組織的・法的な混乱が続いている。Anthropicをはじめとする競合他社が急速に力をつける中、OpenAIのブランドイメージへのダメージは競争上の大きなリスクとなりつつある。こうした背景のもと、Appleとの法的衝突も加わり、同社への風当たりはさらに強まっている。"
+  },
+  {
+    "title": "Salad Chains Are Seeing Foot Traffic Drop Over Cyclosporiasis Fears",
+    "japanese_title": "サラダチェーン店の客足が急減——サイクロスポーラ症感染への恐怖が消費者行動を直撃",
+    "url": "https://www.wired.com/story/explosive-diarrhea-outbreak-new-victims-salad-chains/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. サイクロスポーラ症（寄生虫感染症）への懸念から、葉物野菜を提供するサラダチェーン店への来客数が顕著に減少していることがデータで明らかになった。",
+      "2. 感染すると激しい下痢などの症状を引き起こすこの疾患が、消費者の外食行動に実際の影響を与えている。",
+      "3. 一方で、リスクを意識しながらも来店し続ける「勇敢な」顧客も存在し、その心理も注目されている。"
+    ],
+    "points": [
+      "・ 実際の来客数データによって、感染症報道が消費者行動に定量的かつ即時的な影響を与えることが裏付けられた点",
+      "・ リスクを認知していながらも「正直リスクなんて考えなかった」と語る消費者の存在が示す、健康リスクへの認知バイアスや楽観主義バイアスの実態",
+      "・ サラダチェーンという「健康的」なイメージのブランドが、皮肉にも食の安全問題によって最も大きなダメージを受けるというブランド・パラドックス"
+    ],
+    "prediction": "感染事例の収束や当局による原因特定・公表が遅れるほど、消費者の不安は長期化し、サラダチェーン各社の売上・株価への影響が拡大する可能性がある。各チェーンは食材のトレーサビリティ強化やサプライヤーの見直しなど、安全対策の可視化・広報に迫られるだろう。長期的には、この事態が葉物野菜の洗浄・殺菌技術への投資や業界全体の衛生基準見直しを加速させるきっかけになり得る。",
+    "ai_interpretation": "このニュースの本質は、「健康」を売りにするビジネスモデルが食の安全リスクと直結したとき、ブランド価値が一気に逆転するという現代フードビジネスの脆弱性を示している点にある。また、一部消費者の「リスクを考えなかった」という発言は、人間が日常的な習慣に対してリスク評価を無意識に回避する傾向を浮き彫りにしており、公衆衛生コミュニケーションの難しさをも示唆している。食の安全と消費者心理・ブランド戦略が交差するこの事例は、フードテックや食品業界全体にとって重要な教訓となるだろう。",
+    "collected_at": "2026-07-19T05:06:05.217410+09:00",
+    "background": "サイクロスポーラ症は、「Cyclospora cayetanensis」という寄生虫に汚染された生野菜や水を摂取することで感染する食中毒の一種で、過去にも米国でレタスやハーブ類を原因とする集団感染が繰り返し発生してきた。近年、サラダ専門チェーン（Sweetgreenなど）の人気が高まる中、葉物野菜への依存度が高いこれらの店舗は食の安全問題に対して構造的に脆弱な立場にある。今回の感染懸念の拡大が、消費者の「ヘルシー志向」と「食の安全への不安」の間に鋭い対立をもたらしている。"
+  },
+  {
+    "title": "Will AI fix prior authorization—or make it worse?",
+    "japanese_title": "AIは保険の事前承認を改善するか？米政府が審査自動化パイロットプログラムを開始",
+    "url": "https://arstechnica.com/ai/2026/07/will-ai-fix-prior-authorization-or-make-it-worse/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. 米政府が保険適用の可否を決定する「事前承認（Prior Authorization）」プロセスにAIを活用する試験的プログラムを開始した。",
+      "2. 事前承認は医療現場で長年の問題とされており、患者への治療遅延や医師の業務負担増加を引き起こしてきた。",
+      "3. AIの導入が審査の効率化をもたらす一方、不当な保険拒否を助長するリスクも懸念されている。"
+    ],
+    "points": [
+      "・ AIによる審査自動化が、承認・却下の迅速化につながる可能性がある",
+      "・ 一方で、アルゴリズムによる機械的な判断が、本来承認されるべき治療を不当に却下するリスクがある",
+      "・ 保険会社がAIをコスト削減の手段として悪用する懸念も存在し、規制・監視体制の整備が急務となる"
+    ],
+    "prediction": "パイロットプログラムの結果次第では、AIによる事前承認審査が医療保険制度全体に広がる可能性がある。しかし、AI判断の透明性確保や不服申し立て手続きの整備など、患者保護のための制度的枠組みが不可欠となるだろう。議会や医療団体からの監視も強まり、AI活用の範囲と責任の所在をめぐる議論が本格化すると予想される。",
+    "ai_interpretation": "このニュースの本質は、「効率化」と「公正性」というトレードオフの問題である。AIは処理速度を劇的に向上させる一方、学習データや設計次第で既存の偏りを増幅させるリスクを内包している。医療という人命に直結する領域においては、AIはあくまで補助ツールとして位置づけ、最終判断における人間の関与と説明責任の確保が不可欠であることを、このケースは強く示唆している。",
+    "collected_at": "2026-07-19T05:06:21.740810+09:00",
+    "background": "米国の医療保険制度における「事前承認」とは、保険会社が治療・処方薬・検査などの費用を負担する前に、医師が必要性を証明しなければならない手続きである。このプロセスは煩雑で時間がかかるため、患者の治療遅延や医師・スタッフの過大な事務負担が社会問題となってきた。こうした課題を解決すべく、政府はAI技術を活用した審査効率化の実証実験に乗り出した。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-19",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-07-18",
+    "href": "2026-07-18.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
