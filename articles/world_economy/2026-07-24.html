@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Southwest Airlines put Texas jet fuel on a boat to LA for the first time amid supply worries",
+    "japanese_title": "サウスウエスト航空、燃料不足に備えテキサス産ジェット燃料を船でLAへ初輸送｜航空業界のサプライチェーン危機対応",
+    "url": "https://www.cnbc.com/2026/07/23/southwest-shipped-jet-fuel-from-texas-to-california-amid-supply-crunch.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. サウスウエスト航空は今春、ヒューストンからロサンゼルスへジェット燃料を船舶輸送するために専用船を初めて雇用した。",
+      "2. この異例の措置は、燃料供給不足への懸念に対する予防的なリスク管理策として実施された。",
+      "3. 陸路ではなく海上輸送という選択は、既存のパイプラインや陸上輸送網への依存リスクを分散する新たな戦略を示している。"
+    ],
+    "points": [
+      "・ 航空会社が自社で燃料輸送手段を確保するという異例かつ前例のない対応策",
+      "・ 米国内の燃料パイプラインや陸上インフラの脆弱性・供給不安が背景に存在",
+      "・ 海上タンカーを活用したエネルギー物流の多様化という新たなトレンドの萌芽"
+    ],
+    "prediction": "サウスウエストの対応が業界の先例となり、他の航空会社も燃料調達の多様化・安定化策を競って導入する可能性がある。米国のエネルギーインフラの老朽化や地政学的リスクが続く中、航空業界全体でサプライチェーンの強靭化投資が加速するとみられる。長期的には燃料コストの上昇が航空運賃に転嫁され、消費者物価にも影響を及ぼす可能性がある。",
+    "ai_interpretation": "このニュースの本質は、単なる燃料輸送の話を超え、グローバルなサプライチェーンの脆弱性が先進国の国内インフラにまで及んでいることを象徴している。「まさかの海上輸送」という選択は、既存インフラへの過度な依存リスクを企業が真剣に再評価し始めたことの証左であり、エネルギー安全保障の概念が国家レベルから企業レベルへと降りてきている新時代を示唆している。これはコスト効率よりも供給確実性を優先するという、コロナ禍以降の「レジリエンス重視経営」の典型的な事例といえる。",
+    "collected_at": "2026-07-24T05:19:17.309830+09:00",
+    "market_impact": "航空燃料の供給不安は航空会社のコスト構造を直撃し、運賃上昇や収益圧迫につながる可能性がある。代替輸送手段の活用はタンカー需要を高め、海運市場にも波及効果をもたらす。また、米国西海岸のエネルギー供給安定性への懸念が、エネルギー株やインフラ関連投資にも影響を与えうる。"
+  },
+  {
+    "title": "As Honda CR-V leads U.S. sales, automaker teases new American-built pickup truck",
+    "japanese_title": "ホンダCR-Vが米国販売首位——新型アメリカ製ピックアップトラック「リッジライン」の生産一時停止と次世代モデルを予告",
+    "url": "https://www.cnbc.com/2026/07/23/honda-american-built-pickup-truck.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ホンダのSUV「CR-V」が米国市場で販売トップを記録し、同社の北米戦略における競争力の高さが改めて示された。",
+      "2. 中型ピックアップトラック「リッジライン」は今後の方向性が不透明な状況が続いており、メーカーは一時的な生産停止を発表した。",
+      "3. 一方でホンダは、米国製の新型ピックアップトラックの開発・投入を示唆しており、北米市場への長期的なコミットメントを強調している。"
+    ],
+    "points": [
+      "・ CR-Vの販売首位はSUV需要の根強さを示しており、ホンダの主力製品戦略の成功を裏付ける",
+      "・ リッジラインの一時生産停止はモデルチェンジや戦略的見直しのシグナルである可能性が高い",
+      "・ 「アメリカ製」を前面に打ち出した新型トラックの開発は、保護主義的な通商政策への対応策として注目される"
+    ],
+    "prediction": "ホンダが米国製ピックアップトラックを正式投入すれば、日系メーカー初の本格的な大型トラック市場参入として北米自動車業界に大きなインパクトを与えるとみられる。米中貿易摩擦や関税政策の不透明感が続く中、現地生産比率を高める動きは他の日系・韓国系メーカーにも波及し、北米における製造拠点の再編が加速する可能性がある。また、EVシフトとの兼ね合いで、新型トラックの電動化対応が戦略の核心となるだろう。",
+    "ai_interpretation": "このニュースの本質は、ホンダが「SUVの勝者」としての地位を固めつつ、米国で最も利益率の高いピックアップトラック市場への本格参入を模索しているという、二段階の成長戦略にある。リッジラインの一時停止は単なる後退ではなく、より競争力のある次世代モデルへの「仕込み」と解釈すべきであり、米国政治・経済環境への巧みな適応戦略といえる。グローバル経済的には、自動車産業における「ローカライゼーション（現地化）」の潮流が一段と強まっていることを象徴するニュースであり、製造業全体のサプライチェーン再編を促す先行指標として注目に値する。",
+    "collected_at": "2026-07-24T05:19:38.241637+09:00",
+    "market_impact": "米国ピックアップトラック市場はフォード「F-150」やシボレー「シルバラード」など国内ブランドが圧倒的シェアを持つ激戦区であり、ホンダの新型投入は競争をさらに激化させる可能性がある。現地生産を強化する方針はトランプ政権以降続く「米国製造回帰」の政治的潮流にも合致しており、関税リスクの回避と雇用創出効果が期待される。円安局面における日系メーカーの現地生産拡大は、為替変動リスクのヘッジとしても有効な戦略といえる。"
+  },
+  {
+    "title": "'The Odyssey' is cleaning up for Imax. Expect the momentum to continue",
+    "japanese_title": "ノーラン監督『オデッセイ』がIMAXの興行収入を牽引——2026年に過去最高売上更新へ",
+    "url": "https://www.cnbc.com/2026/07/23/the-odyssey-imax-ticket-sales-revenue.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. クリストファー・ノーラン監督の最新作『The Odyssey』がIMAX形式での興行収入を大幅に押し上げている。",
+      "2. この好調な成績が投資家の信頼を高め、IMAXは2026年に過去最高のチケット売上を達成できるとの期待が高まっている。",
+      "3. プレミアム映画体験への需要が依然として根強く、映画興行業界の回復トレンドが継続していることを示している。"
+    ],
+    "points": [
+      "・ノーラン監督作品とIMAXの相乗効果による「プレミアム映画体験」ビジネスモデルの確立",
+      "・2026年過去最高売上という具体的な業績目標が投資家心理を強気に転換させている点",
+      "・ストリーミング全盛時代においても、劇場体験（特にIMAX）への差別化需要が衰えていないこと"
+    ],
+    "prediction": "IMAXの成功モデルは、他の映画館チェーンにもプレミアムフォーマット投資を促す可能性があり、映画興行業界全体の設備高度化が加速するとみられる。地政学的リスクや景気減速懸念が続く中でも、エンターテインメント消費は比較的堅調を維持しやすく、「口紅効果」的な消費行動が後押しする可能性がある。中長期的には、IMAXのブランド価値向上が新興国市場への展開を促進し、グローバルな収益基盤の多様化につながるだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる映画の흥행成功にとどまらず、「体験型消費」への根強い需要がデジタル・ストリーミング経済と共存できることを証明している点にある。IMAXというハードウェアとノーラン作品というコンテンツの組み合わせは、付加価値の高いニッチ市場戦略の成功例として、他産業にも示唆を与える。グローバル経済の不透明感が増す中で、消費者が「特別な体験」に対しては対価を惜しまないという消費心理の変化は、プレミアム戦略を取る企業全般にとって追い風となるだろう。",
+    "collected_at": "2026-07-24T05:19:57.643391+09:00",
+    "market_impact": "IMAXの株価上昇はエンターテインメント・映画興行セクター全体への好影響をもたらし、関連銘柄への資金流入が期待される。プレミアム体験型コンテンツへの消費者支出の強さは、個人消費の底堅さを示す一指標となり得る。また、日本を含むアジア市場でもIMAXシアターの普及が進んでおり、グローバルな興行収入拡大の恩恵を受ける可能性がある。"
+  },
+  {
+    "title": "'New York Times' alleges White House abuses legal system to intimidate reporters",
+    "japanese_title": "ニューヨーク・タイムズ、トランプ政権がジャーナリスト恫喝目的で司法制度を悪用と法廷で主張",
+    "url": "https://www.npr.org/2026/07/23/nx-s1-5903854/trump-new-air-force-one-nyt-subpoenas",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ニューヨーク・タイムズ紙は、トランプ大統領を怒らせた記事をめぐり、ホワイトハウスが報道記者を威圧するために司法制度を悪用していると法廷で訴える。",
+      "2. 同紙は木曜日に開かれる裁判で、政権による法的手続きが報道の自由への組織的な攻撃であるとの立場を主張する見通し。",
+      "3. この訴訟は、トランプ政権下におけるメディアと政府の対立が司法の場にまで発展した象徴的なケースとなっている。"
+    ],
+    "points": [
+      "・ 政権による司法制度の「武器化」疑惑が報道の自由という民主主義の根幹に関わる問題に発展している点",
+      "・ トランプ大統領とメディアの対立が単なる言論戦を超え、法的・制度的闘争へとエスカレートしている構図",
+      "・ 裁判所の判断が今後の政府とメディアの関係、さらには報道機関の取材・報道姿勢に与える先例効果"
+    ],
+    "prediction": "この裁判の判決次第では、米国内の報道の自由の保護水準が再定義される可能性があり、国際社会における米国の民主主義的価値への評価にも影響が及ぶ可能性がある。政権によるメディアへの法的圧力が常態化すれば、外国企業・投資家が米国のビジネス環境の透明性・予見可能性をより慎重に評価するようになるリスクがある。また、他国の権威主義的政権に対し「法的手段によるメディア圧力」という手法を正当化する悪しき先例となりかねない点も懸念される。",
+    "ai_interpretation": "このニュースの本質は、経済問題というよりも**制度的民主主義の健全性**をめぐる問題であるが、法の支配・報道の自由・政府の透明性は長期的なビジネス環境と投資先としての国家信頼性に直結する重要な経済基盤でもある。司法・行政・メディアの三者の力学が崩れることは、グローバル投資家が重視するESGやガバナンス指標にも影響し、米国の「民主主義プレミアム」を損なうリスクをはらんでいる。報道の自由の後退は情報の非対称性を高め、市場効率性や意思決定の質を中長期的に低下させるという点で、経済合理性の観点からも見過ごせない問題である。",
+    "collected_at": "2026-07-24T05:20:19.963061+09:00",
+    "market_impact": "メディア・報道関連企業の株価や経営環境に不確実性をもたらす可能性があり、特にNYTを含む大手メディア株に短期的な警戒感が生じ得る。報道の自由をめぐる法的リスクの高まりは、広告市場や投資家心理にも間接的な影響を与える恐れがある。また、米国の法の支配・ガバナンスへの懸念が外国投資家の米国市場に対する信頼感に微妙な影響を及ぼす可能性もある。"
+  },
+  {
+    "title": "A town renamed its festival 'AI Love Irondale Day.' Then came the comments",
+    "japanese_title": "「AI Love Irondale Day」改名騒動が示すデータセンター急増への米国南部の反発と地域社会の不安",
+    "url": "https://www.npr.org/2026/07/23/nx-s1-5896481/data-center-backlash-ai-love-irondale-day",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国アラバマ州アイアンデール市が夏祭りを「AI Love Irondale Day」と改名したところ、オンライン上で激しい批判と嘲笑が殺到した。",
+      "2. この騒動は、米国南部で急速に進むデータセンター建設ブームに対する地域住民の根強い不満と不安を象徴する出来事となった。",
+      "3. AI・テック産業の地方誘致を歓迎する行政側と、雇用・環境・地域文化への影響を懸念する市民側との溝が浮き彫りになっている。"
+    ],
+    "points": [
+      "・行政によるAIブランディング戦略が地域住民の反感を招く「AI洗浄（AIウォッシング）」への警戒感が高まっている",
+      "・データセンターの急増が水資源・電力・土地利用など環境問題と直結し、地方政治の争点化が進んでいる",
+      "・テック企業誘致による経済効果（税収・雇用）と地域住民のQOL（生活の質）低下懸念との対立構造が鮮明になっている"
+    ],
+    "prediction": "米国南部を中心にデータセンター建設への住民反対運動が組織化される動きが加速する可能性があり、州・連邦レベルでの規制論議が活発化することが予想される。地政学的にはAIインフラの国内整備を急ぐ米国政府の方針と、地域コミュニティの利益保護の間で政策的緊張が高まり、インフラ投資の立地選定戦略の見直しを迫られる企業が増えるだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる「祭り改名の失敗」ではなく、AI産業の爆発的拡大が地方社会に与える「見えないコスト」への市民的覚醒を示している。グローバル経済においてAI投資競争が激化する中、インフラ受け入れ側の地域社会との合意形成（ソーシャルライセンス）なき成長戦略は持続不可能であるという重要な警告を発している。テック企業と地方行政が「AI＝未来・希望」という一方的なナラティブを押し付けることへの反発は、今後のESG投資評価や企業ブランドリスクとも連動する問題として注視が必要だ。",
+    "collected_at": "2026-07-24T05:20:41.896500+09:00",
+    "market_impact": "AIインフラ投資が米国南部に集中する中、地域社会の反発は今後のデータセンター建設許可や土地取得に影響を与える可能性があり、Microsoftやメタ、Googleなどの大手テック企業の設備投資計画にも波及リスクがある。電力消費の急増により地域電力網や光熱費への圧力が高まり、エネルギーセクターへの注目度も増している。一方で、AI関連インフラ需要そのものは依然として強く、建設・半導体・電力業界への追い風は継続する見通しだ。"
+  },
+  {
+    "title": "Oil prices hit $100 for the first time since May",
+    "japanese_title": "原油価格が5月以来初めて1バレル100ドル突破――中東情勢の悪化が引き金に",
+    "url": "https://www.bbc.co.uk/news/articles/cx2djnzrqk2o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ブレント原油価格が木曜日に6%超急騰し、2023年5月以来初めて1バレル100ドルの大台を突破した。",
+      "2. 中東における戦争の継続的なエスカレーションが、原油供給への懸念を急速に高めている。",
+      "3. エネルギー市場は地政学的リスクに対し極めて敏感に反応しており、価格のボラティリティが高まっている。"
+    ],
+    "points": [
+      "・ 100ドルという心理的節目の突破が、市場のさらなる買い圧力を誘発する可能性",
+      "・ 中東産油国（サウジアラビア・イラク・イラン）が紛争に巻き込まれた場合の供給途絶リスク",
+      "・ OPECプラスが増産対応を取るか、あるいは現状の減産方針を維持するかという政策判断"
+    ],
+    "prediction": "中東情勢が長期化・拡大すれば、原油価格はさらに上昇し、110〜120ドル台に達するシナリオも排除できない。エネルギー価格の高止まりは世界的なインフレ圧力を再燃させ、米連邦準備制度（FRB）をはじめとする主要中央銀行が利上げサイクルの長期化を迫られる可能性がある。一方で、景気後退懸念が需要を抑制し、価格上昇に自然な歯止めがかかるという逆方向の力も働くと考えられる。",
+    "ai_interpretation": "このニュースの本質は、「エネルギー安全保障と地政学リスクが不可分に結びついている」という構造的な脆弱性の再確認にある。100ドル突破は単なる価格上昇ではなく、市場参加者が中東の紛争を「一時的な局地紛争」ではなく「供給に実害を及ぼしうる広域リスク」として再評価し始めたシグナルと読むべきである。グローバル経済へのより深い示唆として、脱炭素・エネルギー転換が進む中でも化石燃料への依存が依然として世界経済の急所であることを、このニュースは改めて浮き彫りにしている。",
+    "collected_at": "2026-07-24T05:21:00.583608+09:00",
+    "market_impact": "原油価格の急騰はインフレ再燃の懸念を高め、各国中央銀行の金融政策運営をより複雑にする可能性がある。エネルギーコストの上昇は航空・輸送・製造業などのセクターに直接打撃を与え、企業収益を圧迫する。また、産油国通貨（サウジリヤル・ノルウェークローネ等）は上昇圧力を受ける一方、原油輸入国である日本円やインドルピーはさらなる下落リスクにさらされる。"
+  },
+  {
+    "title": "Pubs cheer business rates relief while other firms 'left out in the cold'",
+    "japanese_title": "英国パブが固定資産税減免で歓喜、他の小売業者は「恩恵から除外」と不満の声",
+    "url": "https://www.bbc.co.uk/news/articles/clyvnz4489wo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 英国政府がパブなど一部の飲食業に対して固定資産税（ビジネスレーツ）の減免措置を発表し、パブ業界から歓迎の声が上がった。",
+      "2. 一方、同じハイストリート（商店街）に立地する他の小売・サービス業者は支援対象から外れ、不公平だとの不満が噴出している。",
+      "3. 業種別の選択的支援策が、業界間の亀裂と政策の一貫性への疑問を生む結果となっている。"
+    ],
+    "points": [
+      "・ビジネスレーツ（固定資産税）減免がパブ等の特定業種に限定された政策的背景と意図",
+      "・支援から「取り残された」ハイストリート企業の経営悪化リスクと閉店増加の可能性",
+      "・英国における財政緊縮環境下での選択的産業支援という政策スタンスの是非"
+    ],
+    "prediction": "英国政府は財政余力の制約から全業種への支援拡大は困難とみられ、恩恵を受けない企業の廃業・撤退によるハイストリートの空洞化が加速するリスクがある。こうした構造的な商業環境の悪化は英国の個人消費や地域経済に下押し圧力をかけ、欧州全体の景気回復シナリオにも影を落とす可能性がある。また、他国においても同様の「選択的支援 vs 公平な支援」をめぐる政策論争が活発化する可能性がある。",
+    "ai_interpretation": "このニュースの本質は、財政制約下における政府の「選択と集中」型支援策が必然的に生む不公平感と政治的摩擦である。パブが文化的・象徴的な政治的優先度を持つ一方、より多くの雇用を抱える小売業が後回しにされるという構図は、政策立案における経済合理性よりも政治的シンボリズムが優先される危うさを示している。グローバル経済への示唆として、コロナ後の財政余力が枯渇しつつある先進国では、こうした「部分的救済」が社会的分断と産業間不均衡を深める新たなリスク要因となりうる点に注目すべきである。",
+    "collected_at": "2026-07-24T05:21:20.799834+09:00",
+    "market_impact": "英国国内の小売・飲食セクターにおける競争環境の不均衡が生じ、恩恵を受けないテナント企業の経営圧迫が続く可能性がある。ポンド相場への直接的な影響は限定的だが、英国内需の回復力に対する投資家心理に影響を与えかねない。また、商業不動産市場においてもハイストリートの空き店舗増加リスクが高まる懸念がある。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-24",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-07-24.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-07-24.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-07-23",
+    "href": "2026-07-23.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
