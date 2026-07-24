@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "福岡県議会 正副議長ポストめぐる問題 調査の透明性確保が焦点",
+    "japanese_title": "福岡県議会・正副議長ポスト金銭疑惑――中尾副議長辞職で第三者委員会設置へ、透明性確保が急務",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015185681000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 福岡県議会で正副議長ポストをめぐる金銭授受疑惑が浮上し、中尾正幸副議長が「県政の混乱を招いた」として議員辞職した。",
+      "2. 県議会内から事実関係を解明するための第三者委員会設置を求める声が上がり、調査の透明性確保が最大の焦点となっている。",
+      "3. 地方議会における議席・ポストと金銭の結びつきという構造的問題が改めて浮き彫りとなり、地方行政への信頼失墜が懸念される。"
+    ],
+    "points": [
+      "・ **第三者委員会の独立性**――設置主体・委員構成・調査権限が真に中立かどうかが透明性のカギを握る",
+      "・ **金銭授受の構造的背景**――一時的な個人の問題か、議会内の慣行・派閥力学に根ざした組織的問題かの解明が求められる",
+      "・ **他の関係議員の動向**――副議長辞職にとどまらず、疑惑が正議長や他の議員に波及するかどうかで問題の規模が大きく変わる"
+    ],
+    "prediction": "第三者委員会が設置された場合、調査結果の公表時期や内容次第で追加辞職・議会運営の停滞が生じ、福岡県の2025年度予算執行や重要政策審議に遅れが出るリスクがある。国政レベルでも地方議会の規律・倫理規程強化を求める議論が活発化し、総務省による地方自治法改正の検討材料となる可能性がある。選挙が近い地方議員にとっては有権者の不信感が高まる局面であり、次期地方選挙の候補者選定や政党戦略にも影響を与えうる。",
+    "ai_interpretation": "このニュースの本質は、ポスト配分という「見えにくい利権」が地方議会に根付いている構造的腐敗リスクの顕在化であり、単なる個人の問題に矮小化できない点にある。地方行政の信頼性は企業立地判断や地域住民の税負担感にも直結するため、経済的コストは表面上の数字よりはるかに大きい。日本経済の持続的成長には中央だけでなく地方ガバナンスの質向上が不可欠であり、今回の事態は透明性・説明責任の制度的強化を促す重要な契機となりうる。",
+    "collected_at": "2026-07-25T05:24:05.874716+09:00",
+    "market_impact": "今回の問題は地方議会レベルの政治スキャンダルであり、株式市場や為替相場への直接的・即時的な影響は限定的とみられる。ただし、福岡県は九州の経済中枢であり、行政の混乱が長期化すれば県内のインフラ整備・企業誘致・補助金行政などの意思決定が遅滞し、地域経済に間接的なマイナス効果をもたらす可能性がある。国内の地方自治体向け投資や地域金融機関のセンチメントにも、波及リスクとして注視が必要だ。"
+  },
+  {
+    "title": "国会が事実上閉会 合意形成どう図るかが次の国会でも課題に",
+    "japanese_title": "国会閉会後も続く与野党対立――「副首都」構想法成立と参院ねじれが日本経済政策に与える影響",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015185731000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 国会は24日夜に事実上閉会し、「副首都」構想関連法など複数の重要法案が成立した。",
+      "2. 最終盤では与野党の対立が激化し審議が停滞する場面もあり、立法プロセスの機能不全が表面化した。",
+      "3. 参議院で与党が過半数を持たない「ねじれ」状態が継続しており、次の国会でも合意形成が最大の課題となる。"
+    ],
+    "points": [
+      "・ 参議院での与党過半数割れ（いわゆる「ねじれ国会」）が常態化しており、野党の協力なしには重要法案の成立が困難な構造になっている",
+      "・ 「副首都」構想関連法の成立は大阪・関西地区への権限・機能移転を促す可能性があり、首都機能分散という歴史的課題に一石を投じる",
+      "・ 与野党の対立激化による審議停滞は、経済対策・予算審議・社会保障改革など喫緊の政策課題の先送りリスクを高める"
+    ],
+    "prediction": "次の国会では経済財政運営や社会保障改革など優先度の高い議題が山積しており、与党は野党との個別協議・修正協議を通じた合意形成を迫られ、政策の質・スピード両面での妥協が増える可能性が高い。「副首都」構想の具体的な制度設計や予算措置をめぐっては、地方自治体・経済界との調整が本格化し、関連インフラ投資の動向が注目される。ねじれ状態が長期化すれば、市場が求める財政健全化や成長戦略の実行力に疑問符がつき、国際的な日本の政策信頼性にも影響しうる。",
+    "ai_interpretation": "このニュースの本質は、単なる国会閉会の手続き問題ではなく、**日本の民主主義的意思決定コストの上昇**という構造問題を映し出している点にある。参院ねじれによる立法停滞は、変化の速いグローバル経済環境において日本の政策対応力を相対的に低下させるリスクをはらんでいる。「副首都」構想という大きなビジョンが法制化された一方で、それを実行に移す政治的基盤の脆弱さが同時に露呈したという、日本経済の課題を象徴的に示したニュースといえる。",
+    "collected_at": "2026-07-25T05:24:27.141560+09:00",
+    "market_impact": "政策決定の停滞リスクが意識されることで、財政出動や構造改革への期待が後退し、日本株市場では政策関連セクター（建設・インフラ・不動産）の先行き不透明感が増す可能性がある。為替については、政策運営の不透明感が円の弱材料となり得る一方、日銀の金融政策との兼ね合いで大きな変動は限定的とみられる。「副首都」構想の具体化が進めば、関西圏を中心とした地域経済や不動産市場には中長期的なプラス効果が期待できる。"
+  },
+  {
+    "title": "「副首都」構想関連法が成立 自民・維新・みらいなど賛成",
+    "japanese_title": "「副首都」構想関連法が成立——大規模災害時の首都機能分散が本格始動、日本の国土強靭化に新局面",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015185521000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 大規模災害時に首都の代替機能を担う「副首都」構想の関連法が、参院本会議で自民・維新・チームみらいなどの賛成多数により可決・成立した。",
+      "2. 本法律は首都直下型地震や広域災害を想定し、政府機能・経済中枢のバックアップ体制を法的に整備するものである。",
+      "3. 賛成勢力は与党自民党に加え、大阪・関西圏の振興を重視する日本維新の会や新興政党チームみらいが名を連ねており、幅広い政治的支持を得た形となった。"
+    ],
+    "points": [
+      "・ 副首都の具体的な候補地（大阪・名古屋など）の選定プロセスと関連する地価・不動産市場の動向",
+      "・ 維新の会が強く推進してきた「大阪副首都化」構想との整合性と、関西経済圏への波及効果",
+      "・ 法整備後の政府機能移転・分散に伴う行政コスト、および民間企業のバックアップオフィス需要の拡大"
+    ],
+    "prediction": "副首都関連の具体的な整備計画・予算措置が今後の政策議論の焦点となり、インフラ投資・地方創生関連の財政出動が段階的に拡大する可能性が高い。特に関西万博後の大阪経済再編とも連動し、副首都候補地周辺の都市開発・デジタルインフラ整備が加速することが予想される。一方、財源確保や東京一極集中の是正が実際に進むかどうかは、具体的な実施計画の策定次第であり、政治的なコンセンサス形成が引き続き課題となる。",
+    "ai_interpretation": "本法律の成立は、単なる防災対策を超えて、戦後から続く「東京一極集中」という日本経済の構造的リスクに初めて法的な対応策を打ち込んだという点で歴史的意義を持つ。首都機能の分散は、企業のリスク分散・地方投資促進・人口再配置を促し、長期的には地方経済の活性化と国全体の経済的レジリエンス向上につながる可能性を秘めている。ただし、法律の成立はスタートに過ぎず、実効性ある副首都機能の実現には、政府・民間・自治体が一体となった継続的かつ具体的な投資と制度設計が不可欠である。",
+    "collected_at": "2026-07-25T05:24:48.178110+09:00",
+    "market_impact": "副首都候補地とされる大阪・関西圏を中心に、不動産・建設・インフラ関連株への投資期待が高まり、中長期的な株価押し上げ要因となり得る。為替への直接的な短期影響は限定的だが、日本の「災害リスク耐性」強化が対外的な信頼度向上につながれば、円資産への中長期的な評価改善も期待できる。国内では建設・通信・データセンター・防災インフラ産業への需要拡大が見込まれる。"
+  },
+  {
+    "title": "第221特別国会が事実上閉会 政府提出の64法案すべて成立",
+    "japanese_title": "第221特別国会閉会：政府提出64法案が全成立、皇室典範改正・副首都構想など重要立法が完了",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015185801000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 第221特別国会が事実上閉会し、政府提出の64法案がすべて可決・成立という高い立法達成率を記録した。",
+      "2. 皇族数の確保を目的とした改正皇室典範が成立し、長年の課題であった皇室制度の安定化に向けた法的整備が進んだ。",
+      "3. 議員立法では与党連立合意に基づく「副首都」構想関連法案も提出・審議され、国土の多極分散化政策が具体化しつつある。"
+    ],
+    "points": [
+      "・政府提出64法案の「全成立」という異例ともいえる高い可決率は、与党の国会運営力と連立の安定性を示す",
+      "・改正皇室典範は社会的・象徴的意義が大きく、長期的な制度的安定につながる歴史的立法",
+      "・「副首都」構想は東京一極集中の是正を目指すものであり、地方経済の活性化や企業の分散立地戦略に影響する可能性がある"
+    ],
+    "prediction": "副首都構想の法整備が進むことで、大阪・関西圏を中心とした地域経済への投資や企業誘致が加速し、2025年大阪・関西万博後の経済レガシーとも相乗効果を生む可能性がある。また、立法が一段落したことで政府・与党は次期通常国会に向けて経済財政政策や社会保障改革など実行フェーズへ移行することが予想される。政権基盤の安定を背景に、日本銀行との政策協調や財政運営の方針がより明確に打ち出される展開も考えられる。",
+    "ai_interpretation": "今国会における64法案の全成立は、単なる立法数の問題にとどまらず、政権の政策遂行能力と連立基盤の強固さを内外に示す政治的シグナルとして重要である。皇室典範改正と副首都構想という「国家の根幹」に関わる二つの大きなテーマが同時に動いたことは、日本が制度的・地理的な長期課題に正面から向き合い始めたことを意味する。日本経済にとっては、政治的安定が投資環境の予測可能性を高め、国内外の資本にとって中長期的なポジティブ材料になり得ると解釈できる。",
+    "collected_at": "2026-07-25T05:25:08.293573+09:00",
+    "market_impact": "副首都構想の具体化は、大阪・名古屋などの地方不動産市場や建設・インフラ関連銘柄に中長期的なポジティブ材料となり得る。政府提出法案の全成立は政権の安定性を示すシグナルとして、円相場や日本国債市場において一定の安心感を与える可能性がある。一方、個別法案の内容によっては規制強化・緩和の方向性が特定セクターの株価に影響を及ぼす点にも注意が必要だ。"
+  },
+  {
+    "title": "愛知県が「副首都」目指すと表明 県知事と名古屋市長が会見",
+    "japanese_title": "愛知県・名古屋市が「副首都」指定を正式表明——関連法成立で中部圏の経済的地位向上に期待",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015185791000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 副首都構想の関連法成立を受け、愛知県の大村知事と名古屋市の広沢市長が共同会見を開き、副首都指定を目指すことを正式に表明した。",
+      "2. 副首都とは大規模災害時に首都の代替機能を担う拠点であり、行政・経済機能の分散化を制度的に後押しするものである。",
+      "3. 愛知県・名古屋市は製造業の集積や交通インフラの優位性を背景に、全国で最も有力な副首都候補の一つと位置づけられている。"
+    ],
+    "points": [
+      "・ 副首都関連法の具体的な指定要件や国からの財政支援の枠組みがどのように設計されるか",
+      "・ 大阪・関西（IR・万博後の機運）など他の候補地域との誘致競争の行方",
+      "・ リニア中央新幹線の開業見通しと副首都構想の連動による中部圏の広域的な発展シナリオ"
+    ],
+    "prediction": "国が副首都の指定基準や支援制度を具体化する過程で、愛知県・名古屋市は積極的なロビー活動とインフラ整備計画の提示を進めるとみられ、中部圏への公共投資が中長期的に拡大する可能性が高い。また、首都機能のバックアップ拠点としての信頼性を高めるため、データセンターや行政DX関連の民間投資も呼び込む契機となり得る。一方、指定をめぐる地域間競争が激化すれば、各自治体の財政負担増加という課題も浮上してくるだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる「防災対策」にとどまらず、東京一極集中という日本経済の構造的リスクを制度的に是正しようとする大きな政策転換の始まりである。愛知県は製造業GDP・輸出額ともに国内トップクラスであり、副首都指定が実現すれば経済・行政双方の重心が分散し、日本全体のレジリエンス（強靭性）が高まる可能性がある。長期的には企業の本社機能移転や人材流動化を誘発し、地方創生と経済安全保障を同時に達成する政策モデルとして国際的にも注目される展開となり得る。",
+    "collected_at": "2026-07-25T05:25:28.712090+09:00",
+    "market_impact": "副首都構想の具体化により、名古屋・中部圏への官公庁関連施設や企業の移転・分散投資が促進される可能性があり、地域の不動産市場や建設セクターへのポジティブな影響が期待される。円相場への直接的な影響は限定的だが、国内の政策的リスク分散が評価されれば中長期的な日本経済の安定性向上につながり得る。製造業が集積する中部圏への企業誘致がさらに加速し、トヨタ関連をはじめとする地域産業の競争力強化にも寄与する可能性がある。"
+  },
+  {
+    "title": "改正国民投票法が成立 公職選挙法にあわせ投票環境を整備",
+    "japanese_title": "改正国民投票法が成立｜憲法改正への道筋と日本経済・政治への影響を徹底分析",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015185621000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 憲法改正に関する国民投票の投票環境を整備する「改正国民投票法」が参議院本会議で可決・成立した。",
+      "2. 主な改正点は立会人の要件緩和など、公職選挙法に合わせた制度の統一・合理化が図られた。",
+      "3. 採決は自民党・日本維新の会・立憲民主党などの賛成多数という幅広い賛同を得て成立した。"
+    ],
+    "points": [
+      "・ 与野党を超えた広範な賛成（自民・維新・立憲民主等）による成立は、政治的合意形成能力の高さを示す",
+      "・ 公職選挙法との整合性確保により、選挙制度全体の透明性・利便性が向上する",
+      "・ 憲法改正発議に向けた「インフラ整備」が完了したことで、今後の改憲論議が加速する可能性がある"
+    ],
+    "prediction": "投票環境の整備が完了したことで、与党を中心とした憲法改正発議に向けた議論が政策アジェンダの上位に浮上しやすくなると予測される。改憲内容によっては、防衛費拡大や経済安全保障政策の強化が加速し、関連産業への財政支出増加につながる可能性がある。一方、改憲プロセスには国民投票という最終関門が残るため、政治リスクとして市場が過度に反応するシナリオは現時点では考えにくい。",
+    "ai_interpretation": "このニュースの本質は「経済政策」ではなく、日本の憲法秩序と民主主義プロセスの「制度的成熟」を示す点にある。幅広い党派が賛成したことは、イデオロギーを超えた制度合理化への合意を意味し、日本の立法機能の健全性を示すシグナルとして評価できる。経済的示唆としては、憲法改正議論の活発化が安全保障・防衛・デジタル化関連の政策投資を促進し、中長期的に特定セクターの成長ドライバーになり得るという点が最も重要な注目点といえる。",
+    "collected_at": "2026-07-25T05:25:47.629818+09:00",
+    "market_impact": "本法律は直接的な経済・金融政策ではないため、株式市場や為替への即時的な影響は限定的とみられる。ただし、憲法改正論議が具体化する場合、防衛・安全保障関連産業や、憲法に関わる規制緩和を期待するセクターへの中長期的な投資家心理に影響を与える可能性がある。制度整備が進むことで政治的安定性のシグナルとなり、外国人投資家の日本市場への信頼感に緩やかなプラス効果をもたらす可能性もある。"
+  },
+  {
+    "title": "衆院予算委 24日の集中審議取りやめ 27日に開催で与野党合意",
+    "japanese_title": "衆院予算委の集中審議が27日に延期―高市首相出席の閉会中審査で与野党合意、政策運営への影響に注目",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015185781000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 衆議院予算委員会の理事会にて、24日に予定されていた高市総理大臣出席の集中審議を見送ることが決定された。",
+      "2. 与野党間の合意により、来週27日に「閉会中審査」という形式で改めて開催されることとなった。",
+      "3. 国会閉会中にもかかわらず審査が行われる点で、現下の政治・経済課題に対する与野党双方の問題意識の高さが伺える。"
+    ],
+    "points": [
+      "・ 「閉会中審査」という異例の形式が選ばれた背景にある政治的経緯と与野党の思惑",
+      "・ 高市総理が27日の審議でどのような経済・財政政策の方針を示すか",
+      "・ 審議延期によって懸案事項（予算執行・経済対策）の決定プロセスに生じる時間的ロス"
+    ],
+    "prediction": "27日の閉会中審査では、財政政策・物価対策・社会保障費などの重要課題が集中的に議論されると予想され、その内容が今後の政策運営の方向性を左右する可能性が高い。与野党が合意した経緯からも、一定の議論の場は確保されるものの、閉会中という制約の中でどこまで踏み込んだ政策論争が展開されるかは不透明である。審議の結果によっては、秋以降の臨時国会召集の時期や追加経済対策の有無にも影響が波及しうる。",
+    "ai_interpretation": "このニュースの本質は、単なる日程調整にとどまらず、高市政権が直面する政治的求心力と国会運営上の課題を象徴している点にある。閉会中審査という形式を選択したことは、与野党ともに「国民に対する説明責任」を完全には回避できない政治環境を示しており、政策の透明性・説明責任が改めて問われている。日本経済の先行きに対する市場・企業の信頼を維持するためには、27日の審議で具体的かつ実効性のある経済政策のビジョンが示されることが不可欠であり、その内容が中長期的な投資環境にも影響を与えると考えられる。",
+    "collected_at": "2026-07-25T05:26:07.527702+09:00",
+    "market_impact": "審議の延期自体は市場に直接的な急変動をもたらす要因とはなりにくいが、政策決定の「先送り感」が短期的に円相場や株式市場の不透明感を若干高める可能性がある。特に財政政策や経済対策に関する具体的な方針が示されるまで、機関投資家は様子見姿勢を維持するとみられる。国内産業界も予算執行や補助金政策の行方を注視しており、審議内容次第では業種別に株価への影響が出る可能性がある。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-25",
+  "currentCategory": "japan_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-07-25.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-07-24",
+    "href": "2026-07-24.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>

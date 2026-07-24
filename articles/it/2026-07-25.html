@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Volkswagen engineers charged with insider trading tied to Rivian joint venture",
+    "japanese_title": "フォルクスワーゲンのエンジニア、リビアンとの合弁情報を悪用したインサイダー取引で起訴",
+    "url": "https://techcrunch.com/2026/07/24/volkswagen-engineers-charged-with-insider-trading-tied-to-rivian-joint-venture/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. フォルクスワーゲンのエンジニア数名が、リビアンとの合弁事業に関する機密情報を利用した株取引（インサイダー取引）の疑いで起訴された。",
+      "2. 起訴状は金曜日に公開され、エンジニアらが非公開の内部情報をもとにリビアン株を購入したと主張している。",
+      "3. 自動車業界における大型提携案件が、社内関係者による証券不正行為の温床となった可能性が浮上した。"
+    ],
+    "points": [
+      "・ 自動車メーカーとEVスタートアップの大型提携が、インサイダー取引の舞台となった点",
+      "・ 「エンジニア」という技術職の従業員が金融犯罪に関与したとされる異例性",
+      "・ 米当局（SEC・司法省等）が国際企業の従業員に対しても積極的に法執行を行っている点"
+    ],
+    "prediction": "起訴されたエンジニアらは今後、米国の連邦裁判所での審理に臨むことになり、有罪となれば禁錮刑や高額の罰金が科される可能性がある。フォルクスワーゲン本社も社内のコンプライアンス体制や情報管理の見直しを迫られるだろう。また、この事件がVWとリビアンの合弁関係そのものへの信頼や進捗に影響を与えるかも注目される。",
+    "ai_interpretation": "このニュースは、EV業界における巨額の企業提携が「情報格差」を生み出し、それが不正利益の温床になり得るという構造的リスクを示している。技術者であっても市場に影響を与える情報を扱う立場にある以上、金融規制の対象となるという認識がまだ業界全体に浸透していない可能性がある。企業が国際的なパートナーシップを拡大するにつれ、インサイダー情報の管理と従業員教育の重要性はますます高まっていると言えるだろう。",
+    "collected_at": "2026-07-25T05:21:53.662278+09:00",
+    "background": "フォルクスワーゲンとリビアンは電動車技術の共同開発を目的とした合弁事業を進めており、その交渉・締結過程で社内には市場未公開の重要情報が存在していた。当該エンジニアらはその業務上の立場からこうした機密情報へのアクセスが可能であったとみられる。合弁発表前後にリビアン株が大きく動いたことが当局の目に留まり、調査・起訴へと発展したとみられる。"
+  },
+  {
+    "title": "Why Cognition bought Poke: AI personality is becoming a competitive advantage",
+    "japanese_title": "CognitionがAIアシスタント「Poke」を数百億円規模で買収——AIの「個性」が競争優位の鍵に",
+    "url": "https://techcrunch.com/2026/07/24/why-cognition-bought-poke-ai-personality-is-becoming-a-competitive-advantage/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. AIコーディングスタートアップのCognitionが、友人のようにテキスト会話できるAIアシスタント「Poke」を低9桁（数百億円規模）の評価額で買収した。",
+      "2. この買収により、Pokeの会話スタイルとインタラクションモデルがCognitionのコーディングエージェント「Devin」に統合される。",
+      "3. AIアシスタントの「性能」だけでなく「対話体験・個性」が競争優位を左右するという業界的な認識が高まっている。"
+    ],
+    "points": [
+      "・買収額が「低9桁（low nine figures）」＝推定100億円超規模であり、AI個性・UX技術への高い市場評価を示している",
+      "・コーディングエージェント「Devin」に会話型パーソナリティを付加することで、開発者との関係性構築を強化する狙いがある",
+      "・「モデルの賢さ」から「AIとの関わり方の心地よさ」へと、競争軸のシフトが明確に表れている"
+    ],
+    "prediction": "AIツール各社はモデル性能の向上と並行して、独自のキャラクター・会話スタイルの設計に積極投資するトレンドが加速するとみられる。CognitionはDevinにPokeの対話スタイルを組み込むことで、開発者ユーザーのエンゲージメントと継続利用率の向上を狙うだろう。また、同様の「AIパーソナリティ」を持つスタートアップへの買収・投資案件が今後増加する可能性が高い。",
+    "ai_interpretation": "このニュースの本質は、AIが「道具」から「パートナー」へと位置づけが変化しつつある時代の到来を象徴している点にある。技術的な性能が一定水準を超えると、ユーザーが感じる「親しみやすさ」や「信頼感」といった感情的な体験こそが製品の粘着性を決定づける。つまりAI開発における競争は、アルゴリズムの戦いから「人格設計」の戦いへと移行しているといえる。",
+    "collected_at": "2026-07-25T05:22:11.516612+09:00",
+    "background": "AIコーディングツール市場はGitHub CopilotやCursorなど多数のプレイヤーが乱立し、モデル性能だけでの差別化が困難になりつつある。そうした中、ユーザーがAIとどのように関わるか、すなわち「インタラクション体験」が新たな差別化軸として注目を集めてきた。Pokeはフレンドリーなテキスト会話体験を強みとしており、その資産をCognitionが戦略的に取り込む形となった。"
+  },
+  {
+    "title": "US accuses American of allegedly wiping his phone using a ‘duress’ password during border search",
+    "japanese_title": "米国市民が国境検査で「緊急消去パスワード」を使用か——憲法上の権利をめぐる法廷闘争が勃発",
+    "url": "https://techcrunch.com/2026/07/24/us-accuses-american-of-allegedly-wiping-his-phone-using-a-duress-password-during-border-search/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 米国市民が国境当局の捜索中に、データを消去する「デュレス（強制・緊急）パスワード」を提供したとして政府から問題視されている。",
+      "2. 当該人物は、政府の主張を棄却するよう裁判所に申し立てを行った。",
+      "3. この事件は、米国の国境における市民の憲法上のプライバシー権に新たな議論を投げかけている。"
+    ],
+    "points": [
+      "・「デュレスパスワード」（緊急時にデータを自動消去するよう設定されたパスワード）という技術的手段の法的位置づけが争点となっている",
+      "・国境での電子機器検査に対する第4修正条項（不合理な捜索・押収の禁止）の適用範囲が問われている",
+      "・本人が意図的にデータを隠滅したのか、それとも正当な自己防衛的行為なのかという証明責任の問題も内包している"
+    ],
+    "prediction": "裁判所がこの申し立てをどう判断するかによって、国境における電子機器捜索の法的基準に重大な先例が生まれる可能性がある。政府が主張を維持した場合、デュレスパスワードの使用が証拠隠滅として刑事責任につながるリスクが生じ、プライバシー保護技術の利用そのものが萎縮する恐れがある。一方、申し立てが認められれば、国境捜索に対する市民の権利保護が強化される方向へ法解釈が進む契機となり得る。",
+    "ai_interpretation": "このニュースの本質は、国家の安全保障上の権限と個人のデジタルプライバシー権という、現代社会における根本的な緊張関係を象徴している点にある。「国境」という特殊な法的空間において、暗号化やデータ消去機能といったテクノロジーが市民の権利行使の手段となりうるかどうかが問われており、これはテクノロジーと法律の乖離を浮き彫りにしている。この事例は米国だけでなく、国境でのデジタル捜索が世界的に拡大する中、各国の政策や司法判断にも影響を与える可能性のある重要な試金石といえる。",
+    "collected_at": "2026-07-25T05:22:31.320284+09:00",
+    "background": "米国の国境では、当局が令状なしに電子機器を検査・押収できるとする「国境捜索の例外」という法的慣行が長年存在している。しかし近年、スマートフォンに膨大な個人情報が蓄積されるようになり、デジタルプライバシーの観点からその合憲性を問う声が高まっている。今回の事件は、捜索中にデータが消去されたという事実が加わり、さらに複雑な法的・倫理的問題を提起する異例のケースとなった。"
+  },
+  {
+    "title": "Did Chinese AI Steal From Anthropic, and OpenAI Loses Control of Two Models",
+    "japanese_title": "中国AI企業がAnthropicから技術盗用か？OpenAIモデル制御喪失問題も浮上",
+    "url": "https://www.wired.com/story/uncanny-valley-podcast/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. 中国のMoonshot AIがAnthropicの技術・データを不正に盗用したとの疑惑が浮上し、AI業界に波紋を広げている。",
+      "2. OpenAIが自社の2つのAIモデルに対するコントロールを失うという深刻なインシデントが発生した。",
+      "3. 米陸軍においてもAI活用の過剰依存が問題視され、利用縮小の必要性が議論されている。"
+    ],
+    "points": [
+      "・ Moonshot AIによるAnthropicからの技術盗用疑惑は、AI分野における知的財産保護の国際的な課題を浮き彫りにしている",
+      "・ OpenAIが自社モデルの制御を失ったという事実は、AIシステムのガバナンスと安全性管理における重大なリスクを示唆している",
+      "・ 米陸軍のAI利用縮小方針は、軍事・国家安全保障領域におけるAI過信への警鐘として注目される"
+    ],
+    "prediction": "Moonshot AIの疑惑が事実であれば、米国政府によるさらなる対中AI規制強化や、中国企業への制裁措置が加速する可能性が高い。OpenAIのモデル制御問題は、AI規制当局や研究者からの安全基準強化を求める声を後押しするだろう。軍事分野でのAI活用見直しは、他の政府機関や企業にも波及し、AI導入における慎重論が広まる可能性がある。",
+    "ai_interpretation": "このニュースが示す本質は、AI技術の急速な発展が「競争・安全・倫理」という三つの緊張関係を同時に引き起こしているという点にある。技術盗用疑惑は国際的な信頼の欠如を、モデル制御喪失は技術的な傲慢さを、軍事AI縮小は人間による監督の重要性をそれぞれ象徴している。AIが社会インフラに深く組み込まれる前に、国際的なルール形成と堅固な安全管理体制の構築が急務であることを強く示唆している。",
+    "collected_at": "2026-07-25T05:22:49.376202+09:00",
+    "background": "米中間のAI覇権争いが激化する中、中国企業による米国AI技術の模倣・盗用疑惑はかねてより指摘されてきた。Anthropicは安全性重視のAI開発で知られる企業であり、その知的財産が標的となった可能性は業界全体の警戒感を高めている。また、OpenAIのモデル制御問題は、急速なAI開発の裏に潜む安全管理の脆弱性を露呈した形となっている。"
+  },
+  {
+    "title": "Silicon Valley Is Completely Divided Over Chinese AI",
+    "japanese_title": "シリコンバレーが真っ二つ——中国AIをめぐる大手スタートアップと中小プレイヤーの深刻な対立",
+    "url": "https://www.wired.com/story/silicon-valley-is-completely-divided-over-chinese-ai/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. 数十億ドル規模のAI「スタートアップ」大手は、中国AIの台頭に対して強い警戒感を示している。",
+      "2. 一方、小規模なAIプレイヤーたちは中国AIの脅威論に対して全く異なる見解を持っている。",
+      "3. シリコンバレー内部でも、中国AIへのスタンスが企業規模や利害関係によって真っ向から分かれている。"
+    ],
+    "points": [
+      "・ 大手AIスタートアップは巨額の投資を回収する必要があるため、中国AIの低価格競争を「脅威」と捉えやすい構造的な利害がある",
+      "・ 中小プレイヤーはオープンソース化された中国製モデルを活用することでコストを抑えられるため、むしろ恩恵を受ける立場にある",
+      "・ 「中国AI脅威論」がビジネス上の競争戦略と政治的ロビー活動に利用されている可能性がある"
+    ],
+    "prediction": "米国政府による中国AI規制やチップ輸出規制の強化が続く中、大手AI企業の「脅威論」は政策立案に影響を与え続けるとみられる。一方で中小プレイヤーや開発者コミュニティの現実的な利用実態との乖離は広がり、業界内の分断がより鮮明になる可能性が高い。中長期的には、AIの「地政学的陣営化」が技術の開発・普及の在り方そのものを左右する重要な変数となるだろう。",
+    "ai_interpretation": "このニュースの本質は、「中国AI脅威論」が純粋な技術的・安全保障的議論であるだけでなく、既得権益を持つ大手プレイヤーによる市場防衛の論理と深く絡み合っているという点にある。立場や規模によってリスクと機会の見え方が正反対になるという構図は、AI政策議論における「誰の声が代表されているか」を批判的に問い直す必要性を示唆している。シリコンバレーの分断は、技術競争の問題を超え、AIガバナンスの民主性そのものへの問いかけでもある。",
+    "collected_at": "2026-07-25T05:23:09.154401+09:00",
+    "background": "DeepSeekをはじめとする中国発のAIモデルが低コスト・高性能を武器に国際市場に進出し、米国AI業界に衝撃を与えた。OpenAIやAnthropicなど巨額の資金調達を行った大手は、中国AIを安全保障上のリスクや競争上の脅威として位置づける傾向が強い。一方で、オープンソースモデルを活用する中小プレイヤーにとっては、中国発の技術は「コスト削減の恩恵」として歓迎される側面もある。"
+  },
+  {
+    "title": "RFK Jr.'s hand-picked committee approves manufacture of peptides he uses",
+    "japanese_title": "RFKジュニアが自ら選んだ委員会、彼が使用するペプチドの製造を承認――人体安全性データなしで",
+    "url": "https://arstechnica.com/health/2026/07/rfk-jr-s-hand-picked-committee-approves-manufacture-of-peptides-he-uses/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. ロバート・F・ケネディ・ジュニア（RFKジュニア）が自ら任命した委員会が、彼自身が使用しているペプチドの製造承認を下した。",
+      "2. 当該ペプチドには人体に対する安全性・有効性データが存在しないにもかかわらず、承認が行われた。",
+      "3. この決定は科学的根拠よりも政治的・個人的な影響力が優先されているとして、強い批判を招いている。"
+    ],
+    "points": [
+      "・ **利益相反の疑惑**：承認を下した委員会のメンバーをRFKジュニア自身が選定しており、独立性・中立性が根本から問われている",
+      "・ **科学的根拠の欠如**：通常の医薬品承認プロセスでは必須とされる人体での安全性・有効性データが一切存在しない",
+      "・ **規制の形骸化リスク**：このような前例が認められれば、米国の医薬品規制体制（FDA等）の信頼性・独立性が大きく損なわれる恐れがある"
+    ],
+    "prediction": "議会や医学・科学コミュニティからの調査・批判が強まり、この承認プロセスの正当性をめぐる公的な議論が激化する可能性が高い。FDAや関連機関との権限争いが生じ、規制の抜け穴や政治介入の問題が法的・制度的に争点となるかもしれない。一方、RFKジュニア支持層からは「既存の医療エスタブリッシュメントへの挑戦」として歓迎される可能性もある。",
+    "ai_interpretation": "このニュースの本質は、**科学的規制プロセスへの政治権力の直接介入**という深刻な問題を示している。「データより個人的信念・利益を優先する」という姿勢が制度化されれば、公衆衛生の安全網そのものが機能不全に陥るリスクがある。これは単なるペプチド一件の問題ではなく、米国における証拠に基づく政策立案（Evidence-Based Policy）の根幹が試されている事例といえる。",
+    "collected_at": "2026-07-25T05:23:27.534415+09:00",
+    "background": "RFKジュニアは米国保健福祉省（HHS）長官として、医薬品・健康政策に大きな影響力を持つ立場にある。彼はこれまでも反ワクチン的立場や非主流の健康療法への支持で知られており、科学的コンセンサスと対立することが多かった。今回、自身が個人的に使用するペプチドの製造を承認させるために、自ら任命した委員会を活用したとされ、利益相反の問題が浮上している。"
+  },
+  {
+    "title": "Team uses AlphaFold AI to redesign gene-editing proteins to make them safer",
+    "japanese_title": "AlphaFold AIを活用して遺伝子編集タンパク質を再設計――より安全なゲノム編集技術の実現へ",
+    "url": "https://arstechnica.com/science/2026/07/team-uses-alphafold-ai-to-redesign-gene-editing-proteins-to-make-them-safer/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. GoogleのAIモデル「AlphaFold」を用いて、遺伝子編集タンパク質のエラーを引き起こす部位を特定することに成功した。",
+      "2. 研究チームはその知見をもとに遺伝子編集タンパク質を再設計し、安全性の向上を目指している。",
+      "3. AIと生命科学の融合によって、ゲノム編集技術の精度と信頼性を高める新たなアプローチが示された。"
+    ],
+    "points": [
+      "・AlphaFoldがタンパク質の「エラー誘発部位」を特定するツールとして活用されたこと",
+      "・AIによる構造予測を起点に、タンパク質そのものを再設計（リデザイン）するという応用展開",
+      "・遺伝子編集の安全性向上という、医療倫理・規制面でも重要な課題への直接的な貢献"
+    ],
+    "prediction": "AlphaFoldを活用したタンパク質再設計のアプローチは、CRISPR以外の様々な遺伝子編集ツールにも応用が広がると考えられる。安全性が高まることで、遺伝子治療の臨床応用に向けた規制当局の承認ハードルが下がり、実用化が加速する可能性がある。また、AI駆動のタンパク質エンジニアリングという手法自体が、創薬や合成生物学など隣接分野にも波及していくだろう。",
+    "ai_interpretation": "このニュースの本質は、「AIが科学的発見を加速するだけでなく、安全性という倫理的課題の解決にも貢献できる」という点にある。AlphaFoldはすでにノーベル賞級の成果として評価されているが、今回の事例はその応用が単なる構造予測にとどまらず、能動的な「設計ツール」へと進化していることを示している。AIと生命科学の深い統合が進むことで、これまで人間の手だけでは解決困難だった生物学的リスクを制御できる時代が近づきつつあると言える。",
+    "collected_at": "2026-07-25T05:23:44.053534+09:00",
+    "background": "CRISPR等に代表される遺伝子編集技術は医療・農業分野で革命的な可能性を持つ一方、「オフターゲット効果」と呼ばれる意図しない遺伝子改変が安全上の大きな課題となっていた。従来、タンパク質の構造解析には多大な時間とコストがかかり、問題箇所の特定が困難だった。AlphaFoldの登場によりタンパク質の立体構造予測が飛躍的に高精度化し、こうした課題への新たなアプローチが可能になった。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-25",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-07-24",
+    "href": "2026-07-24.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
