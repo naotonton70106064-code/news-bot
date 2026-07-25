@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Logistics giants are racing to keep up with healthcare boom as GLP-1s highlight need for cold storage",
+    "japanese_title": "GLP-1肥満治療薬ブームが加速するコールドチェーン革命――物流大手が医療ヘルスケア市場へ本格参入",
+    "url": "https://www.cnbc.com/2026/07/25/ups-fedex-dhl-healthare-logistics-glp.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. GLP-1（オゼンピックなど肥満・糖尿病治療薬）の需要急増を背景に、温度管理・コールドチェーン物流への投資が世界的に拡大している。",
+      "2. 大手物流・海運企業が医療・ヘルスケア分野を新たな成長市場として位置づけ、専用インフラの整備を競い合っている。",
+      "3. 医薬品の厳格な温度管理要件が、従来の物流モデルの抜本的な変革を迫っている。"
+    ],
+    "points": [
+      "・ GLP-1薬剤（ノボノルディスク・イーライリリー製品）は2〜8℃の厳密な冷蔵管理が必要で、通常医薬品より高度なサプライチェーンを要求する",
+      "・ 物流大手にとって医療分野は利益率が高く、景気変動に強い「ディフェンシブ収益源」として戦略的重要性が増している",
+      "・ コールドチェーン施設の不足は特にアジア・中東・アフリカ地域で深刻であり、グローバルな格差拡大リスクも内包している"
+    ],
+    "prediction": "今後5〜10年でコールドチェーン物流市場は年率10%超の成長が続くと見込まれ、物流企業によるM&A・設備投資競争がさらに激化するだろう。地政学的観点では、医薬品サプライチェーンの「戦略インフラ化」が進み、各国政府が国内コールドチェーン能力の強化を安全保障政策の一環として推進する動きが広がる可能性がある。一方、高エネルギー消費を伴うコールドチェーン拡大はカーボンニュートラル目標との矛盾を生み、ESG投資家からの圧力が新たな課題となる。",
+    "ai_interpretation": "このニュースの本質は、「医薬品イノベーション」が「物流・インフラ産業」を根底から再編するという、産業横断的なメガトレンドの顕在化である。GLP-1薬剤はその象徴に過ぎず、mRNAワクチンや細胞治療薬など今後登場する次世代医薬品もより高度な温度管理を要求することから、コールドチェーンへの投資は構造的・不可逆的な潮流といえる。グローバル経済への示唆として、ヘルスケアと物流の融合は新たな「産業複合体」を形成し、この分野で主導権を握る企業・国家が将来の経済競争力において優位に立つという地政学的含意も持っている。",
+    "collected_at": "2026-07-26T05:17:04.063708+09:00",
+    "market_impact": "GLP-1医薬品市場の急成長（2030年までに1,500億ドル規模との予測）が、DHL・FedEx・UPSなどの物流株および冷凍倉庫REITへの資金流入を促進する可能性がある。コールドチェーン設備への大規模投資は、建設・冷凍機器・エネルギー産業にも波及効果をもたらし、関連セクター全体の需要を底上げする。また、医薬品物流の高付加価値化により、新興国を含む各国の物流インフラ整備投資が加速するとみられる。"
+  },
+  {
+    "title": "Paramount agrees to delay WBD acquisition to as late as June 2027 amid legal challenge",
+    "japanese_title": "パラマウント、法的問題でWBD買収完了を最大2027年6月まで延期へ――メディア業界再編に影響か",
+    "url": "https://www.cnbc.com/2026/07/24/paramount-wbd-merger-delay.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. パラマウントは当初2024年9月末までにWarner Bros. Discovery（WBD）の買収を完了する予定だったが、法的異議申し立てを受け、完了時期を最大2027年6月まで延期することに合意した。",
+      "2. パラマウント側はこの延期合意を「大きな勝利（significant win）」と位置づけており、取引自体は継続する姿勢を示している。",
+      "3. 法的障壁により世界的なメディア業界の大型M&Aが長期化するという、昨今の規制強化トレンドを象徴するケースとなっている。"
+    ],
+    "points": [
+      "・ 法的異議申し立ての内容・主体（規制当局か第三者か）が今後の交渉の行方を左右する重要要因",
+      "・ 買収完了が約2年半延期されることで、両社の経営戦略・財務計画への影響が不可避",
+      "・ パラマウントが「勝利」と表現する背景には、取引破棄を回避しつつ時間的猶予を確保した戦略的意図がある可能性"
+    ],
+    "prediction": "米国では規制当局によるメディア・テック分野のM&A審査が一段と厳格化しており、今回のケースは他の大型買収案件にも牽制効果を与えるとみられる。2027年という長期タイムラインの間に業界環境（ストリーミング競争・広告市場・AI活用）が大きく変化する可能性があり、取引条件の再交渉リスクも残る。地政学的観点では、米国メディア産業の集中化に対する議会・規制機関の監視がさらに強まる展開も想定される。",
+    "ai_interpretation": "このニュースの本質は、単なる買収スケジュールの変更ではなく、「巨大メディア再編が法的・規制的壁に直面する時代」の到来を示している点にある。パラマウントが延期を「勝利」と表現せざるを得ない状況は、現在のM&A環境がいかに複雑化しているかを端的に物語っている。グローバル経済への示唆としては、メディア・通信・テクノロジー分野における大型統合は今後、規制リスクをより慎重に織り込んだ長期戦略が不可欠となるという重要な教訓を提供している。",
+    "collected_at": "2026-07-26T05:17:25.590441+09:00",
+    "market_impact": "パラマウント・グローバルおよびWBDの株価は不確実性の長期化により短期的な下押し圧力を受ける可能性がある。メディア・エンターテインメントセクター全体においても、大型M&Aに対する規制リスクの再評価が進み、投資家センチメントが慎重化するおそれがある。為替への直接的な影響は限定的だが、米国メディア株の動向はグローバル機関投資家のポートフォリオ調整に波及する可能性がある。"
+  },
+  {
+    "title": "China's Geely to make EVs at Ford plant in Spain under new joint venture",
+    "japanese_title": "中国吉利汽車、スペインのフォード工場でEV生産へ――合弁会社設立で2028年に初車両投入",
+    "url": "https://www.cnbc.com/2026/07/23/ford-china-geely-ev-europe.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米フォードと中国の吉利汽車（Geely）は合弁会社を設立し、スペインにあるフォードの既存工場で電気自動車（EV）を生産する計画を発表した。",
+      "2. 合弁会社は2027年前半に操業を開始し、最初の新型車両は2028年にラインオフする予定。",
+      "3. 欧州市場における中国EV技術とフォードの製造インフラを組み合わせることで、両社の競争力強化を図る戦略的提携となる。"
+    ],
+    "points": [
+      "・ 欧州の「中国製EV追加関税」の抜け穴として、現地生産モデルが規制回避の手段となり得る点",
+      "・ フォードが自社ブランドではなくOEM・合弁形式で工場を存続させる「製造拠点の再定義」という戦略転換",
+      "・ 吉利にとってはボルボ・ロータスに続く欧州展開の強化であり、欧州市場での技術・ブランドの現地化が加速する点"
+    ],
+    "prediction": "欧州における中国自動車メーカーの現地生産モデルは今後増加が見込まれ、EU当局は関税政策だけでなく現地生産に対する補助金・規制ルールの見直しを迫られる可能性が高い。米中関係の緊張が続く中、フォードと吉利の提携は米国内での政治的批判を招くリスクもあり、米政府による対中投資規制の範囲拡大が議論される契機となりうる。地政学リスクが高まるほど、こうした「第三国（欧州）経由の協業」モデルは増加するとみられる。",
+    "ai_interpretation": "このニュースの本質は、自動車産業における「EV覇権争いのグローバル再編」を象徴する出来事であり、米中対立・EU規制・産業空洞化という三つの構造的課題が一つの合弁契約に凝縮されている。フォードが中国企業と組むことで欧州工場を延命させるという選択は、西側メーカーがもはや単独でEV転換コストを賄えない現実を如実に示している。長期的には「国籍」よりも「技術・資本・市場アクセス」を軸とした産業再編が加速し、従来の地政学的陣営論では捉えきれない複雑なグローバルサプライチェーンが形成されていくことを示唆している。",
+    "collected_at": "2026-07-26T05:17:46.900851+09:00",
+    "market_impact": "欧州EV市場において中国資本・技術が本格的に参入する象徴的な案件となり、テスラやフォルクスワーゲンなど既存プレーヤーへの競争圧力が高まる可能性がある。フォードにとっては遊休・縮小傾向にあるスペイン工場を有効活用できる一方、欧州委員会による中国製EV輸入関税の動向が合弁スキームの採算性に直接影響する。ユーロ圏の製造業雇用維持という観点から、スペイン政府や欧州当局の対応にも注目が集まる。"
+  },
+  {
+    "title": "Trump is hellbent on tariffs. Here are 5 implications",
+    "japanese_title": "トランプ関税政策の5つの衝撃：新たな法的根拠を模索し世界経済の不確実性が長期化",
+    "url": "https://www.npr.org/2026/07/25/nx-s1-5905692/trump-tariffs-economy-inflation",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. トランプ大統領は関税政策に強い執念を持ち、その実施を正当化する新たな法的根拠を次々と模索している。",
+      "2. この姿勢は米国内外の経済に対する不確実性を長引かせ、企業・市場・貿易相手国に広範な影響を与えている。",
+      "3. 関税政策の5つの重大な含意として、経済的・外交的・法的・市場的・地政学的リスクが複合的に浮上している。"
+    ],
+    "points": [
+      "・ トランプ政権が新たな法的根拠を模索していること自体が、既存の関税政策の脆弱性を示唆している",
+      "・ 不確実性の長期化が企業のサプライチェーン戦略や投資計画に構造的変化を迫っている",
+      "・ 米国の一方的な関税強化がWTOなど多国間貿易秩序の形骸化をさらに加速させるリスクがある"
+    ],
+    "prediction": "トランプ政権が法的正当性を新たに構築することに成功すれば、関税措置はより広範・長期的なものとなり、対米貿易依存度の高い日本・EU・中国などは対抗措置の検討を余儀なくされるだろう。地政学的には、米国の経済的孤立主義がさらに強まることで、中国主導の経済圏構築やブロック経済化が加速する可能性がある。結果として、戦後以来の自由貿易体制そのものの再設計が国際社会に迫られる局面が近づいていると見られる。",
+    "ai_interpretation": "このニュースの本質は、トランプ関税政策が単なる経済政策ではなく、米国の国際秩序における役割の再定義を意味している点にある。法的根拠を次々と模索するという姿勢は、政策の持続可能性よりも政治的意志を優先するものであり、予測不可能性こそが戦略的ツールとして意図的に使われている可能性がある。グローバル経済への示唆としては、企業・国家ともに「米国依存モデル」からの分散化・多元化戦略を本格的に加速せざるを得ない転換点に差し掛かっていると言えるだろう。",
+    "collected_at": "2026-07-26T05:18:09.360264+09:00",
+    "market_impact": "関税の長期化懸念により、グローバルサプライチェーンの再編圧力が高まり、特に製造業・輸出依存型産業への打撃が深刻化する恐れがある。為替市場ではドルの乱高下リスクが増し、新興国通貨への下落圧力も強まる可能性がある。また、貿易摩擦の長期化は企業の設備投資判断を先送りさせ、世界全体の経済成長率を下押しする要因となりうる。"
+  },
+  {
+    "title": "Paramount says it will pause its Warner acquisition while legal challenges play out",
+    "japanese_title": "パラマウント、法的異議申し立てを受けワーナー買収を一時停止——メディア業界再編に暗雲",
+    "url": "https://www.npr.org/2026/07/24/nx-s1-5906818/paramount-warner-bros-merger-pause-lawsuits",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. パラマウントは、ワーナーとの合併・買収計画を法的手続きが決着するまで一時停止すると発表した。",
+      "2. 米国の12州および全米脚本家組合（WGA）がこの合併に対して法的異議を申し立てている。",
+      "3. メディア大手同士の大型統合案件が司法・規制当局の壁に直面し、成立が不透明な状況となっている。"
+    ],
+    "points": [
+      "・ 12州という広範な連合による異議申し立ては、反トラスト（独占禁止）規制の強化姿勢を象徴しており、バイデン政権以降続くビッグビジネス監視の流れと合致する",
+      "・ 全米脚本家組合（WGA）の参加は、労働者・クリエイター側が企業合併に対して法的手段を講じる新たな前例を示している",
+      "・ 合併の一時停止は買収費用・機会損失を増大させ、両社の財務戦略や経営計画に直接的な打撃を与える"
+    ],
+    "prediction": "法的手続きが長期化した場合、合併条件の変更・縮小、あるいは破談というシナリオも現実味を帯びてくる。メディア・エンターテインメント業界では統合による規模拡大がストリーミング戦争を勝ち抜く鍵とされているだけに、頓挫すれば両社の競争力低下につながる恐れがある。また、この案件の行方は今後の大型メディアM&Aに対する規制当局のスタンスを占う試金石にもなり得る。",
+    "ai_interpretation": "このニュースの本質は、メディア産業における「スケールメリット追求」と「公共・労働者利益の保護」という二つの論理が正面衝突している点にある。ストリーミング時代においてコンテンツ覇権を握るためには大規模な垂直統合が不可欠とされる一方で、市場支配力の集中は多様なクリエイターや消費者の選択肢を損なうリスクをはらむ。グローバル経済全体でテック・メディア企業への規制強化が加速する中、この案件は「成長のための合併」が今後いかに困難な道のりとなるかを示す象徴的事例といえる。",
+    "collected_at": "2026-07-26T05:18:32.919587+09:00",
+    "market_impact": "パラマウントおよびワーナー・ブラザース・ディスカバリーの株価は不確実性の高まりから下落圧力を受ける可能性があり、メディアセクター全体の投資家心理にも悪影響を与えかねない。また、ストリーミング市場におけるコンテンツ競争の再編シナリオが後退することで、NetflixやDisneyなど競合他社が相対的に優位に立つ可能性がある。M&A市場全体においても、規制強化の潮流を改めて意識させる事案となり、大型案件の審査長期化リスクが再評価されるだろう。"
+  },
+  {
+    "title": "ADHD has rewired the workplace. This is what it means for bosses and workers",
+    "japanese_title": "ADHD診断急増が職場を変革——経営者と労働者が知るべき新常識と生産性への影響",
+    "url": "https://www.bbc.co.uk/news/articles/c70gq125xweo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ADHD（注意欠如・多動症）の診断数が世界的に急増しており、職場環境や労働管理のあり方に根本的な変革を迫っている。",
+      "2. 企業側はADHDを持つ従業員の特性に対応した柔軟な勤務形態や環境整備が追いついていない現状が浮き彫りになっている。",
+      "3. 経営者・労働者双方にとってADHDへの理解と適切な対応が、生産性・人材確保・職場満足度に直結する経営課題となっている。"
+    ],
+    "points": [
+      "・ リモートワーク・フレックス制度の普及がADHD当事者にとってプラスに働くケースが多く、働き方改革との親和性が高い",
+      "・ 診断数増加の背景には、社会的認知向上・医療アクセス改善があり、「隠れADHD」層の顕在化が職場に新たな課題をもたらしている",
+      "・ 経営者側には合理的配慮（Reasonable Accommodation）の法的義務が強まる傾向があり、コンプライアンスリスクが増大している"
+    ],
+    "prediction": "ADHDをはじめとする神経発達多様性（ニューロダイバーシティ）への対応は、ESG経営・DEI（多様性・公平性・包括性）戦略の中核テーマとして世界的に重要性を増すと予測される。HR테크・職場アクセシビリティ関連ビジネスの市場規模は今後5〜10年で大幅に拡大し、新興企業や大手テック企業による投資競争が激化するだろう。また、各国政府による職場での神経多様性保護に関する規制強化も見込まれる。",
+    "ai_interpretation": "このニュースの本質は、単なる医療・福祉の問題ではなく、**「人材の質的多様化」が企業競争力に直結する時代の到来**を示している点にある。ADHDの特性（創造性・リスク許容・集中の波）はイノベーション産業と相性が良く、適切に活かされれば経済的価値を生む「資産」となり得る。グローバル経済においては、ニューロダイバーシティへの対応力が企業の持続的成長力と人材獲得競争における差別化要因になるという、新たなパラダイムシフトを示唆している。",
+    "collected_at": "2026-07-26T05:18:53.244681+09:00",
+    "market_impact": "ADHDへの対応を巡り、メンタルヘルステック・HR（人事管理）ツール・製薬市場への投資拡大が見込まれ、関連セクターの成長を後押しする。労働生産性の観点では、適切なサポート体制が整備されれば人材の定着率向上につながり、企業の採用コスト削減にも寄与する可能性がある。一方、対応が遅れる企業は優秀な多様性人材の流出リスクにさらされる。"
+  },
+  {
+    "title": "Long overdue, life-changing or frivolous? Your thoughts on wedding rule changes",
+    "japanese_title": "英国が結婚式法を大幅緩和へ――どこでも挙式可能な新ルールの経済・社会的影響を分析",
+    "url": "https://www.bbc.co.uk/news/articles/cvg8wlwzjx9o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 英国政府は、カップルがほぼあらゆる場所で結婚式を挙げられるよう、現行の結婚関連法規を緩和する方針を打ち出している。",
+      "2. この改革は「時代遅れ」と批判されてきた厳格な挙式場所の制限を撤廃し、個人の選択の自由を大幅に拡大するものである。",
+      "3. 国民の間では「待望の改革」「人生を変える決断」「不要な変更」など、賛否両論の声が上がっている。"
+    ],
+    "points": [
+      "・ 規制緩和により、ウェディング市場の競争が激化し、価格多様化と消費者の選択肢拡大が同時進行する",
+      "・ 宗教団体や伝統的な式場業者からの反発・ロビー活動が法案成立の障壁となる可能性がある",
+      "・ 法的有効性の担保（登録官の立ち会い要件など）をどう整理するかが制度設計の核心的課題となる"
+    ],
+    "prediction": "英国のウェディング産業は年間数十億ポンド規模であり、規制緩和が実現すれば市場構造の再編が加速し、テック系プラットフォーム（会場マッチングサービス等）への投資流入が増える可能性がある。EU離脱後の英国が「柔軟な規制環境」を国際的な差別化要因として打ち出す文脈とも合致しており、他の生活関連法制の見直し議論にも波及するだろう。地政学的影響は低いが、先進国における「個人の選択権拡大」トレンドの象徴的事例として国際的に注目される。",
+    "ai_interpretation": "このニュースの本質は、単なる婚姻法の技術的改正にとどまらず、「国家が個人のライフイベントをどこまで規制すべきか」という自由主義的価値観の再定義にある。経済的観点からは、規制緩和が需要の顕在化と市場の裾野拡大をもたらす典型例であり、ウェディング産業をモデルケースとして他分野の規制改革論議を後押しする触媒となり得る。グローバル経済への示唆として、「スモールビジネス支援×規制緩和×消費者主権」の三位一体アプローチが、停滞する内需を刺激する有効な政策手段であることを改めて示している。",
+    "collected_at": "2026-07-26T05:19:15.089496+09:00",
+    "market_impact": "ウェディング産業全体の市場規模拡大が見込まれ、非伝統的な会場（農場・ビーチ・個人宅など）を提供する中小事業者に新たなビジネス機会が生まれる。ホテルや専門式場の独占的優位性が薄れる一方、ユニークな体験を求めるプレミアム市場の需要増加が英国観光業や地方経済を活性化させる可能性がある。ポンド相場への直接的影響は限定的だが、ウェディングツーリズムの振興を通じた外貨獲得効果が中長期的に期待される。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-26",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-07-26.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-07-26.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-07-25",
+    "href": "2026-07-25.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
