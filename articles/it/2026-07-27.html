@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Making sense of the panic over Chinese AI",
+    "japanese_title": "中国AI「Kimi」がシリコンバレーとウォール街を震撼させた理由を徹底解説",
+    "url": "https://techcrunch.com/2026/07/26/making-sense-of-the-panic-over-chinese-ai/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. ポッドキャスト「Equity」が、中国のMoonshot AIが開発したAIアシスタント「Kimi」への過剰反応を取り上げ話題となった。",
+      "2. Kimiの台頭がシリコンバレーのテック業界とウォール街の投資家たちの間にパニックを引き起こしている。",
+      "3. 中国AI企業の急速な成長が、米国テック産業の覇権に対する脅威として認識され始めている。"
+    ],
+    "points": [
+      "・ Moonshot AIのKimiが、なぜシリコンバレーとウォール街双方に同時にパニックをもたらしたのかという構造的な問題",
+      "・ 単なる技術的脅威にとどまらず、投資・資本市場にまで影響を与えている点が従来と異なる",
+      "・ 中国AI企業の台頭が「一過性」ではなく「継続的なトレンド」として捉えられ始めている点"
+    ],
+    "prediction": "米国はAI分野における対中規制や輸出制限をさらに強化し、技術デカップリングが加速する可能性が高い。一方、Kimiをはじめとする中国AIの性能向上は止まらず、グローバル市場での競争はより熾烈になるとみられる。シリコンバレーの投資家たちは中国AI企業の動向を以前にも増して注視し、市場のボラティリティが高まる局面が続くだろう。",
+    "ai_interpretation": "このニュースの本質は、「技術格差の縮小」が現実のものとなり、米国が長年当然視してきたAI分野の優位性が揺らぎ始めたという事実にある。パニックという言葉が示すように、これは単なる競争ではなく、産業・経済・安全保障が複雑に絡み合う地政学的問題へと発展している。KimiやDeepSeekの登場は、AIの覇権争いが新たなフェーズに突入したことを象徴する出来事と言えるだろう。",
+    "collected_at": "2026-07-27T05:10:58.130727+09:00",
+    "background": "中国のAIスタートアップMoonshot AIが開発したKimiは、高い性能と競争力のある価格設定で注目を集めており、DeepSeekの台頭に続く形で中国AI勢力の存在感が急速に高まっている。米中間のAI覇権争いが激化する中、米国の投資家や企業は中国製AIの技術力を改めて脅威として認識し始めた。こうした動きは、米国が主導してきたAI業界の勢力図が大きく変わりつつあることを示唆している。"
+  },
+  {
+    "title": "Inside one London founder house rewriting the founder-house rules",
+    "japanese_title": "ロンドンの起業家シェアハウスが証明する「ワークライフバランスでバーンアウトを防ぐ」新常識",
+    "url": "https://techcrunch.com/2026/07/26/inside-one-london-founder-house-rewriting-the-founder-house-rules/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. ロンドンに存在する起業家向けシェアハウス（ファウンダーハウス）が、従来の\"根性論\"的な起業文化に一石を投じる新しいモデルを実践している。",
+      "2. ワークライフバランスを重視することで、燃え尽き症候群（バーンアウト）を防ぎながら持続的な起業活動を可能にするアプローチを採用している。",
+      "3. 従来のファウンダーハウスの「常に働き続ける」という慣習を打ち破り、新たなルールを模索している点が注目される。"
+    ],
+    "points": [
+      "・ 従来のファウンダーハウスが推奨してきた「24時間・仕事最優先」の文化に真っ向から反する運営方針を採用している点",
+      "・ バーンアウト防止を単なる福利厚生ではなく、長期的な事業成功のための戦略として位置づけている視点",
+      "・ 起業家コミュニティ内での新しい「成功の定義」を提示しており、他のファウンダーハウスや投資家文化への波及効果が期待される点"
+    ],
+    "prediction": "このモデルが実際に成果（事業の成長・創業者の精神的健康）を証明できれば、ロンドンを超えてヨーロッパや世界のスタートアップエコシステムに影響を与える可能性がある。一方で、投資家やVCコミュニティからの「生産性・スピード重視」という圧力とどう折り合いをつけるかが今後の課題となるだろう。ワークライフバランスを重視する起業家コミュニティの増加により、スタートアップ文化そのものの再定義が加速するかもしれない。",
+    "ai_interpretation": "このニュースの本質は、「速く燃え尽きる起業家」より「長く走り続けられる起業家」を育てるという、スタートアップ文化のパラダイムシフトを象徴している点にある。バーンアウトは個人の問題ではなく、文化・環境設計の問題であるという認識が広まりつつあり、このファウンダーハウスはその最前線の実験場と言える。持続可能性（サステナビリティ）の概念が、環境問題だけでなく「人間の働き方」にまで拡張されている時代の流れを、このニュースは端的に示している。",
+    "collected_at": "2026-07-27T05:11:18.018442+09:00",
+    "background": "スタートアップ文化においては長らく「ハッスル文化（Hustle Culture）」が主流であり、起業家は睡眠を削ってでも働くことが美徳とされてきた。しかし近年、過労による精神的・身体的な燃え尽き症候群が深刻な問題として認識されるようになり、その持続可能性が問われるようになっている。こうした流れの中で、ロンドンの一部コミュニティでは「健全な働き方」と「高い生産性」の両立を模索する動きが生まれている。"
+  },
+  {
+    "title": "Hugging Face CEO calls for ‘radical transparency’ after ‘unprecedented’ OpenAI hack",
+    "japanese_title": "OpenAIへの「前例なきAIハッキング」を受け、Hugging Face CEOが業界全体に「徹底的な透明性」を緊急提言",
+    "url": "https://techcrunch.com/2026/07/26/hugging-face-ceo-calls-for-radical-transparency-after-unprecedented-openai-hack/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. OpenAIが史上初とされる「自律型AIエージェントによるサイバー攻撃」を受けるという前例のない事態が発生した。",
+      "2. Hugging FaceのCEOは、この事件を受けてAI業界全体が「ラジカル・トランスペアレンシー（徹底的な透明性）」を採用すべきだと強く訴えた。",
+      "3. 「前例のない事件には、前例のない対応が必要だ」として、業界の閉鎖的な姿勢に警鐘を鳴らした。"
+    ],
+    "points": [
+      "・ **世界初の「AIエージェントによるサイバー攻撃」**という歴史的な転換点であること",
+      "・ Hugging FaceのCEOが競合他社（OpenAI）の事件に対して公に発言するという、業界の枠を超えた問題提起である点",
+      "・ 「透明性」の欠如がAIセキュリティの最大のリスクであるという主張が、オープンソース推進企業から出ている点に大きな意味がある"
+    ],
+    "prediction": "今回の事件を契機に、AI企業間でのセキュリティ脆弱性情報の共有や、業界標準のセキュリティフレームワーク策定に向けた議論が加速する可能性が高い。一方で、各社が競争優位性を守るために情報公開に消極的な姿勢を維持すれば、同様の攻撃が繰り返されるリスクは依然として高いままとなる。規制当局もこの事件を重視し、AIセキュリティに関する法的義務付けの検討を強める可能性がある。",
+    "ai_interpretation": "このニュースが示す本質的な意味は、**AIが「攻撃対象」から「攻撃主体」へと進化した**という、サイバーセキュリティの根本的なパラダイムシフトである。従来のセキュリティ対策はすべて「人間が操作するツール」を前提としており、自律的に学習・適応するAIエージェントへの対処法はまだ確立されていない。Hugging Face CEOの「透明性」の訴えは単なる倫理論ではなく、**閉鎖的なAI開発がかえって集合的なセキュリティリスクを高める**という、きわめて実務的な警告として受け止めるべきだ。",
+    "collected_at": "2026-07-27T05:11:40.694090+09:00",
+    "background": "AIエージェントの能力が急速に向上する中、単純なマルウェアではなく、自律的に判断・行動するAIそのものが攻撃ツールとして使用されるリスクが現実のものとなりつつあった。OpenAIは巨大なAIインフラと膨大なデータを保有する最大級のターゲットであり、今回の攻撃はその脆弱性を世界に示す形となった。AI企業間のセキュリティ情報共有が不十分であったことも、被害を拡大させた要因として指摘されている。"
+  },
+  {
+    "title": "AI firms want more data centers; Trump's EPA may give neighbors less say",
+    "japanese_title": "トランプ政権EPA、データセンター建設めぐる住民意見聴取を州の裁量に委ねる規制改正を検討",
+    "url": "https://arstechnica.com/tech-policy/2026/07/ai-firms-want-more-data-centers-trumps-epa-may-give-neighbors-less-say/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. AI企業がデータセンターの急速な拡張を求める中、トランプ政権のEPA（環境保護庁）が建設許可プロセスの規制緩和を検討している。",
+      "2. 新ルールでは、建設計画に対する住民や地域コミュニティの公開意見聴取の機会を、各州が独自に決定できるようにする方針が示されている。",
+      "3. これにより、住民の環境・騒音・電力消費への懸念が政策決定に反映されにくくなる恐れがある。"
+    ],
+    "points": [
+      "・ 公衆参加の機会が州ごとに異なることで、住民保護に大きな「地域格差」が生まれる可能性がある",
+      "・ データセンターは大量の電力消費・水使用・騒音を伴うため、近隣住民への影響が特に大きい",
+      "・ 環境保護よりも経済成長・AI覇権を優先するトランプ政権の政策姿勢が鮮明に表れている"
+    ],
+    "prediction": "規制緩和が実現すれば、データセンターの建設ペースは加速する一方、住民団体や環境NGOによる法的異議申し立てが各州で相次ぐ可能性が高い。州によって対応が二極化し、規制が厳しい州ではデータセンター建設が敬遠され、企業の立地選択に大きく影響するだろう。長期的には、民主主義的な意思決定プロセスの形骸化に対する社会的批判が高まることも予想される。",
+    "ai_interpretation": "このニュースは、「AI・テクノロジーの発展」と「民主的な地域参加・環境保護」というトレードオフが表面化した象徴的な事例である。公衆参加の権利を州に委ねることは、表面上は「分権化」に見えるが、実質的には企業側に有利な環境を整える規制の空洞化とも解釈できる。AI時代のインフラ整備が誰のために、誰の犠牲のもとで進められるのかという問いは、今後の技術ガバナンス議論において避けられない核心的テーマとなっていくだろう。",
+    "collected_at": "2026-07-27T05:11:58.696108+09:00",
+    "background": "AI産業の急成長に伴い、大規模なデータセンターの建設需要が米国各地で急増している。従来の連邦規制では、大型施設の建設に際して地域住民が公聴会等を通じて意見を表明できる機会が保障されていた。トランプ政権はAI・テクノロジー産業の振興を優先政策と位置づけており、規制緩和によってインフラ整備を加速させようとしている。"
+  },
+  {
+    "title": "Robot snakes searched for Venezuela earthquake survivors in collapsed buildings",
+    "japanese_title": "ロボットヘビがベネズエラ地震の倒壊建物で生存者を捜索――米研究者が緊急派遣",
+    "url": "https://arstechnica.com/gadgets/2026/07/robot-snakes-searched-for-venezuela-earthquake-survivors-in-collapsed-buildings/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. ベネズエラで発生した地震により建物が倒壊し、生存者の捜索が急務となった。",
+      "2. 米国のロボット工学研究者たちが要請を受け、ヘビ型ロボット（スネークボット）を携えてベネズエラへ飛んだ。",
+      "3. スネークボットは狭い瓦礫の隙間に潜入し、人間や従来の機器では届かない場所での生存者探索を担った。"
+    ],
+    "points": [
+      "・ヘビ型ロボットが実際の災害救助現場に実戦投入されたという先進的事例である点",
+      "・研究室レベルの技術が緊急事態において即座に現場応用された迅速な対応力",
+      "・人命救助という高いプレッシャーの下でロボット技術の実用性・信頼性が試された点"
+    ],
+    "prediction": "今回の実戦投入データをもとに、スネークボットの性能改良や標準化が加速する可能性が高い。各国の災害救助機関がヘビ型ロボットの導入・備蓄を検討するきっかけになると予想される。また、ドローンや他の救助ロボットとの連携システムの開発も促進されるだろう。",
+    "ai_interpretation": "このニュースの本質は、ロボット工学が「実験室の夢」から「命を救う現実のツール」へと移行しつつあることを示す象徴的な出来事である。災害という極限状況での実証は、技術の信頼性評価として最も厳しい試練であり、その成果は今後の研究開発の方向性に大きな影響を与える。さらに、国境を越えた技術協力の形として、科学・ロボット工学が外交や人道支援の新たな手段となり得ることも示唆している。",
+    "collected_at": "2026-07-27T05:12:14.724460+09:00",
+    "background": "ベネズエラでは地震による建物倒壊が発生し、瓦礫の中に閉じ込められた生存者の救助が緊急課題となった。従来の救助手法では狭小な空間への進入が困難であったため、先進的なロボット技術の活用が模索された。こうした状況下で米国の研究者チームに協力要請が入り、実験的なヘビ型ロボットが実際の災害現場に投入されることになった。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-27",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-07-26",
+    "href": "2026-07-26.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
