@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "PSA: Your Claude shared chats and Artifacts may have ended up on Google",
+    "japanese_title": "Claudeの共有チャット・成果物がGoogleに公開インデックスされていた問題：プライバシーリスクの実態",
+    "url": "https://techcrunch.com/2026/07/27/psa-your-claude-shared-chats-and-artifacts-may-have-ended-up-on-google/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. AIアシスタント「Claude」のユーザーが共有した会話や「Artifacts（アーティファクト）」が、Googleの検索結果に表示される状態になっていたことが発覚した。",
+      "2. Redditユーザーが「site:claude.ai/share」という検索演算子を使うことで、多数の共有会話が誰でも閲覧できる状態であることを発見した。",
+      "3. 公開された情報の中には、健康記録など個人の機密情報が含まれていたケースも報告されており、深刻なプライバシー問題となっている。"
+    ],
+    "points": [
+      "・ 検索演算子一つで誰でも他人の会話にアクセスできる状態だったという、セキュリティ設計上の重大な欠陥",
+      "・ 健康記録などの高度に機密性の高い個人情報が含まれる会話まで漏洩していた可能性",
+      "・ 被害を受けたユーザー数や公開されていたデータの範囲が現時点では「不明（untold number）」であり、全容が把握できていない点"
+    ],
+    "prediction": "Anthropicはrobots.txtの修正やnoindexタグの追加など、Googleへのインデックス防止措置を急ピッチで実施すると見られる。一方で、すでにキャッシュやアーカイブサイトに保存されたデータは完全には削除できない可能性があり、長期的なデータ残存リスクが残る。また、この問題がGDPRや各国のプライバシー法に抵触するかどうか、規制当局の調査対象となる可能性もある。",
+    "ai_interpretation": "このインシデントは、AI企業が「使いやすさ」と「プライバシー保護」のバランスを軽視しがちであることを象徴する事例といえる。ユーザーがAIに打ち明けるデータは医療・法律・金融など極めて機密性の高い情報を含むことが多く、共有機能のデフォルト設定やインデックス制御は慎重な設計が必須である。本件はAI産業全体に対し、利便性追求の裏に潜むプライバシーリスクの管理責任を改めて問い直す警鐘となっている。",
+    "collected_at": "2026-07-28T05:24:15.030789+09:00",
+    "background": "Claudeには、会話内容や作成したミニアプリ・ドキュメント（Artifacts）を他者と共有できるリンク機能が存在する。しかし、この共有リンクがGoogleのクローラーによってインデックス化されており、意図せず一般公開状態になっていたと見られる。ユーザーは「共有リンクを知っている人だけが見られる」と認識していた可能性が高く、Anthropic側の設定・説明が不十分だった可能性がある。"
+  },
+  {
+    "title": "Microsoft launches its first cybersecurity model, plus a new agentic cybersecurity system",
+    "japanese_title": "マイクロソフト、初のAIサイバーセキュリティ専用モデルと自律型セキュリティシステムを発表",
+    "url": "https://techcrunch.com/2026/07/27/microsoft-launches-its-first-cyber-model-and-a-new-agentic-cybersecurity-system/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. マイクロソフトが同社初となるAIセキュリティ専用モデルを正式にリリースした。",
+      "2. 新たなエージェント型（自律型）サイバーセキュリティプラットフォームも同時に発表された。",
+      "3. 今回の発表により、マイクロソフトのAIセキュリティ製品群が大幅に強化された。"
+    ],
+    "points": [
+      "・マイクロソフトが「初の専用AIセキュリティモデル」を開発したという点は、汎用LLMではなくセキュリティ特化型モデルへのシフトを示す",
+      "・「エージェント型（Agentic）」という概念の採用により、脅威検知から対応までを自律的に実行できる可能性がある",
+      "・世界最大級のエンタープライズIT企業がこの分野に本格参入することで、業界標準への影響力が大きい"
+    ],
+    "prediction": "マイクロソフトのAzureやMicrosoft 365との深い統合が進み、企業ユーザーへの導入障壁が下がることで急速な普及が見込まれる。エージェント型AIの進化により、SOC（セキュリティオペレーションセンター）の業務自動化がさらに加速し、セキュリティアナリストの役割そのものが変化していくと予想される。一方で、AIを悪用したサイバー攻撃への対抗手段としての有効性が今後の評価軸となるだろう。",
+    "ai_interpretation": "このニュースの本質は、サイバーセキュリティが「人間が監視・判断する領域」から「AIが自律的に防御する領域」へと本格的に移行し始めたことを示す象徴的な出来事である。マイクロソフトが汎用AIではなくセキュリティ専用モデルを開発したことは、セキュリティ領域における専門特化型AIの優位性を同社自身が認めたことを意味する。これはAI産業全体における「特化型モデル vs. 汎用モデル」という根本的な問いに対する、実践的な回答の一つとも解釈できる。",
+    "collected_at": "2026-07-28T05:24:33.173758+09:00",
+    "background": "サイバー攻撃の高度化・多様化が加速する中、従来の人手による対応では限界が生じており、AIを活用したセキュリティ対策の需要が急増している。マイクロソフトはすでにSecurity Copilotなどのセキュリティ製品を展開しており、今回の発表はその延長線上にある戦略的強化と位置づけられる。また、競合他社（Google、CrowdStrikeなど）もAIセキュリティ分野への投資を加速しており、業界全体での競争が激化している。"
+  },
+  {
+    "title": "Apple sued after alleged App Store crypto scam cost users $1.8M",
+    "japanese_title": "AppleがApp Storeの偽暗号資産ウォレット詐欺で提訴―被害総額180万ドル超",
+    "url": "https://techcrunch.com/2026/07/27/apple-sued-after-alleged-app-store-crypto-scam-cost-users-1-8m/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 3人のユーザーがApp Storeでダウンロードした不正な暗号資産ウォレットアプリにより、合計180万ドル以上の被害を受けたとしてAppleを提訴した。",
+      "2. この訴訟は、Appleが長年主張してきた「アプリ審査プロセスが詐欺からユーザーを守る」という安全性の主張に正面から異議を唱えるものである。",
+      "3. App Storeの審査体制の信頼性と、プラットフォーム運営者としてのAppleの法的責任が問われる重大な事案となっている。"
+    ],
+    "points": [
+      "・ Appleの審査プロセスの実効性が法廷で直接問われる初の大規模訴訟となり得る点",
+      "・ プラットフォーム事業者がユーザーの金銭的損害に対して法的責任を負うかという前例のない問題提起",
+      "・ 暗号資産関連詐欺アプリの巧妙化により、人的審査だけでは対応が困難になっている実態の露呈"
+    ],
+    "prediction": "Appleは自社の審査プロセスの正当性を主張し、詐欺アプリの責任はアプリ開発者側にあると反論する可能性が高い。一方、訴訟が進展すれば審査プロセスの内部実態が明らかになり、App Storeの安全神話に対する社会的信頼が揺らぐリスクがある。また、この訴訟の結果次第では、他のプラットフォーム事業者にも同様の責任論が波及する可能性がある。",
+    "ai_interpretation": "このニュースの本質は、単なる企業訴訟を超えた「プラットフォーム責任論」の新たな局面を示している。Appleが独占的なアプリ流通経路としての地位を維持しながら、その安全性を売り物にしてきた以上、詐欺被害に対する免責を主張することは倫理的にも法的にも難しくなりつつある。デジタル経済においてプラットフォーマーがどこまでユーザー保護義務を負うべきかという問いに対し、この訴訟は重要な判断基準をもたらす可能性がある。",
+    "collected_at": "2026-07-28T05:24:51.486477+09:00",
+    "background": "Appleは長年にわたり、App Storeの厳格な審査プロセスをAndroidなどのオープンプラットフォームと差別化する主要な競争優位性として訴求してきた。しかし近年、暗号資産市場の拡大に伴い、正規アプリに偽装した詐欺的なウォレットアプリやDeFiアプリがストアに紛れ込む事例が増加している。今回の訴訟は、こうした審査の「抜け穴」が実際に多額の金銭的被害を生んだことを示す具体的な事例として注目を集めている。"
+  },
+  {
+    "title": "Verizon touts $1B dark fiber deal for Google data centers as first of many",
+    "japanese_title": "ベライゾン、Google データセンター向け10億ドルのダークファイバー契約締結――AI需要を背景に同様の大型案件が続く見通し",
+    "url": "https://arstechnica.com/ai/2026/07/verizon-seeks-ai-profits-with-mini-data-centers-1b-dark-fiber-deal-with-google/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. 米通信大手ベライゾンが、Googleのデータセンター向けに約10億ドル規模のダークファイバー供給契約を締結したと発表した。",
+      "2. ベライゾンはこの契約をAI関連インフラ需要を取り込む戦略の「第一弾」と位置づけ、同様の案件が今後も続くと期待している。",
+      "3. 同社はダークファイバー提供に加え、既存データセンターの改修（レトロフィット）からもAI関連収益を見込んでいる。"
+    ],
+    "points": [
+      "・ 10億ドルという契約規模は、ダークファイバー案件としては異例の大型案件であり、AI投資の規模感を象徴している",
+      "・ ベライゾンが「first of many（第一弾）」と表現しており、同社がAIインフラ市場での複数の大型契約獲得に自信を持っていることが伺える",
+      "・ ダークファイバー提供とデータセンター改修という二軸の戦略により、通信キャリアがAIバリューチェーンに深く組み込まれようとしている"
+    ],
+    "prediction": "ベライゾンに続き、AT&TやT-Mobileなど他の通信キャリアもAIデータセンター向けのダークファイバー・インフラ契約獲得競争に参入してくると予想される。Google以外のMeta、Microsoft、Amazonといったハイパースケーラーとの類似契約も相次いで発表される可能性が高い。通信キャリアはこれまでの消費者向け収益モデルからB2B・インフラ型収益モデルへのシフトを加速させるだろう。",
+    "ai_interpretation": "このニュースが示す本質は、「AIインフラ投資の恩恵が、テック企業だけでなく通信キャリアにも波及し始めた」という産業構造の変化である。これまで成熟産業として収益成長に苦しんでいた通信キャリアが、AIブームを梃子に高付加価値インフラプロバイダーとして再定義されつつある点は非常に重要だ。ダークファイバーという既存資産の再評価は、AIが既存産業の資産価値を塗り替える好例といえる。",
+    "collected_at": "2026-07-28T05:25:10.621506+09:00",
+    "background": "生成AIの急速な普及により、大手テック企業はデータセンターの大規模拡張と高速・大容量の通信インフラ整備を迫られている。ダークファイバー（未使用の光ファイバー回線）は、テック企業が自社でネットワークを柔軟に制御できるため需要が急増しており、通信キャリアにとって新たな収益源として注目されている。ベライゾンはこうした潮流を商機と捉え、AIインフラ需要の取り込みに本格的に乗り出している。"
+  },
+  {
+    "title": "Experts warn current Starship heat shield tech is a \"dead end\" for rapid reuse",
+    "japanese_title": "専門家警告：スターシップの現行ヒートシールド技術は「行き詰まり」、急速な再利用に対応不可",
+    "url": "https://arstechnica.com/space/2026/07/despite-recent-successes-rapid-reuse-of-starship-remains-a-tough-nut-to-crack/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. 専門家たちは、SpaceXのスターシップが採用している現行の耐熱シールド技術では、迅速な機体再利用を実現するには根本的な限界があると警告している。",
+      "2. NASAは数十年にわたって熱防護システム（TPS）の研究に十分な投資を行ってこなかったことが、技術的停滞の背景にある。",
+      "3. 完全再使用型ロケットの実用化には、現行技術を超えた次世代の熱防護技術の開発が不可欠とされている。"
+    ],
+    "points": [
+      "・現行のセラミックタイル式ヒートシールドは損傷しやすく、飛行ごとの大規模メンテナンスが不可避",
+      "・NASAによる熱防護技術への長期的な研究投資不足が、業界全体の技術水準の停滞を招いている",
+      "・「迅速な再利用（ラピッドリユース）」はSpaceXのビジネスモデルの根幹であり、この課題はコスト競争力にも直結する"
+    ],
+    "prediction": "SpaceXおよび関連機関は、より耐久性の高い新素材（先進セラミック複合材やアブレーティブ素材など）や能動冷却システムの研究開発を加速させる可能性が高い。一方でNASAや米国政府が熱防護研究への予算を増額しない限り、根本的なブレークスルーには時間がかかるとみられる。短期的にはスターシップの運用頻度に制限が生じ、完全再使用という目標の達成が当初の想定より遅れる可能性がある。",
+    "ai_interpretation": "このニュースの本質は、民間宇宙開発の急速な進展と、その基盤を支えるべき公的研究投資の長年の怠慢との間に生まれた「技術的負債」の問題を浮き彫りにしている点にある。スターシップの再利用頻度はSpaceXが描く火星移住計画や低コスト打ち上げビジネスの実現可能性を左右する核心的要素であり、ヒートシールド問題はその最大のボトルネックの一つといえる。宇宙開発の「民営化」が進む時代においても、基礎研究・材料科学への公的支援の重要性を改めて問い直す警鐘として受け取るべきニュースである。",
+    "collected_at": "2026-07-28T05:25:32.269301+09:00",
+    "background": "スペースシャトル時代から続く耐熱タイル技術は基本的な原理がほぼ変わっておらず、毎回の飛行後に大規模な点検・補修が必要となっている。SpaceXはスターシップに六角形のセラミックタイルを採用しているが、再突入時の高熱・高圧環境での損傷が繰り返し報告されており、ターンアラウンドタイム（整備・再利用までの時間）の短縮を妨げている。NASAが熱防護研究への予算を長年削減してきたことで、民間主導の宇宙開発が加速する現代においても技術的な基盤が脆弱なままとなっている。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-28",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-07-27",
+    "href": "2026-07-27.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
