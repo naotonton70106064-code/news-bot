@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "消費税減税 高市首相が税率1％案軸に判断の見方強まる",
+    "japanese_title": "高市首相、食料品消費税を1％引き下げへ——来年4月から2年間の減税案が軸に浮上",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015189201000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 食料品の消費税減税を議論してきた「国民会議」は明確な方向性を示さないまま議論を終える見通しとなった。",
+      "2. 政府・与党内では、高市首相が衆院選での公約を重視し、来年4月から2年間にわたり税率を1％引き下げる案が軸として検討されている。",
+      "3. 選挙公約の実現を優先する姿勢が鮮明となり、財政規律との兼ね合いが今後の焦点となる。"
+    ],
+    "points": [
+      "・減税幅が「1％」にとどまる場合、消費者への恩恵が限定的となり、政策効果と政治的コストのバランスが問われる",
+      "・「国民会議」が方向性を示せなかった背景には、財務省・財政規律派との根強い対立がある可能性",
+      "・2年間の時限措置であるため、恒久化か延長かをめぐる政治的議論が期限前に再燃することが予想される"
+    ],
+    "prediction": "高市首相が公約実現を優先する姿勢を貫けば、来年の通常国会で関連法改正が議論される公算が高く、与野党間の攻防が激化するとみられる。減税の財源問題が明確にされなければ、国際格付け機関や市場参加者が日本の財政健全化への疑念を強め、長期金利に上昇圧力がかかる局面も想定される。また、1％減税の効果検証次第では、将来的なさらなる引き下げや対象品目の拡大論が浮上する可能性もある。",
+    "ai_interpretation": "今回のニュースの本質は、「政治的公約の実現」と「財政規律の維持」という相反する命題を、政府がどう折り合いをつけるかという構造的問題を映し出している点にある。1％という中途半端な数字は、公約を守るポーズを保ちながら財政への影響を最小化しようとする政治的妥協の産物とも読め、真の消費刺激効果には懐疑的な見方も生まれやすい。日本経済にとっての示唆は、消費増税で積み上げてきた財政再建路線が「選挙公約」という政治ロジックによって侵食され始めており、中長期的な財政戦略の信頼性が問われる転換点に差し掛かっているという点である。",
+    "collected_at": "2026-07-29T05:19:40.406066+09:00",
+    "market_impact": "食料品への消費税減税は家計の実質購買力を下支えし、消費関連株（食品・小売・外食）にとって追い風となる可能性がある。一方で、減税による税収減が財政悪化懸念を高め、円相場や日本国債に対して一定の下押し圧力が生じるリスクも否定できない。国内小売・スーパー各社は価格改定対応コストが発生するものの、中長期的には売上増効果が期待される。"
+  },
+  {
+    "title": "熊本で震度7 政府 救命・救助に全力対応 プッシュ型支援も",
+    "japanese_title": "熊本震度7地震、政府が救命救助とプッシュ型支援で緊急対応――経済・産業への影響に注目",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015189211000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 28日夕方、熊本県で震度7の強い地震が発生し、政府は大規模被害を確認したとして緊急対応体制を即時発動した。",
+      "2. 政府は救命・救助活動を最優先としつつ、自治体の要請を待たずに物資・支援を届ける「プッシュ型支援」を展開する方針を打ち出した。",
+      "3. 2016年の熊本地震の教訓を活かした迅速な初動対応が今回の政府対応の特徴となっている。"
+    ],
+    "points": [
+      "・ TSMCをはじめとする半導体関連工場の操業停止・設備被害の有無が国内外のサプライチェーンに直結する",
+      "・ プッシュ型支援の迅速な発動は、2016年熊本地震での初動遅れへの反省を踏まえた政策進化を示す",
+      "・ 復興需要による公共投資拡大が短期的な財政支出増加につながり、国債市場・金利動向にも影響しうる"
+    ],
+    "prediction": "被害規模が確定次第、政府は補正予算編成や緊急経済対策の検討に入る可能性が高く、建設・土木業界への需要が中長期的に押し上げられると見込まれる。熊本県の基幹産業である半導体・製造業の復旧状況次第では、国内外の部品供給に支障が生じ、関連業種の業績見通し修正が相次ぐ展開も想定される。また観光業・農業への風評被害防止策など、地域経済の早期回復を目的とした政策パッケージの策定も急務となるだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる災害対応を超えて「日本の経済的脆弱性」を改めて浮き彫りにした点にある。熊本は今や国家的な半導体戦略の中核地域であり、自然災害リスクと経済安全保障が密接に連動する構造的課題が鮮明になった。政府のプッシュ型支援という能動的対応は評価できるが、重要インフラの耐震強化・冗長化への継続的な公的投資こそが、日本経済の長期的なレジリエンス強化に不可欠であることを、このニュースは強く示唆している。",
+    "collected_at": "2026-07-29T05:20:00.219382+09:00",
+    "market_impact": "株式市場では、建設・インフラ・防災関連銘柄への短期的な買い需要が高まる一方、熊本に生産拠点を持つ半導体・自動車関連企業の株価下落リスクが懸念される。為替については、大規模災害時に見られるリスク回避の円買い圧力が一時的に強まる可能性がある。熊本は半導体（TSMC熊本工場など）や農業・食品産業の重要拠点であり、サプライチェーンへの影響が国内産業全体に波及する懸念もある。"
+  },
+  {
+    "title": "高市首相「救命・救助活動を最優先」熊本県で震度7",
+    "japanese_title": "熊本で震度7発生・高市首相が救命救助を最優先指示－災害対応と経済への影響を緊急分析",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015188421000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 熊本県で震度7の大規模地震が発生し、高市首相が28日夕方に官邸で緊急対応を表明した。",
+      "2. 首相は「救命・救助活動を最優先」と明言し、政府として迅速な災害対応に乗り出す姿勢を示した。",
+      "3. 2016年熊本地震の経験を持つ同地域での再度の大規模地震であり、インフラ・経済への影響が懸念される。"
+    ],
+    "points": [
+      "・ 熊本県はTSMCの新工場が稼働した半導体産業の集積地であり、生産ラインへの物理的被害の有無が国際的なサプライチェーンにも影響しうる",
+      "・ 2016年の熊本地震の教訓を踏まえた政府の初動対応スピードと財政出動規模が景気下支えの鍵となる",
+      "・ 高市政権の危機管理能力が問われる政治的試練であり、対応如何によって内閣支持率や政策優先度に変化が生じる可能性がある"
+    ],
+    "prediction": "政府は近く緊急災害対策本部を設置し、補正予算や予備費の活用による復興財政出動が見込まれ、短期的には公共投資の拡大が景気を下支えする展開が予想される。熊本地域の産業インフラへの被害状況次第では、半導体や自動車部品のサプライチェーン混乱が国内外の製造業に波及し、日本のGDPにも一定の下押し圧力となりうる。中長期的には復興需要が地域経済を活性化させる一方、財政規律への影響も議論となろう。",
+    "ai_interpretation": "このニュースの本質は、単なる自然災害への対応にとどまらず、「半導体産業集積地・熊本」という日本の新たな経済的戦略拠点が試練にさらされた点にある。熊本はTSMC進出以降、日本の半導体復興戦略の象徴となっており、被害規模によっては国家的な産業政策の見直しや地政学的リスク管理の議論にまで発展しかねない。また、高市首相にとって今回の危機対応は政権の求心力を左右する重要な政治的イベントであり、その手腕が今後の経済政策の信頼性にも直結するという点で、日本経済全体への示唆は大きい。",
+    "collected_at": "2026-07-29T05:20:21.614680+09:00",
+    "market_impact": "株式市場では、建設・防災関連株や復興需要を見込んだインフラ銘柄への買いが期待される一方、熊本地域に生産拠点を持つ半導体・自動車関連企業（例：TSMCの熊本工場周辺）への影響を市場が注視する可能性がある。為替については、リスク回避の円買いが一時的に進む可能性があるが、規模の確認待ちとなろう。国内産業では、熊本を中心とした九州の製造業・農業・観光業へのサプライチェーン寸断リスクが短期的な懸念材料となる。"
+  },
+  {
+    "title": "高市首相「政府が総力あげて対策」非常災害対策本部会議",
+    "japanese_title": "高市首相が非常災害対策本部を設置——大規模地震への政府総力対応と経済への影響を徹底分析",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015188801000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 政府は大規模地震を受け、高市首相をトップとする「非常災害対策本部」を28日夜に総理大臣官邸で設置・開催した。",
+      "2. 高市首相、赤間防災担当大臣、小泉防衛大臣、上野厚生労働大臣、金子国土交通大臣ら関係閣僚が一堂に会し、政府一体となった災害対応を確認した。",
+      "3. 首相は「政府が総力を挙げて対策にあたる」と明言し、迅速な初動対応と被災者支援の方針を打ち出した。"
+    ],
+    "points": [
+      "・ 非常災害対策本部の設置スピード——初動対応の迅速さが被害拡大防止と経済的損失の最小化に直結する",
+      "・ 自衛隊・防衛省の派遣規模——小泉防衛大臣が出席していることから、大規模な自衛隊による救助・支援活動が見込まれる",
+      "・ 復旧・復興予算の規模——補正予算の編成や予備費の活用など、財政措置の内容が今後の経済政策の焦点となる"
+    ],
+    "prediction": "政府は近く被災地への緊急支援措置や補正予算の検討に着手するとみられ、公共投資の増加が短期的なGDP押し上げ要因となる可能性がある。一方、財政悪化懸念や国債増発観測が長期金利の上昇圧力となり、日銀の金融政策運営にも影響を与えるリスクがある。復旧需要を契機に建設・インフラ・防災テック分野への投資拡大が加速し、中長期的な産業構造の変化につながる可能性も否定できない。",
+    "ai_interpretation": "このニュースの本質は、単なる災害対応を超えて、「平時の経済政策から非常時の危機管理モード」への政府機能の切り替えを示している点にある。非常災害対策本部の迅速な設置は、政治的リーダーシップの可視化という側面も持ち、高市政権の危機対応能力が国内外から評価される試金石となる。日本経済にとっては、復旧・復興投資という短期的な需要創出と、財政悪化・生産停滞という負の側面が同時進行するという構造的なジレンマを改めて浮き彫りにするニュースといえる。",
+    "collected_at": "2026-07-29T05:20:42.053039+09:00",
+    "market_impact": "大規模地震の発生は、建設・インフラ復旧関連株や防災・建設機械セクターへの需要期待から一時的な株価上昇要因となり得る一方、被災地域の企業活動停滞やサプライチェーン寸断による景気下押しリスクも懸念される。為替市場では、リスク回避の円買いが進む可能性があるが、大規模財政出動の観測から円安方向へ振れる場面も想定される。国内産業全体では、被災地の生産・物流機能の低下が短期的に経済活動に悪影響を与える恐れがある。"
+  },
+  {
+    "title": "木原官房長官「家屋倒壊や火災など通報多数」熊本県で震度7",
+    "japanese_title": "熊本震度7発生——木原官房長官が緊急会見、家屋倒壊・火災の被害拡大を確認",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015188701000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 熊本県で震度7の大規模地震が発生し、家屋倒壊や火災など多数の被害通報が相次いでいる。",
+      "2. 木原官房長官が2回目の臨時記者会見を開き、政府として情報収集と初動対応に当たっていることを表明した。",
+      "3. 被害の全容は現時点では不明であり、今後の情報集約と迅速な支援体制の整備が急務となっている。"
+    ],
+    "points": [
+      "・ 熊本県は半導体・自動車など戦略的産業の集積地であり、工場・設備への被害状況が経済的影響の鍵を握る",
+      "・ 2016年熊本地震の教訓を踏まえた政府の初動対応スピードと支援規模が問われる",
+      "・ 木原官房長官の2度目の臨時会見という事実が、政府が事態を重大視していることを示している"
+    ],
+    "prediction": "政府は災害対策基本法に基づく緊急対策本部を設置し、補正予算や予備費の活用による大規模な復興支援策を打ち出す可能性が高い。復旧・復興需要により建設・資材・重機関連業界には中期的な特需が生まれる一方、被災地域の個人消費や観光業は短期的に大きく落ち込む見通しだ。また、インフラ強靭化への政策投資が加速し、防災・減災関連予算の拡充が議論される可能性がある。",
+    "ai_interpretation": "このニュースの本質は、単なる自然災害の報告にとどまらず、日本経済の「地政学的脆弱性」を改めて浮き彫りにしている点にある。熊本という半導体産業の新たな要衝が被災した場合、日本の産業政策の根幹に関わるリスクが顕在化しうる。また、大規模災害のたびに問われる「財政出動と財政規律のバランス」という構造的課題が、今回も政策議論の中心に浮上することが予想され、日本経済の長期的な強靭性設計が試される局面となる。",
+    "collected_at": "2026-07-29T05:21:06.374524+09:00",
+    "market_impact": "震度7という大規模地震は、建設・住宅関連株やインフラ復旧関連銘柄に短期的な上昇圧力をもたらす一方、地元企業や製造業サプライチェーンへの打撃から関連銘柄は下落リスクを抱える。為替市場ではリスク回避の円高圧力が生じる可能性があるが、政府の財政出動期待が高まれば国債需給にも影響が及ぶ。熊本は半導体関連産業（TSMC熊本工場など）の集積地であるため、生産への影響次第でグローバルなサプライチェーンリスクにも波及しうる。"
+  },
+  {
+    "title": "木原官房長官 「人的 物的被害は現在確認中」熊本県で震度7",
+    "japanese_title": "熊本県で震度7の大地震発生——津波注意報も発令、政府が緊急対応へ",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015188261000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 熊本県宇城市・氷川町で最大震度7の強い地震が発生し、木原官房長官が臨時会見で人的・物的被害を確認中と発表した。",
+      "2. 地震に伴い津波注意報が発表され、沿岸部への警戒が呼びかけられている。",
+      "3. 政府は情報収集と被害確認を急いでおり、今後の対応策の検討に入っている。"
+    ],
+    "points": [
+      "・ 熊本県は半導体・自動車関連の主要製造拠点であり、工場設備への被害状況が国内外のサプライチェーンに直結する",
+      "・ 津波注意報の発令により、沿岸部の物流・港湾機能への一時的な停止リスクが生じている",
+      "・ 2016年の熊本地震の経験から、政府の初動対応と復興予算の迅速な編成が経済的損失の抑制に重要となる"
+    ],
+    "prediction": "被害規模が明らかになるにつれ、政府は補正予算の編成や激甚災害指定の検討を迫られる可能性が高く、財政出動が短期的に拡大する見通しである。熊本に拠点を置く半導体・製造業企業の操業停止が長引く場合、国内外の部品供給網に影響が波及し、関連業種の株価や生産見通しの下方修正につながりうる。一方、復興需要による建設・資材業界への経済的恩恵も中期的に期待される。",
+    "ai_interpretation": "このニュースの本質は、単なる自然災害の速報にとどまらず、日本経済の「地政学的・地理的脆弱性」を再び浮き彫りにしている点にある。熊本はTSMC進出以降、日本の半導体産業復興の象徴的地域となっており、大規模災害はその戦略的リスクを改めて問い直す契機となる。日本経済全体への示唆として、重要産業の地理的集中リスクの分散と、インフラの耐震強化への継続的な公共投資の必要性が一層高まると言えるだろう。",
+    "collected_at": "2026-07-29T05:21:26.101770+09:00",
+    "market_impact": "震度7という大規模地震の発生は、短期的に日本株市場（特に保険・建設・インフラ関連銘柄）へ影響を与える可能性が高く、復興需要への期待から建設株が上昇する一方、保険株は売り圧力を受ける可能性がある。為替市場ではリスク回避の円売りドル買いが一時的に進む可能性があるが、国内需要喚起への期待から円の動向は不安定になりやすい。熊本県は半導体関連工場（TSMCなど）が集積する産業拠点でもあり、製造業のサプライチェーンへの影響も懸念される。"
+  },
+  {
+    "title": "「外国干渉防止法」の検討など求める提言案 自民戦略本部",
+    "japanese_title": "自民党が「外国干渉防止法」創設を提言――外国代理人登録義務化で政治ロビー活動の透明化へ",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015188121000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 自民党戦略本部が、外国勢力による政治介入を防ぐため、外国代理人登録の義務化を盛り込んだ提言案を策定した。",
+      "2. 不正な外国干渉に対して刑事罰を科す新法「外国干渉防止法」の検討を求める内容で、米国のFARA（外国代理人登録法）を参考にした制度整備が想定される。",
+      "3. 政治家・官僚へのロビー活動の透明化を図ることで、安全保障と民主主義プロセスの健全性確保を目指す。"
+    ],
+    "points": [
+      "・ 米国のFARAや英国の外国影響力登録制度（FIRS）など、先進国が相次いで導入している規制の日本版として位置づけられる点",
+      "・ 「外国代理人」の定義範囲（企業・個人・団体など）がどこまで及ぶか、実務運用上の線引きが今後の焦点となる点",
+      "・ 中国・ロシアなどを念頭に置いた安全保障上の要請と、経済外交・民間交流への過度な萎縮効果のバランスをどう取るかという点"
+    ],
+    "prediction": "法整備が本格化すれば、外国政府・企業と日本の政治家・官僚の間に入るコンサルタントや団体の活動が可視化され、政策決定の透明性向上につながる。ただし、定義の曖昧さや罰則規定の厳しさによっては、正当なビジネス交流や学術・文化交流にも萎縮効果が生じるリスクがあり、法案の細部設計が経済・外交両面に大きな影響を与えるとみられる。与野党間の議論や経済界からの意見聴取を経て、法案化までには一定の時間を要する可能性が高い。",
+    "ai_interpretation": "このニュースの本質は、「経済安全保障」から「政治安全保障」へと日本の防衛意識が拡張しつつあることを示す重要なシグナルである。グローバルなサプライチェーン規制や重要技術の流出防止策に続き、政治プロセスそのものへの外国影響力遮断に踏み込もうとしており、日本が「開かれた国」と「安全な国」の両立という難題に正面から向き合い始めた段階と解釈できる。日本経済にとっては、短期的な摩擦コストを負いながらも、長期的なルール形成力と国際的な信頼獲得につながる政策転換として注視する必要がある。",
+    "collected_at": "2026-07-29T05:21:47.852829+09:00",
+    "market_impact": "外国資本や外国企業による対日ロビー活動への規制強化は、一部の外資系コンサルティング会社やPR会社のビジネスモデルに影響を与える可能性がある。一方、安全保障環境の整備は日本市場の信頼性・透明性向上につながり、中長期的には外国直接投資（FDI）の健全化を促す効果も期待できる。為替や株式市場への直接的な短期インパクトは限定的とみられる。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-29",
+  "currentCategory": "japan_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-07-29.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-07-28",
+    "href": "2026-07-28.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
