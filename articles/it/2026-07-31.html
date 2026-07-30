@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "CareCloud begins to notify hundreds of thousands after hackers stole medical records",
+    "japanese_title": "医療データ大手CareCloudにサイバー攻撃、数十万人の患者医療記録が流出",
+    "url": "https://techcrunch.com/2026/07/30/carecloud-begins-to-notify-hundreds-of-thousands-after-hackers-stole-medical-records/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 医療技術データ大手CareCloudが、保護された医療データストアへのハッキング被害を受け、数十万人規模への通知を開始した。",
+      "2. 攻撃者は患者の機密医療記録を含む大量のデータを窃取したとされる。",
+      "3. CareCloudは膨大な患者医療データを取り扱う企業であり、被害の規模と影響の深刻さが懸念されている。"
+    ],
+    "points": [
+      "・ 被害者が「数十万人」規模に及ぶという非常に大規模な情報漏洩である点",
+      "・ 医療記録という極めてセンシティブな個人情報が含まれており、二次被害（なりすまし・詐欺）のリスクが高い点",
+      "・ HIPAAなど米国医療情報保護法への準拠状況や、規制当局による調査・制裁の可能性がある点"
+    ],
+    "prediction": "米国保健福祉省（HHS）や連邦取引委員会（FTC）による調査が開始され、CareCloudは多額の制裁金や集団訴訟のリスクに直面する可能性が高い。被害を受けた患者に対しては、クレジット監視サービスの提供などの救済措置が講じられる一方、同社のブランド信頼性は大きく損なわれる恐れがある。また、本件を契機に医療データを扱う企業全体にセキュリティ強化の圧力が高まることが予想される。",
+    "ai_interpretation": "今回の事件は、医療のデジタル化が進む一方でセキュリティ投資が追いついていないという、医療IT業界全体が抱える構造的な脆弱性を象徴している。医療データは一度漏洩すると変更が不可能（氏名・生年月日・診断情報など）であり、金融情報と比較しても被害の永続性が高く、当事者への影響は長期にわたる。本質的には「データを集約・管理する利便性」と「集中管理による攻撃リスクの増大」というトレードオフを、業界全体としてどう解決するかという問いを改めて突きつけた事件といえる。",
+    "collected_at": "2026-07-31T05:16:17.084155+09:00",
+    "background": "医療分野におけるデジタル化・クラウド化の急速な進展により、CareCloudのような医療技術企業が大量の患者データを一元管理するケースが増加している。医療データは個人情報の中でも特に価値が高く、ダークウェブ上での売買価格も金融情報を上回るとされるため、サイバー犯罪者の格好の標的となっている。米国では医療機関へのサイバー攻撃が近年急増しており、今回の事件もその流れの中で発生したと見られる。"
+  },
+  {
+    "title": "Friend, the lonely AI wearable, returns with a new voice and a much bigger price tag",
+    "japanese_title": "孤独を癒すAIウェアラブル「Friend」が音声機能搭載・価格大幅値上げで再登場",
+    "url": "https://techcrunch.com/2026/07/30/friend-the-lonely-ai-wearable-returns-with-a-new-voice-and-a-much-bigger-price-tag/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. AIウェアラブルデバイス「Friend」が新たに音声会話機能を追加してリニューアル",
+      "2. 機能強化に伴い、価格が大幅に引き上げられた",
+      "3. 孤独感を抱えるユーザーに寄り添うAIコンパニオンとしての進化を目指している"
+    ],
+    "points": [
+      "・ 音声機能の追加により、テキストベースから会話ベースへと大きくインターフェースが進化",
+      "・ 価格の大幅値上げは、ハードウェアコストだけでなくAI処理・運用コストの増大を反映している可能性",
+      "・ 「孤独」をビジネス課題として捉えるAIコンパニオン市場の拡大を示唆している"
+    ],
+    "prediction": "価格上昇がユーザー獲得の障壁となる可能性がある一方、音声機能によって製品の訴求力は高まり、コアなファン層には受け入れられるでしょう。AIコンパニオン市場はReplika等の競合も存在するため、差別化戦略としてウェアラブルという「物理的存在感」をどう活かすかが鍵となります。今後はサブスクリプションモデルの導入や機能拡張によるマネタイズ強化も予想されます。",
+    "ai_interpretation": "このニュースの本質は、「孤独」という人間の根源的な感情ニーズをテクノロジーで商品化する動きが本格化しているという点にあります。音声機能の追加は単なるアップグレードではなく、AIとの関係性をより「人間らしい絆」に近づけようとする意図の表れです。価格上昇を受け入れてでも感情的なつながりを求める消費者の存在は、現代の孤独問題の深刻さと、それに対するテクノロジー依存の加速を象徴していると言えます。",
+    "collected_at": "2026-07-31T05:16:33.431849+09:00",
+    "background": "「Friend」は、現代社会における孤独問題に着目し、常時携帯できるAIコンパニオンとして開発されたウェアラブルデバイスです。当初はテキストや通知ベースのコミュニケーションに留まっていましたが、よりリアルな「友人」体験を実現するため、音声対話機能の実装が求められていました。スマートフォンに依存しない形で感情的なつながりを提供するデバイスとして注目を集めていた経緯があります。"
+  },
+  {
+    "title": "Google says it fixed more Chrome bugs in June than over the past two years, thanks to AI",
+    "japanese_title": "GoogleがAI活用でChromeのバグ修正数を過去2年分超える水準に大幅増加",
+    "url": "https://techcrunch.com/2026/07/30/google-says-it-fixed-more-chrome-bugs-in-june-than-over-the-past-two-years-thanks-to-ai/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. GoogleはAIおよびLLM（大規模言語モデル）ツールの活用により、2025年6月単月で過去2年間を上回る数のChromeバグを発見・修正した。",
+      "2. 同様の動きはMicrosoftでも確認されており、AI導入がソフトウェアのセキュリティ対応を指数関数的に加速させている。",
+      "3. セキュリティ専門家は過去2年にわたりこのようなAI活用の効果を予測・警告しており、その現実化が実証された形となった。"
+    ],
+    "points": [
+      "・ 単月のバグ修正数が過去2年間の累計を超えるという、驚異的な効率向上が実現した",
+      "・ GoogleだけでなくMicrosoftも同様の成果を上げており、業界全体のトレンドであることが示された",
+      "・ LLM・AIがセキュリティ分野で「予防・発見」フェーズにおいて実用レベルの効果を発揮し始めた"
+    ],
+    "prediction": "AI活用によるバグ発見の加速は今後さらに進み、他の主要テック企業（Apple、Meta、Amazonなど）も同様のアプローチを本格導入すると予想される。一方で、悪意ある攻撃者側もAIを使った脆弱性探索を強化する「攻防のAI化」が進む可能性があり、セキュリティの軍拡競争が新たなフェーズに入る懸念もある。長期的には、AIによる自動修正（パッチ生成）まで一気通貫で行われる時代が近づくだろう。",
+    "ai_interpretation": "このニュースの本質は、AIがソフトウェア開発における「品質保証・セキュリティ」の生産性を桁違いに引き上げる転換点に到達したことを示している。これはコスト削減や効率化にとどまらず、これまで人的リソースの限界から見逃されてきた無数の脆弱性が初めて表面化することを意味し、デジタルインフラ全体の安全性水準を根本から底上げする可能性を秘めている。同時に、「AIが見つけられる脆弱性はAIで攻撃もできる」という非対称リスクへの対策が、今後の企業・政府にとって最重要課題の一つになると言える。",
+    "collected_at": "2026-07-31T05:16:54.982469+09:00",
+    "background": "近年、ソフトウェアの複雑化に伴いセキュリティ脆弱性の発見・対応が追いつかない状況が続いていた。そこでGoogleやMicrosoftといった大手テック企業がコードの静的解析やファジングテストにAI・LLMを組み込み始め、人間のエンジニアでは見落としやすいバグを自動的に大量検出できる体制を整えてきた。セキュリティ研究者たちはこのトレンドを2年以上前から予見しており、今回のGoogleの発表はその予測の正しさを裏付けるものとなった。"
+  },
+  {
+    "title": "Nvidia’s Open Source Alliance Is Missing Some Key Names: OpenAI and Anthropic",
+    "japanese_title": "NvidiaのオープンソースAI同盟にOpenAIとAnthropicが不参加──AI業界の「オープン vs クローズド」対立が鮮明に",
+    "url": "https://www.wired.com/story/nvidias-open-source-alliance-snubs-openai-and-anthropic/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. NvidiaがオープンソースAI推進のための同盟を結成したが、OpenAIとAnthropicという主要AI企業が参加していない。",
+      "2. AI業界ではオープンソースとクローズドソースの主導権争いが激化しており、ホワイトハウスのAI政策にも影響を与えている。",
+      "3. チャットボットのログが検索エンジンに表示されるプライバシー問題も新たな課題として浮上している。"
+    ],
+    "points": [
+      "・NvidiaがオープンソースAI推進の旗手として積極的な政治・業界工作を展開していること",
+      "・ChatGPTを擁するOpenAIとClaude開発元のAnthropicという業界最大手2社が同盟から距離を置いていること",
+      "・ホワイトハウスのAI政策形成において、オープン派とクローズド派の綱引きが政策立案に直接影響している点",
+      "・チャットボットログの検索エンジン流出というユーザープライバシーに関わる実務的問題が顕在化していること"
+    ],
+    "prediction": "NvidiaのオープンソースAI同盟は参加企業を拡大しようとするが、OpenAIやAnthropicが加わる可能性は低く、業界は二極化が進む可能性が高い。米政府のAI規制・政策においても、オープン派とクローズド派がそれぞれのロビー活動を強化し、政策の方向性が大きく揺れる局面が続くと予想される。また、チャットボットのログ流出問題は規制当局の注目を集め、プライバシー保護に関する新たなガイドラインや法整備を促すきっかけになりうる。",
+    "ai_interpretation": "このニュースの本質は、AI覇権争いが単なる技術競争を超え、「誰がAIのルールを決めるか」という政治・経済・倫理的な主導権争いに発展していることを示している。Nvidiaがオープンソースというイデオロギーをビジネス戦略と融合させることで影響力拡大を図る一方、OpenAIとAnthropicの不参加はクローズドモデルの商業的・安全保障的な論理の根強さを示す。これはAI技術の未来像をめぐる「開放性」と「統制」の価値観対立であり、その帰結は社会全体のAIガバナンスの在り方を左右する重大な分岐点といえる。",
+    "collected_at": "2026-07-31T05:17:15.376106+09:00",
+    "background": "AI開発をめぐっては、技術をオープンに公開して普及を促すべきか、安全性・競争優位の観点からクローズドに管理すべきかという論争が長年続いている。NvidiaはGPU供給を通じてAI業界全体に影響力を持つ立場から、オープンソース陣営を支持する同盟を形成しようと動いた。一方、OpenAIやAnthropicは商業的・安全上の理由からクローズドソース路線を維持しており、両者の溝が改めて浮き彫りになった。"
+  },
+  {
+    "title": "Gemini Robotics 2 Brings Google's AI Into the Physical World",
+    "japanese_title": "Google DeepMindの「Gemini Robotics 2」が物理世界へのAI進出を加速——\"フィジカルAGI\"の実現に向けた重大な一歩",
+    "url": "https://www.wired.com/story/google-gemini-can-control-humanoid-robots/",
+    "source": "Business Latest",
+    "category": "it",
+    "summary_lines": [
+      "1. Google DeepMindが最新AIモデル「Gemini Robotics 2」を発表し、AIを現実の物理世界に統合する「フィジカルAGI」の実現に向けた大きな飛躍を遂げた。",
+      "2. 従来のデジタル空間にとどまらず、ロボット工学と高度なAIを融合させることで、現実世界での自律的な行動・判断能力を持つシステムの構築を目指している。",
+      "3. 一方で、AIを物理世界に実装することには安全性・倫理面での新たなリスクが伴うことも指摘されている。"
+    ],
+    "points": [
+      "・「フィジカルAGI」という概念の登場——単なるソフトウェアAIを超え、物理空間で自律的に動作・判断するAIの実用化フェーズへの移行を示唆している",
+      "・Gemini Robotics 2における能力の「大幅な飛躍（significant jump）」——前世代と比較してどこまで現実的なタスクをこなせるか、具体的な性能向上が焦点",
+      "・現実世界への実装に伴うリスク——誤動作・安全事故・プライバシー侵害・悪用可能性など、デジタルAIとは質的に異なる危険性への対処が必要"
+    ],
+    "prediction": "Google DeepMindはGemini Robotics 2を足がかりに、産業用・家庭用ロボットへの本格的な技術展開を進めるとみられ、他のビッグテック企業との開発競争がさらに激化するだろう。規制当局も物理AIに特有のリスクへの対応を迫られ、EU AI法などの枠組みを超えたロボットAI専用のガイドラインや法整備が議論されることが予想される。短期的には産業・医療・物流分野での実証実験が拡大し、2〜3年以内に商業利用の具体的な事例が登場する可能性が高い。",
+    "ai_interpretation": "このニュースの本質は、AIが「考えるだけの存在」から「行動する存在」へと進化する転換点を示しているという点にある。フィジカルAGIの実現は、AIの影響を仮想空間からリアル社会全体に拡張するものであり、その恩恵とリスクのスケールは従来とは比較にならないほど大きい。つまりこれは単なる技術的アップデートではなく、人間社会とAIの関係性そのものを根本的に再定義する歴史的な転換の始まりと捉えるべきである。",
+    "collected_at": "2026-07-31T05:17:36.845508+09:00",
+    "background": "AIの進化はこれまで主にデジタル領域（テキスト生成・画像認識・対話など）で進んできたが、より汎用的な知能（AGI）の実現には現実世界との相互作用が不可欠とされてきた。Google DeepMindはGeminiシリーズを通じてAIの能力を継続的に拡張しており、ロボティクスとの統合はその自然な延長線上にある。また、OpenAIやテスラ（Optimus）など競合他社もロボットAI分野への参入を強めており、業界全体で「フィジカルAI」競争が激化している。"
+  },
+  {
+    "title": "New MCP specification addresses the main barrier to enterprise adoption",
+    "japanese_title": "エンタープライズ導入の壁を突破：新MCP仕様が企業採用の最大課題を解決、廃止ポリシーも追加",
+    "url": "https://arstechnica.com/ai/2026/07/with-a-stateless-makeover-new-mcp-spec-targets-enterprise-scale/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. AI通信プロトコル「MCP（Model Context Protocol）」の新仕様が公開され、企業導入における最大の障壁が解消された。",
+      "2. 新たなポリシーにより、機能が突然削除・廃止されることがなくなり、安定性が保証される。",
+      "3. エンタープライズ環境での本格的なAI活用に向け、信頼性と互換性が大幅に向上した。"
+    ],
+    "points": [
+      "・ 企業採用の「最大の障壁」が何であったかが明示され、それへの具体的な技術的解決策が提示された点",
+      "・ 機能の突然の廃止を防ぐ**廃止ポリシー（Deprecation Policy）**の新設により、長期運用における予測可能性が向上した点",
+      "・ AIプロトコルが成熟期に入り、スタートアップ向けから企業グレードへと進化していることを示す転換点である点"
+    ],
+    "prediction": "今回の安定性保証により、金融・医療・製造業などリスク管理に厳格な大企業がMCPの採用を加速させる可能性が高い。また、競合するAIプロトコルやフレームワークも同様の廃止ポリシー整備を迫られ、業界全体の成熟化が進むと考えられる。中長期的にはMCPがAIエージェント間通信のデファクトスタンダードとしての地位をより強固にするだろう。",
+    "ai_interpretation": "このニュースの本質は「AIの技術的進化」ではなく「AIの企業インフラ化」という段階的成熟を象徴している点にある。プロトコルに廃止ポリシーが設けられるということは、MCPがもはや実験的技術ではなく、企業のミッションクリティカルなシステムに組み込まれる前提で設計されるフェーズに突入したことを意味する。AIが「使ってみる技術」から「基盤として依存する技術」へと転換する歴史的な節目のシグナルと言えるだろう。",
+    "collected_at": "2026-07-31T05:17:54.302496+09:00",
+    "background": "MCPはAnthropicが主導するAIエージェントとツール間の通信標準プロトコルであり、急速に業界標準としての地位を確立しつつある。しかし、企業がシステムへ組み込む際には「仕様変更による既存実装の破損リスク」が大きな懸念事項となっており、エンタープライズ採用の足かせとなっていた。今回の仕様更新はこうした企業側の不安に正面から応えるものと位置づけられる。"
+  },
+  {
+    "title": "Yet more qubit tech: New quantum dot options, diamond vacancies",
+    "japanese_title": "量子コンピュータの新選択肢：量子ドットとダイヤモンド空孔欠陥が拓く量子ビット技術の未来",
+    "url": "https://arstechnica.com/science/2026/07/quantum-computing-roundup-still-more-technologies-making-waves/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. 量子コンピュータの基本単位である「量子ビット（クビット）」を実現するための新技術として、量子ドットとダイヤモンド空孔欠陥（NVセンター）が注目されている。",
+      "2. 複数の企業が異なるアプローチでクビット技術を開発しており、業界全体で選択肢が急速に増加している。",
+      "3. 特定の技術に依存しない多様な開発競争が、量子コンピュータの実用化を加速させる可能性がある。"
+    ],
+    "points": [
+      "・ 量子ドット技術は半導体製造プロセスとの親和性が高く、既存のシリコン産業インフラを活用できる可能性がある",
+      "・ ダイヤモンド空孔欠陥（NVセンター）は室温動作の可能性を持ち、冷却コストの大幅削減につながる期待がある",
+      "・ 複数企業が並行して異なる技術を推進することで、業界全体の技術的リスク分散が図られている"
+    ],
+    "prediction": "短期的には各技術の誤り訂正性能やスケーラビリティの比較検証が進み、有力な技術が絞り込まれていく段階に入るとみられる。中長期的には、用途や環境に応じて最適なクビット技術を選択する「ハイブリッド型」量子システムが主流となる可能性がある。また、半導体大手の参入が加速し、量子ドット技術が量産化の観点で優位に立つシナリオも十分考えられる。",
+    "ai_interpretation": "このニュースが示す本質は、量子コンピュータ開発が「単一の覇権技術を目指す段階」から「多様な技術の並走・競争の段階」へと成熟しつつあるという転換点である。技術の多様化は一見遠回りに見えるが、生物の進化と同様に最終的により堅牢で実用的なソリューションを生み出す原動力となる。クビット技術の選択肢が増えることは、量子コンピュータ産業全体のエコシステム形成を促進し、特定国や企業への技術依存リスクを低減するという地政学的意味合いも持っている。",
+    "collected_at": "2026-07-31T05:18:13.570613+09:00",
+    "background": "量子コンピュータの実現には安定したクビットの実装が不可欠であり、現在は超伝導回路やイオントラップが主流とされてきた。しかし、これらの技術は低温環境の維持や誤り率の高さなど固有の課題を抱えており、代替技術の探索が続いていた。そこで量子ドットやダイヤモンドのNV（窒素空孔）センターといった固体素子ベースの新アプローチが有力候補として急浮上してきた。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-07-31",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-07-30",
+    "href": "2026-07-30.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
