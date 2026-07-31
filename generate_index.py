@@ -162,6 +162,10 @@ def generate_index():
     html = f'''<!DOCTYPE html>
 <html lang="ja">
 <head>
+  <!-- ADSENSE-START -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1944739806788973"
+     crossorigin="anonymous"></script>
+  <!-- ADSENSE-END -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIニュースまとめ - 毎日のIT・テクノロジーニュースをAIが要約</title>
