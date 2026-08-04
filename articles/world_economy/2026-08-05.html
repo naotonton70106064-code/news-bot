@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- ADSENSE-START -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1944739806788973"
+     crossorigin="anonymous"></script>
+  <!-- ADSENSE-END -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Lucid misses second-quarter expectations as EV maker conducts 'operational reset'",
+    "japanese_title": "ルーシッド、第2四半期決算が市場予想を下回る――EV新興メーカーが「オペレーショナル・リセット」に着手",
+    "url": "https://www.cnbc.com/2026/08/04/lucid-group-lcid-earnings-q2-2026.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米EV新興企業ルーシッド・グループが第2四半期の業績市場予想を下回り、いわゆる「オペレーショナル・リセット（事業再編）」を実施中であることを明らかにした。",
+      "2. 新CEO・シルビオ・ナポリ氏は今年初めに生産見通しを停止しており、今回も業績ガイダンスの更新は行われなかった。",
+      "3. 経営陣の交代と生産計画の白紙化が重なり、投資家・市場に対する透明性の欠如が改めて浮き彫りになった。"
+    ],
+    "points": [
+      "・ 新CEO就任後わずか数か月で生産ガイダンスを撤回という異例の経営判断",
+      "・ サウジアラビアPIFによる多額の出資継続の是非が今後の資金繰りの鍵を握る",
+      "・ 「オペレーショナル・リセット」の具体的内容（コスト削減・人員整理・生産ライン見直し）が未公表である点"
+    ],
+    "prediction": "EV市場全体が需要鈍化と価格競争の激化に直面する中、資金力の乏しい新興EVメーカーの淘汰・再編がさらに加速すると予想される。ルーシッド自身は中東や欧州への展開で活路を見出そうとしているが、明確な収益化の道筋を示せなければ追加資金調達も困難になり、業界再編の波に飲み込まれるリスクが高まる。",
+    "ai_interpretation": "このニュースの本質は、単一企業の業績不振にとどまらず、「EVブーム後の現実」を象徴している点にある。低金利・補助金頼みで急成長したEV新興企業のビジネスモデルが、金利高止まりと補助金縮小という環境変化に耐えられるかどうかの試練が本格化しており、ルーシッドはその象徴的事例となっている。グローバル経済的には、エネルギー転換（グリーントランジション）への投資継続と短期的な収益性要求のジレンマが今後さらに顕在化し、各国の産業政策や補助金設計の見直しを迫る契機となりうる。",
+    "collected_at": "2026-08-05T05:31:24.575102+09:00",
+    "market_impact": "EV新興企業全体への投資家心理が一段と冷え込む可能性があり、テスラやリヴィアンといった競合他社の株価にも間接的な下押し圧力がかかりうる。またルーシッドの主要株主であるサウジアラビア公共投資ファンド（PIF）の動向が注目され、中東資本とグローバルEV産業の関係にも影響を与えかねない。ドル建て資産としてのリスクオフムードが強まれば、新興市場通貨にも波及する可能性がある。"
+  },
+  {
+    "title": "Paramount Skydance raises full-year profit guidance, remains 'confident' about WBD merger",
+    "japanese_title": "パラマウント・スカイダンス、通期利益予想を上方修正――WBDとの合併交渉にも自信",
+    "url": "https://www.cnbc.com/2026/08/04/paramount-skydance-psky-earnings-q2-2026.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. パラマウント・スカイダンスは第2四半期の決算発表を行い、通年の利益見通しを上方修正した。",
+      "2. ワーナー・ブラザース・ディスカバリー（WBD）との合併提案に向けた準備を継続していることを改めて表明した。",
+      "3. 業績の堅調さと合併への自信を同時に示すことで、投資家・市場への安心感を演出した。"
+    ],
+    "points": [
+      "・ 通期利益予想の上方修正は、コスト削減や収益構造改善が順調に進んでいることを示唆",
+      "・ WBDとの合併交渉が依然「自信あり」と表現されており、規制当局の承認プロセスが鍵",
+      "・ ストリーミング事業の収益化動向が、業績回復の持続性を左右する重要指標"
+    ],
+    "prediction": "パラマウント・スカイダンスとWBDの合併が実現すれば、グローバルなコンテンツ配信市場において米国発の巨大メディアコングロマリットが誕生し、業界地図が大きく塗り替えられる。一方で、米国や欧州の規制当局による独占禁止法審査が今後の最大の障壁となり、承認の行方が合併スケジュールを左右する。新興国市場へのコンテンツ展開戦略も注目されており、アジア・中東などの成長市場における競争が激化するだろう。",
+    "ai_interpretation": "このニュースの本質は、ストリーミング戦争の「第2フェーズ」における生き残り戦略としての大型統合の動きを体現している点にある。単なるM&Aの進捗報告にとどまらず、通期見通しの上方修正と合わせて公表することで、市場・投資家・規制当局に対し「財務的健全性と戦略的確信」を同時にアピールする高度なコミュニケーション戦略と読み取れる。グローバル経済においては、デジタルコンテンツ産業の覇権争いが今後の知的財産・データ経済の主導権争いと直結しており、このM&Aの帰趨は単なる業界再編を超えた意味を持つ。",
+    "collected_at": "2026-08-05T05:31:44.216744+09:00",
+    "market_impact": "メディア・エンターテインメント業界における大型M&Aの進展は、同セクターの株価や投資家センチメントに直接影響を与える可能性がある。また、合併が実現すれば北米を中心としたグローバルなメディア市場の再編が加速し、NetflixやDisney＋などの競合ストリーミングサービスへの競争圧力が高まる見通しだ。為替面での直接的な影響は限定的だが、米国メディア株の動向はリスク資産全般のセンチメントに波及する場合がある。"
+  },
+  {
+    "title": "Chipotle stock falls on potential link to salmonella outbreak in Minnesota",
+    "japanese_title": "チポトレ株が急落——ミネソタ州サルモネラ菌集団感染との関連疑惑で食品安全リスクが浮上",
+    "url": "https://www.cnbc.com/2026/08/04/chipotle-stock-falls-salmonella-outbreak-minnesota.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国の人気ファストカジュアルチェーン「チポトレ」の株価が、ミネソタ州でのサルモネラ菌集団感染との潜在的な関連が報じられたことで下落した。",
+      "2. チポトレは問題が疑われるサプライヤーからの食材（ペッパー類）を即座に店舗から撤去し、別の生産者から調達した製品に切り替えた。",
+      "3. 食品安全問題への迅速な対応を示したものの、過去の食中毒問題の記憶もあり投資家心理に悪影響を与えた。"
+    ],
+    "points": [
+      "・ チポトレは2015〜2016年のE.coli・ノロウイルス集団感染問題で株価が大幅に下落した「前科」があり、投資家の反応が過敏になりやすい",
+      "・ 問題食材の迅速な撤去と代替調達という危機管理対応の速度が、今後のブランド信頼回復の鍵を握る",
+      "・ 米国農業サプライチェーンにおける食品安全基準の見直し・強化議論が再燃する可能性がある"
+    ],
+    "prediction": "感染との因果関係が公式に確認された場合、チポトレはさらなる株価下落・訴訟リスク・規制当局による調査強化に直面する可能性が高い。一方で過去の危機からの復活実績があることから、迅速かつ透明性の高い対応が維持されれば中長期的な業績回復は十分に見込まれる。グローバルな食品安全規制の強化トレンドの中で、農産物のトレーサビリティ（追跡可能性）技術への投資需要が高まるきっかけにもなり得る。",
+    "ai_interpretation": "このニュースの本質は、単なる一企業の食品事故を超え、**グローバルサプライチェーンの脆弱性と企業ブランドリスクの連動性**を象徴している。デジタル時代において食品安全問題はリアルタイムで拡散し、株価・消費者行動・規制環境を同時に揺さぶる「複合リスク」として経営の最重要課題となっている。食品業界全体にとって、サプライチェーンの多様化とリアルタイム品質管理への投資は、もはや任意ではなく戦略的必須事項であるというグローバル経済への重要な示唆を含んでいる。",
+    "collected_at": "2026-08-05T05:32:05.029719+09:00",
+    "market_impact": "チポトレ株（CMG）の下落は、外食産業全体の食品安全リスクへの投資家の敏感さを改めて示すものであり、同業他社の株価にも警戒感が波及する可能性がある。農業・食品サプライチェーン関連企業にとっては、品質管理コストの上昇圧力が意識される契機となり得る。米国内消費者信頼感にも局所的な影響を及ぼす可能性があるが、グローバル市場全体への直接的な為替・株式市場への波及は限定的とみられる。"
+  },
+  {
+    "title": "The sneaky economics of healthwashing",
+    "japanese_title": "「健康洗脳マーケティング」の経済学：食品ラベルに隠された巧妙な罠と消費者が払う余分なコスト",
+    "url": "https://www.npr.org/sections/planet-money/2026/08/04/g-s1-136624/the-sneaky-economics-of-healthwashing",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 食品企業は「オーガニック」「高タンパク」などの健康訴求ラベルを活用し、消費者の購買意欲を操作することで、実質的な価値以上の価格プレミアムを獲得している。",
+      "2. 人間の脳は健康関連キーワードに対して合理的判断を停止しやすく、この認知バイアスが食品業界のマーケティング戦略の核心として利用されている。",
+      "3. 消費者がこうした「ヘルスウォッシング（健康偽装）」を見抜くためのリテラシー向上が、過剰支出を防ぐうえで不可欠となっている。"
+    ],
+    "points": [
+      "・「オーガニック」「ナチュラル」「グルテンフリー」などのラベルは厳密な定義が曖昧なケースが多く、法的規制の抜け穴を利用した価格プレミアムが横行している",
+      "・消費者の認知バイアス（ハロー効果・確証バイアス）が健康ラベルへの過信を生み出し、企業はこれを科学的に設計したマーケティングで活用している",
+      "・米国・欧州・日本など主要市場で規制当局による表示基準の見直し議論が加速しており、業界全体のビジネスモデルに構造的変化が迫られる可能性がある"
+    ],
+    "prediction": "消費者教育の向上とSNSによる情報拡散により、ヘルスウォッシングへの批判的視点が広がり、中長期的には実質的な栄養価・成分透明性を重視するブランドへの需要シフトが起きると予測される。規制面では、EUのグリーンウォッシング規制の流れと同様に、食品健康表示に対する国際的な基準強化が進む可能性が高く、対応コストが中小食品メーカーの競争力に打撃を与えかねない。一方で、真の機能性食品・代替タンパク市場には正当な成長機会が生まれ、信頼性を武器にする新興企業の台頭が加速するだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる食品マーケティングの問題を超え、**情報の非対称性が生む経済的格差**の縮図として読み解ける。知識を持つ消費者と持たない消費者の間で支払う対価が異なるという構造は、デジタル経済における個人データ搾取と同じメカニズムであり、グローバルに拡大する「認知資本主義」の象徴的事例といえる。世界経済への示唆として、企業の短期的利益追求と消費者の長期的厚生のギャップを埋めるには、規制・教育・テクノロジー（成分スキャンアプリ等）の三位一体のアプローチが不可欠であり、これは今後のESG投資評価軸にも新たな「S（社会）」指標として組み込まれていく可能性を示唆している。",
+    "collected_at": "2026-08-05T05:32:29.750197+09:00",
+    "market_impact": "グローバルのヘルスフード市場は数兆円規模に拡大しており、実態を伴わない健康訴求による価格設定が消費者物価を押し上げる一因となっている。食品・飲料セクターでは高マージン商品へのシフトが続き、大手メーカーの収益構造を下支えする一方、規制当局の監視強化リスクが投資判断に影響を与え始めている。また、消費者の可処分所得が圧迫される中でのプレミアム価格戦略は、インフレ環境下における家計負担の深刻化とも連動している。"
+  },
+  {
+    "title": "Why Texas is betting 'Y'all Street' can take on Wall Street",
+    "japanese_title": "テキサス「ヨールストリート」がウォール街に挑戦——ダラスの金融ハブ化は本物か？",
+    "url": "https://www.npr.org/2026/08/04/nx-s1-5697067/texas-banking-goldman-sachs-wall-street",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. テキサス州ダラスを中心に金融産業が急成長しており、ニューヨークのウォール街に対抗する「ヨールストリート」として注目を集めている。",
+      "2. テキサス全体のビジネスブームを背景に、多くの金融機関や企業本社が低税率・低コストを求めてテキサスへ移転・拡張している。",
+      "3. しかし、ニューヨークが持つ人材集積・規制インフラ・国際的ネットワークの優位性を奪えるかどうかは依然として疑問視されている。"
+    ],
+    "points": [
+      "・テキサス州の無所得税政策や規制の緩さが、金融機関の移転・設立を強力に後押ししている",
+      "・ゴールドマン・サックスやチャールズ・シュワブなど大手金融機関がすでにダラス圏に拠点を拡大している",
+      "・「集積の経済」という点でニューヨークにはまだ大きな優位性があり、真の競合となるには人材育成エコシステムの成熟が不可欠"
+    ],
+    "prediction": "米国内における金融センターの多極化は今後も継続するとみられ、ニューヨーク一極集中の時代は緩やかに終焉を迎える可能性がある。ただし、テキサスが国際金融の中心地として台頭するには、外国金融機関の誘致や規制整備など長期的な課題が残る。地政学的リスクや気候変動リスク（ハリケーン・熱波）がテキサスの持続的成長に対する不確実要因として意識され始めるだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる企業移転トレンドを超えた「米国型資本主義の地理的再編」を示している。低税・規制緩和・低コストを武器にしたテキサスモデルは、グローバルな「規制裁定」競争の縮図であり、各国の金融センター戦略にも示唆を与える。長期的には、ニューヨークとテキサスが異なる機能（国際金融 vs 国内・産業金融）で棲み分ける「双極構造」が米国金融市場の新たな姿となる可能性が高い。",
+    "collected_at": "2026-08-05T05:32:52.420955+09:00",
+    "market_impact": "テキサスへの金融機能の分散が進むことで、ニューヨーク不動産市場やオフィス需要にさらなる下押し圧力がかかる可能性がある。一方、テキサス州の経済拡大はエネルギー・テクノロジー・不動産セクターへの投資拡大を促し、米国内の地域間経済格差の構図を塗り替えつつある。ドル資産の分散化という観点では、グローバル投資家にとって米国内の投資先多様化の新たな選択肢となり得る。"
+  },
+  {
+    "title": "Oil prices fall on hopes Strait of Hormuz could reopen",
+    "japanese_title": "ホルムズ海峡再開の期待で原油価格が下落｜米国務長官・財務長官が交渉進展を表明",
+    "url": "https://www.bbc.co.uk/news/articles/cpw9v0gnzxwo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. マルコ・ルビオ米国務長官とスコット・ベッセント財務長官が、ホルムズ海峡を通じた原油輸送再開に向けた交渉が前進していると発表した。",
+      "2. この報道を受け、供給途絶リスクが後退するとの観測から国際原油価格が下落した。",
+      "3. 世界の原油輸送の約20%が通過するホルムズ海峡の動向が、再びエネルギー市場の焦点となっている。"
+    ],
+    "points": [
+      "・ ホルムズ海峡は中東産原油の主要輸出ルートであり、閉鎖リスクは世界的なエネルギー安全保障に直結する",
+      "・ 米国の閣僚級が揃って交渉進展を発表したことで、外交的解決への期待感が高まっている",
+      "・ OPECや産油国の増産姿勢と合わさり、原油市場は供給過剰方向へ傾く可能性がある"
+    ],
+    "prediction": "ホルムズ海峡が実際に再開されれば、原油供給の安定化とともに世界的なインフレ圧力の緩和が期待され、各国中央銀行の金融政策にも好影響を与える可能性がある。ただし、中東地域の地政学的リスクは依然として高く、交渉が決裂した場合には原油価格が急騰し市場に混乱をもたらすリスクも残る。米国の外交的関与の深さが今後の展開を左右する重要な変数となるだろう。",
+    "ai_interpretation": "このニュースの本質は、「エネルギー安全保障が地政学と直結している」という現代経済の構造的脆弱性を改めて浮き彫りにしている点にある。米国が閣僚レベルで積極的に関与していることは、エネルギー供給の安定がインフレ抑制・同盟国支援・ドル覇権維持と密接に結びついているという戦略的判断を示唆している。グローバル経済にとって、ホルムズ海峡の安定は単なる地域問題ではなく、サプライチェーン・物価・金融政策を連鎖的に左右する「世界経済の咽喉部」であることを再認識させるニュースといえる。",
+    "collected_at": "2026-08-05T05:33:12.920698+09:00",
+    "market_impact": "原油価格の下落はWTI・ブレント原油ともに売り圧力を強め、エネルギー関連株や産油国通貨（ノルウェークローネ・カナダドルなど）の下落要因となり得る。一方、原油輸入国である日本・インド・中国などアジア諸国の通貨や製造業セクターにはポジティブな影響が期待される。航空・物流・化学業界などエネルギーコストに敏感な産業は恩恵を受ける可能性がある。"
+  },
+  {
+    "title": "Why Trump Media's sale of fast access to market-moving social posts is controversial",
+    "japanese_title": "トランプメディア、市場影響力あるSNS投稿への有料アクセスサービスが物議――ウォール街向け情報商品化の波紋",
+    "url": "https://www.bbc.co.uk/news/articles/c4gdkl9zn8wo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. トランプ・メディア＆テクノロジー・グループ（TMTG）が、Truth Socialの影響力ある投稿をウォール街の金融機関に優先的に提供する有料サービスを開始した。",
+      "2. このサービスは、市場を動かす可能性のあるソーシャルメディア投稿への「ファストアクセス」を金融機関に販売するもので、情報格差と公正性の観点から論争を巻き起こしている。",
+      "3. 特にトランプ大統領本人の投稿が株価・為替・政策期待に直結するケースが多いため、情報の非対称性・インサイダー的優位性に対する規制上の懸念が浮上している。"
+    ],
+    "points": [
+      "・ 大統領の発言が市場を直接動かす時代において、その情報への「有料優先アクセス」は実質的な情報商品化であり、市場操作との境界線が曖昧",
+      "・ 一般投資家と機関投資家の間に新たな「情報格差」を制度的に生み出すビジネスモデルへの倫理的疑問",
+      "・ SEC（米証券取引委員会）やFINRAによる規制介入の可能性と、言論の自由との法的衝突という複雑な構図"
+    ],
+    "prediction": "米国内での規制議論が本格化し、ソーシャルメディア投稿を金融情報として分類・規制するための新たな法整備が検討される可能性が高い。一方で、TMTGはトランプ政権との政治的近さを背景に規制回避を図るとみられ、これが市場ガバナンスへの信頼低下につながるリスクがある。国際的にも「政治的SNSの金融利用」という前例として注目され、欧州や日本の規制当局が類似事例への対応を迫られる展開も予想される。",
+    "ai_interpretation": "このニュースの本質は、**政治権力・情報・金融市場の三者が前例のない形で融合しつつある**という構造的変化を象徴している点にある。トランプ氏の発言が市場変動要因である事実を逆手に取り、それを収益化するビジネスモデルは、民主主義的な情報の公平性と資本主義的な情報の商品化という矛盾を鋭く突きつける。グローバル経済への示唆として、政治リスクの「情報化・金融商品化」という新潮流が今後の市場構造を根本から変え、規制の枠組み自体の再設計を世界規模で迫る可能性がある。",
+    "collected_at": "2026-08-05T05:33:34.921248+09:00",
+    "market_impact": "このサービスにより、一部の機関投資家が個人投資家より先に市場を動かす情報を入手できる構造が生まれ、株式・為替・債券市場における情報の公平性が根本から問われる。特にドル相場や米国株に敏感なグローバル投資家にとって、情報格差リスクが新たな市場の不安定要因となりうる。SECや金融規制当局による調査・規制強化の動きが加速すれば、フィンテックおよびソーシャルメディア業界全体にも影響が波及する可能性がある。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-08-05",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-08-05.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-08-05.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-08-04",
+    "href": "2026-08-04.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
