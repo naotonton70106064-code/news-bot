@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- ADSENSE-START -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1944739806788973"
+     crossorigin="anonymous"></script>
+  <!-- ADSENSE-END -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "OTC類似薬の追加負担 がん患者ら対象外に 中間とりまとめ",
+    "japanese_title": "OTC類似薬の患者追加負担制度、がん・入院患者を適用除外へ―厚労省検討会が中間とりまとめ",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015197641000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 厚生労働省の検討会は、市販薬と成分・効能が類似する「OTC類似薬」を処方された患者に追加負担を求める新制度の中間とりまとめを公表した。",
+      "2. がん患者や入院中の患者など、医療的必要性が高いと判断されるケースは適用対象から除外する方針が示された。",
+      "3. この制度は医療費の適正化と患者の自己選択促進を目的としており、保険財政の持続可能性を高める取り組みの一環である。"
+    ],
+    "points": [
+      "・がん患者・入院患者など医療弱者への配慮が明示され、制度設計における公平性が一定程度担保された点",
+      "・適用除外の範囲をどこまで広げるかが今後の焦点となり、制度の実効性と影響規模を左右する",
+      "・セルフメディケーション推進政策との整合性および、患者の経済的負担増加への社会的反発の動向"
+    ],
+    "prediction": "今後は対象品目リストや追加負担額の具体的な設定をめぐり、患者団体・医師会・薬剤師会などの利害関係者との調整が本格化し、制度の最終決定までに議論が紛糾する可能性が高い。医療費の自然増が続く中、政府はこの制度を社会保障費抑制策の一つとして位置づけており、2026年度以降の診療報酬改定や保険制度改革と連動して具体化が進む見通しである。セルフメディケーション税制の拡充など、市販薬購入を促す補完的な政策が同時に強化される可能性もある。",
+    "ai_interpretation": "このニュースの本質は、「全員一律の給付」から「必要性に応じた選別給付」へという日本の社会保障制度の構造的転換を象徴している点にある。高齢化による医療費膨張が財政を圧迫する中、国民に「自助」を促しつつ真に保護が必要な患者を守るという二重目標の実現が政策課題となっており、その難しいバランスをこの制度が体現している。日本経済への示唆としては、医療・介護分野での「受益と負担の見直し」が今後も継続的に強化される流れが不可逆であり、企業・家計ともに医療費自己負担増加を前提とした中長期的な資産・経営計画の見直しが求められる局面に入りつつあると言えよう。",
+    "collected_at": "2026-08-06T05:30:11.219929+09:00",
+    "market_impact": "ドラッグストアやOTC医薬品メーカー（ロート製薬・小林製薬など）にとっては、患者が処方薬から市販薬へシフトする需要増加が期待され、株価にポジティブな影響を与える可能性がある。一方、製薬メーカーや調剤薬局は処方箋数の減少リスクを抱えることになり、業績への影響が懸念される。為替への直接的な影響は限定的だが、医療費抑制策が財政健全化の文脈で評価されれば、長期的に日本国債の信認維持につながり得る。"
+  },
+  {
+    "title": "参政 神谷代表 核兵器めぐる議論 “タブー視せずに”",
+    "japanese_title": "参政党・神谷代表が核議論のタブー撤廃を主張｜広島で記者団に見解示す",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015197661000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 参政党の神谷代表が広島市において、核兵器をめぐる議論をタブー視すべきではないという認識を記者団に表明した。",
+      "2. 国際安全保障環境の変化を背景に、核抑止論を含む安全保障政策の再検討を促す発言として注目される。",
+      "3. 日本の核アレルギーとも呼ばれる伝統的な政治文化に対し、一石を投じる主張となっている。"
+    ],
+    "points": [
+      "・ 発言の場が「広島」であることの政治的・象徴的意味合いの大きさ",
+      "・ NATO型核共有（ニュークリア・シェアリング）議論との連動可能性",
+      "・ 参院選・衆院選を見据えた安全保障政策の争点化への影響"
+    ],
+    "prediction": "核議論の是非は今後の国政選挙における安全保障論争を活発化させ、防衛費増額や核抑止政策をめぐる与野党間の対立軸が鮮明になる可能性がある。政府・与党は非核三原則の堅持を改めて強調する対応を迫られるとみられ、政策的な波及効果が生じやすい局面となる。経済安全保障の観点からも、核・防衛に関連するサプライチェーンや技術開発投資への注目度が高まる可能性がある。",
+    "ai_interpretation": "このニュースの本質は、単なる安全保障論に留まらず、**日本の戦略的自律性と経済安全保障の再定義**を迫るものである。核議論のタブー撤廃は防衛産業の国産化・技術投資拡大につながる政策議論を加速させ、中長期的には関連産業の市場規模拡大に影響し得る。一方で、広島・長崎を持つ日本社会の歴史的感情と経済合理性の間で生じる摩擦は、政治リスクとして企業の投資判断にも微妙な影響を与える点に留意が必要である。",
+    "collected_at": "2026-08-06T05:30:28.535884+09:00",
+    "market_impact": "防衛・安全保障関連銘柄（三菱重工・川崎重工など）への関心が高まる可能性があるが、本発言単体での直接的な株価インパクトは限定的とみられる。為替市場においては、地政学リスクへの意識が高まることで円の安全資産としての需要が複雑な動きを示す可能性がある。国内防衛産業の中長期的な政策議論に影響を与える可能性は排除できない。"
+  },
+  {
+    "title": "食料品消費税減税 政府が基本方針決定 来年4月から2年間1％に",
+    "japanese_title": "政府が食料品消費税を1％に減税決定｜2026年4月から2年間の負担軽減策の全容と経済的影響",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015197191000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 政府は臨時閣議において、食料品の消費税率を2026年4月から2年間にわたり現行の8％から1％へ引き下げる基本方針を正式に決定した。",
+      "2. 本措置は中低所得者層を中心とした税・社会保険料の負担軽減を主な目的としており、家計の実質的な購買力回復を狙った政策である。",
+      "3. 時限的な措置として2年間の期限が設定されており、恒久的な税制改正ではなく緊急的・経済対策的な位置づけとみられる。"
+    ],
+    "points": [
+      "・減税幅が8％→1％と極めて大幅であり、家計1世帯あたりの年間軽減効果の試算が政策評価の鍵となる",
+      "・「2年間の時限措置」という設計が、財政規律維持との兼ね合いをどう説明するかが政治的争点になり得る",
+      "・対象品目の範囲（加工食品・外食・酒類の扱い）が業界間の公平性や制度の複雑性に直結する重要論点である",
+      "・中低所得者層への恩恵が本当に届くかどうか、価格への転嫁状況のモニタリング体制が問われる",
+      "・財源確保の方法（国債増発か歳出削減か）によって財政・金融政策への波及効果が大きく異なる"
+    ],
+    "prediction": "2026年4月の施行に向けて、国会審議や関連法改正のプロセスが本格化し、対象品目の定義をめぐる業界ロビー活動も活発化するとみられる。日銀の金融政策運営においては、消費税減税による一時的な物価押し下げ効果をどう評価するかが利上げ判断に影響を与える可能性がある。2年後の「出口戦略」、すなわち税率を元に戻す際の政治的困難さも早期から意識されており、事実上の恒久化圧力が生じるリスクも否定できない。",
+    "ai_interpretation": "この政策の本質は、単なる税率調整にとどまらず、長引く物価高と実質賃金の停滞に対する政府の「可処分所得防衛策」としての性格が強く、選挙を意識した政治的文脈とも切り離せない。日本経済への示唆としては、消費税という基幹税に手をつけたことで、今後の財政再建路線との整合性が根本から問われる転換点になり得る。真に中低所得者を救済するには減税だけでなく社会保障給付との組み合わせが不可欠であり、この政策の設計の精緻さが中長期的な政策信頼性を左右するだろう。",
+    "collected_at": "2026-08-06T05:30:52.318561+09:00",
+    "market_impact": "食料品関連の小売・スーパー・食品メーカー株は消費拡大期待から短期的に買い材料となる可能性がある一方、税収減による財政悪化懸念が国債市場や円相場に下押し圧力をかけるリスクも存在する。内需関連セクター全般には消費底上げというポジティブな効果が見込まれるが、財源の裏付けが不明確な場合は市場の信認低下につながりかねない。外食産業や食品流通業においては価格転嫁のオペレーション対応コストも一時的な負担となり得る。"
+  },
+  {
+    "title": "れいわ 山本譲司新代表“ボトムアップの組織で党勢拡大を”",
+    "japanese_title": "れいわ新選組・山本譲司新代表が就任会見――ボトムアップ組織で党勢拡大を宣言",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015197501000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. れいわ新選組の新代表に就任した山本譲司氏が記者会見を行い、党の方向性を示した。",
+      "2. 「ボトムアップの組織づくり」を核心戦略として掲げ、草の根からの党勢拡大を目指す姿勢を強調した。",
+      "3. トップダウン型からの脱却を図ることで、組織の持続的成長と支持基盤の拡大を狙う。"
+    ],
+    "points": [
+      "・「ボトムアップ」という組織論は、これまでの山本太郎代表による個人カリスマ依存型から、組織政党への脱皮を図る重要な転換点を意味する",
+      "・山本譲司氏は元衆議院議員であり、福祉・障がい者政策に深い知見を持つことから、社会政策面での党の政策深化が期待される",
+      "・党勢拡大戦略として地方組織の強化や候補者育成が進むか、次期国政選挙に向けた具体的な行動が注目される"
+    ],
+    "prediction": "次期参院選・衆院選に向け、れいわ新選組が組織力を強化できれば、野党再編の議論に新たな変数をもたらす可能性がある。積極財政や消費税廃止を主張する同党の影響力拡大は、立憲民主党や国民民主党との政策競争を激化させ、野党全体の経済政策論議を刺激する要因となりうる。一方、ボトムアップ路線が実際に機能するかは、資金力・人材確保・地方浸透度にかかっており、短期間での成果は見えにくい。",
+    "ai_interpretation": "このニュースの本質は、「カリスマ政治」から「組織政治」への転換という、日本の小政党が直面する普遍的な課題への挑戦と読み取れる。れいわ新選組がこの転換に成功すれば、格差是正・社会保障強化・財政拡張といった経済議題が国会でより持続的に議論される土壌が生まれ、日本の政策形成に一定の影響を与えうる。経済的弱者や非正規労働者の声を代弁する勢力が組織として成熟することは、日本の民主主義と経済政策の多様性という観点からも注目に値する動向である。",
+    "collected_at": "2026-08-06T05:31:11.858011+09:00",
+    "market_impact": "この政治ニュース単体が株式市場や為替に与える直接的な短期的影響は限定的と見られる。ただし、れいわ新選組が掲げる積極財政・消費税廃止・社会保障拡充などの政策が将来的に影響力を持てば、財政政策や国債市場への間接的な波及効果が生じる可能性がある。党勢が拡大すれば、連立交渉や国会審議において左派的な経済政策の存在感が増し、財政規律への市場の視線が変化する局面も考えられる。"
+  },
+  {
+    "title": "福岡 正副議長ポストめぐる問題 県議会が第三者委設置を決定",
+    "japanese_title": "福岡県議会、正副議長ポスト金銭授受疑惑で第三者委員会を設置―透明性確保へ本格調査開始",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015197401000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 福岡県議会において、正副議長ポストの選出をめぐり金銭授受があったと指摘される問題が浮上し、議会の信頼性が問われる事態となっている。",
+      "2. 議会側は日本弁護士連合会のガイドラインに基づく第三者委員会を設置し、独立性・中立性を担保した形で事実関係の調査を行うことを正式に決定した。",
+      "3. 第三者委員会の活用は、内部調査では対応しきれない深刻な疑惑に対し、外部の専門家による客観的な検証を求める姿勢を示すものである。"
+    ],
+    "points": [
+      "・ 日弁連ガイドラインに基づく第三者委員会は高い独立性を持ち、調査結果の信頼性と公表範囲が焦点となる",
+      "・ 金銭授受の当事者・金額・経緯など具体的な事実関係の解明が今後の議会運営を大きく左右する",
+      "・ 地方議会における「ポスト取引」慣行への社会的関心が高まり、全国的な議会改革論議に波及する可能性がある"
+    ],
+    "prediction": "第三者委員会の調査結果次第では、関係議員の辞職や議会の再編につながる可能性があり、福岡県の行政運営に一定の混乱が生じるリスクがある。また、調査結果が全国的に注目されることで、他の地方議会においても類似の慣行見直しや内部ガバナンス強化の動きが加速する可能性が高い。国政レベルでも地方議会の透明性確保に関する制度的議論が促進される契機となり得る。",
+    "ai_interpretation": "このニュースの本質は、単なる地方スキャンダルではなく、日本の地方民主主義における「慣行」と「透明性」の構造的矛盾を浮き彫りにした点にある。議長・副議長ポストの選出過程に金銭が介在するとすれば、それは有権者の意思から乖離した権力配分を意味し、地方自治の根幹を揺るがす問題である。日本経済の持続的成長には地方行政の健全なガバナンスが不可欠であり、今回の第三者委員会設置が形式的な幕引きに終わらず、実質的な制度改革へとつながるかどうかが真の問われどころと言える。",
+    "collected_at": "2026-08-06T05:31:31.973109+09:00",
+    "market_impact": "このニュースは地方議会の政治的スキャンダルにとどまるものであり、株式市場や為替市場への直接的な影響はほぼ皆無と考えられる。ただし、福岡県が推進するスタートアップ支援や大型インフラ整備などの地域政策において、議会の意思決定機能が一時的に停滞するリスクが生じる可能性がある。地元企業や投資家にとっては、行政の信頼性低下による間接的な投資環境の悪化に注視が必要である。"
+  },
+  {
+    "title": "高市首相「強い経済」実現と財政持続可能性は両立可能",
+    "japanese_title": "高市首相、経団連会長と会談——「強い経済」と財政健全化の両立方針を明示",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015197231000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 高市首相が経団連の筒井会長と会談し、経済財政政策の方向性について意見交換を行った。",
+      "2. 国内投資の強化を通じた「強い経済」の実現を最優先課題として掲げた。",
+      "3. 積極的な経済成長路線と財政の持続可能性は矛盾しないという認識を政府トップが公式に示した。"
+    ],
+    "points": [
+      "・「強い経済」と「財政持続可能性」という従来トレードオフとされてきた二つの目標を同時達成できると明言した点",
+      "・経済界のトップである経団連会長との早期会談により、官民連携の姿勢を明確に打ち出した点",
+      "・「国内投資の強化」をキーワードとしており、海外依存からの脱却や産業基盤強化への政策転換を示唆している点"
+    ],
+    "prediction": "国内投資促進に向けた税制優遇措置や補助金制度の拡充など、具体的な政策パッケージが今後発表される可能性が高い。財政健全化目標（プライマリーバランス黒字化）の達成時期や手法については、与党内や財務省との調整が今後の焦点となるだろう。成長と財政規律の両立という方針が維持されるかどうかは、予算編成プロセスの中で真価が問われることになる。",
+    "ai_interpretation": "このニュースの本質は、高市政権が「成長なくして財政再建なし」という供給側重視の経済哲学を政策の軸に据えたことを対外的に宣言した点にある。財政緊縮一辺倒でも無制限な財政出動でもなく、投資拡大による税収増で両立を図るという戦略は、アベノミクスの継承と進化を意識したものと読み取れる。ただし、少子高齢化・社会保障費膨張という構造的課題を抱える日本経済において、この両立シナリオが現実に機能するかは、具体的な政策の精度と実行力に大きく依存する点に留意が必要だ。",
+    "collected_at": "2026-08-06T05:31:49.734638+09:00",
+    "market_impact": "株式市場においては、国内投資促進の姿勢が設備投資関連銘柄や製造業セクターへのポジティブなシグナルとなり、短期的な買い材料になり得る。為替については、財政規律への一定の配慮が示されたことで、過度な円安懸念の抑制につながる可能性がある。一方、具体的な政策措置が不明確な段階では、市場の反応は限定的にとどまる可能性も高い。"
+  },
+  {
+    "title": "自民 食料品の消費税減税 来年4月から2年間1％ 基本方針案了承",
+    "japanese_title": "自民党が食料品の消費税を1％へ引き下げ決定｜2026年4月から2年間の時限措置で家計負担軽減へ",
+    "url": "https://news.web.nhk/newsweb/na/na-k10015197001000",
+    "source": "NHKONEニュース|政治",
+    "category": "japan_economy",
+    "summary_lines": [
+      "1. 自民党は、食料品の消費税率を現行の8％から1％に引き下げる政府の基本方針案を了承した。",
+      "2. 減税期間は来年（2026年）4月から2年間の時限的措置であり、恒久的な制度変更ではない。",
+      "3. 政府は同日午後の臨時閣議でこの基本方針を正式決定する運びとなっている。"
+    ],
+    "points": [
+      "・ 減税幅が極めて大きい（8％→1％）ため、食料品の実質的な値下がり効果は家計に直接かつ広範に波及する",
+      "・ 「2年間の時限措置」という期限付き設定であり、恒久化・延長をめぐる政治的駆け引きが今後の焦点となる",
+      "・ 財源の手当てや他の税目・社会保障費への影響など、財政健全化との整合性が問われる"
+    ],
+    "prediction": "時限措置の終了（2028年3月末）が近づくにつれ、延長・恒久化を求める政治的圧力が高まることが予想され、事実上の恒久減税に移行するリスクをはらんでいる。財政悪化への懸念から格付け機関や国際投資家の日本国債に対する見方が厳しくなる可能性があり、中長期的な金利上昇圧力につながりかねない。また、インフレ抑制と消費刺激の両立という観点では一定の効果が期待できる反面、食料品以外の物価高への対策は依然として課題として残る。",
+    "ai_interpretation": "今回の政策は、物価高に苦しむ家計を直接支援するという即効性を持つ一方、日本が長年抱える財政規律の問題を一段と複雑にするという二面性を持っている。「時限措置」という建前を取りながらも、政治的に一度与えた減税を撤回することは極めて難しく、事実上の既成事実化が進む可能性が高い。これは単なる景気対策を超え、日本の税制・財政運営の根幹に関わる構造的転換点となりうる重大な政策決定と言えるだろう。",
+    "collected_at": "2026-08-06T05:32:09.538809+09:00",
+    "market_impact": "食料品の大幅な税率引き下げにより、消費者の可処分所得が実質的に増加し、個人消費の回復・拡大が期待されることから、食品関連株や小売・スーパー株にとってはポジティブな材料となり得る。一方で、約7％分の税収減が財政悪化懸念を招き、国債市場や円相場に下押し圧力を与えるリスクも否定できない。国内の食品メーカーや流通業界は価格競争の激化に直面する可能性があるが、需要拡大の恩恵も受けるため、業界全体としては総じてプラスの影響が見込まれる。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-08-06",
+  "currentCategory": "japan_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-08-06.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-08-05",
+    "href": "2026-08-05.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
