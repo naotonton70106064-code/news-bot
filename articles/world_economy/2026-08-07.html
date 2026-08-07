@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- ADSENSE-START -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1944739806788973"
+     crossorigin="anonymous"></script>
+  <!-- ADSENSE-END -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Sweetgreen cuts full-year outlook as cyclospora fears weigh on sales",
+    "japanese_title": "スウィートグリーン、サイクロスポラ感染懸念で年間見通しを下方修正――関与なしも風評被害に直撃",
+    "url": "https://www.cnbc.com/2026/08/06/sweetgreen-cuts-full-year-outlook-as-cyclospora-fears-weigh-on-sales.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国のサラダチェーン「スウィートグリーン」は、サイクロスポラ（寄生虫）の感染アウトブレイクに関連しているとは認定されていないにもかかわらず、消費者の不安から売上が低迷し、通期業績見通しを引き下げた。",
+      "2. 感染症の直接的な原因企業でなくても、同業カテゴリー全体への消費者離れ（ヘルシー・サラダ系外食）が発生し、「風評リスク」が業績に深刻な打撃を与えている。",
+      "3. 外食産業における食品安全への消費者感度の高さが改めて浮き彫りとなり、特にサラダ・生鮮食品を主力とするブランドの脆弱性が露呈した。"
+    ],
+    "points": [
+      "・ **風評被害の恐ろしさ**：自社が原因でないにもかかわらず業績悪化——「無実のブランドリスク」という現代ビジネスの構造的課題を体現",
+      "・ **消費者心理の過敏性**：食の安全に対する消費者の反応は非合理的なほど敏感であり、SNS時代において情報の拡散が実害を超える影響を及ぼす",
+      "・ **ヘルシーフードブームの光と影**：生野菜・サラダを売りにするビジネスモデルは、食品安全リスクに対して構造的に脆弱であることが再確認された"
+    ],
+    "prediction": "スウィートグリーンは客足回復に向けたマーケティング・PR強化や食品安全の透明性アピールを迫られるとみられ、短期的な回復には数四半期を要する可能性が高い。また、同様の事例が今後も繰り返されることで、ヘルシー外食セクター全体がサプライチェーンの追跡可能性（トレーサビリティ）強化や食品安全保険への投資を加速させるきっかけとなりうる。中長期的には、テクノロジーを活用した食品安全管理への需要が高まり、アグリテック・フードテック分野への資金流入を促す可能性がある。",
+    "ai_interpretation": "このニュースの本質は「情報リスクが実態リスクを超越する時代」の到来を象徴している点にある——企業は自らのミスだけでなく、業界全体のネガティブイメージにも脆弱であり、危機管理の範囲が根本的に拡大している。グローバル経済においては、消費者の信頼（コンシューマートラスト）が企業価値を左右する最重要無形資産であり、特に食品・ヘルスケア分野ではその影響が財務数値に即座に反映される。投資家にとっては、ESGやブランドリスク管理の質が企業評価における新たな差別化指標となることを示唆する事例といえる。",
+    "collected_at": "2026-08-07T09:46:14.863805+09:00",
+    "market_impact": "スウィートグリーン（NYSE: SG）の株価への下押し圧力が短期的に継続するとみられ、同社と類似ビジネスモデルを持つヘルシー外食チェーン全体のセクターセンチメントが悪化する可能性がある。米国の外食・フードサービス関連株や生鮮野菜サプライチェーンへの投資家の慎重姿勢が強まる懸念もある。為替・グローバル市場への直接的な影響は限定的だが、米国消費者の外食支出動向を示す先行指標として注目される。"
+  },
+  {
+    "title": "American Airlines will stop upgrading elite flyers to business from coach on long domestic flights",
+    "japanese_title": "アメリカン航空、国内長距離路線でエリート会員へのビジネスクラス無料アップグレードを廃止",
+    "url": "https://www.cnbc.com/2026/08/06/american-airlines-flight-upgrades-become-harder-to-get.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. アメリカン航空は、国内の長距離路線において上級会員（エリートフライヤー）へのエコノミーからビジネスクラスへの無料アップグレードを廃止すると発表した。",
+      "2. これはアメリカン航空が収益最大化を図るため、ビジネスクラス座席の有償販売を優先する戦略的転換を意味する。",
+      "3. 長年の特典として提供されてきた無料アップグレードの廃止は、顧客ロイヤルティプログラムの見直しとコスト構造改革の一環とみられる。"
+    ],
+    "points": [
+      "・ エリート会員向け特典の縮小は、顧客のロイヤルティ離れや競合他社（デルタ、ユナイテッド）への乗り換えを促すリスクがある",
+      "・ ビジネスクラス座席の有償販売強化は、単価向上による収益改善を狙った戦略であり、航空業界全体のトレンドと一致する",
+      "・ 頻繁に出張する法人顧客（コーポレートトラベラー）への影響が大きく、企業の出張管理コスト増加につながる可能性がある"
+    ],
+    "prediction": "航空業界全体でロイヤルティプログラムの「価値希薄化」が進む中、消費者は特典の実質的な価値を再評価し、航空会社の選択基準が変化する可能性がある。世界的なプレミアム旅行需要の高まりを背景に、航空会社各社は無料アップグレードよりも有償アップグレードや直接販売を優先するビジネスモデルへの移行を加速させるとみられる。これにより、中長期的にはエリート会員制度の再設計や新たな差別化特典の導入が業界全体で進む可能性が高い。",
+    "ai_interpretation": "このニュースの本質は、航空会社が「顧客ロイヤルティへの投資」から「収益の即時最大化」へと戦略の重心を移しているという構造的変化を示している。パンデミック後のプレミアム需要回復を好機と捉え、かつては集客ツールだった無料アップグレードを「機会損失」として見直す動きは、サービス業全体における特典経済の転換点を象徴している。グローバル経済においては、インフレや金利上昇を受けた企業収益圧力が、消費者向けロイヤルティ特典の縮小という形で表れており、「見えないコスト削減」が広がるトレンドへの警戒が必要である。",
+    "collected_at": "2026-08-07T09:46:35.979522+09:00",
+    "market_impact": "航空業界全体でビジネスクラスの有償収益（プレミアム収益）を重視する傾向が強まっており、他社も類似の方針変更を追随する可能性がある。為替や燃料費の高騰を背景に、航空会社各社は収益性改善を迫られており、無料特典の削減はその一手段となっている。アメリカン航空株（AAL）への短期的な投資家評価には、収益改善期待とロイヤル顧客離れリスクの両面から影響を与える可能性がある。"
+  },
+  {
+    "title": "Savers Value Village thrift store launches new AI tool to price items",
+    "japanese_title": "セイバーズ・バリュービレッジ、AI価格設定ツール導入でリサイクルショップの価格一貫性と低価格を実現",
+    "url": "https://www.cnbc.com/2026/08/06/savers-value-village-thrift-store-launches-new-ai-tool-to-price-items.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国の大手中古品チェーン「セイバーズ・バリュービレッジ」が、商品価格を一貫して低く維持するための新たなAI価格設定ツールを導入した。",
+      "2. 同社はこの新技術の詳細をCNBCに独占提供し、小売業界におけるAI活用の最前線事例として注目を集めている。",
+      "3. 価格設定の自動化・標準化により、店舗間の価格ばらつきを解消し、消費者にとってより公平でわかりやすい買い物体験を提供することを目指している。"
+    ],
+    "points": [
+      "・ AI技術がプレミアムな高級小売業だけでなく、中古品・低価格市場にも浸透しつつあることを示す象徴的な事例",
+      "・ インフレ継続による生活費高騰を背景に、消費者の節約ニーズとAI効率化が合致したビジネスモデルの進化",
+      "・ 価格設定の透明性・一貫性確保により、顧客信頼度向上とブランド価値強化が見込まれる点"
+    ],
+    "prediction": "セイバーズのAI価格設定ツール導入は、他の中古品チェーンや小売業者にとって追随すべきベンチマークとなり、業界全体でのAI活用競争が加速する見通しだ。世界的にサステナビリティ意識が高まる中、リユース市場自体が拡大傾向にあり、AI導入によって運営コストを削減した企業が市場シェアを拡大する可能性が高い。また、こうした動きはグローバルな小売業界におけるAI投資の正当性をさらに高め、関連技術企業への資金流入を促進するだろう。",
+    "ai_interpretation": "このニュースの本質は、AIが「高付加価値・高単価市場」だけでなく「低価格・庶民市場」においても実用的な競争優位をもたらすフェーズに突入したことを示している点にある。価格設定という一見単純な業務のAI化は、規模の大きい小売チェーンにおいて人件費削減・価格競争力強化・顧客満足度向上という三重の効果をもたらし、従来の経営課題を一挙に解決する可能性を秘めている。グローバル経済への示唆としては、AIの民主化が進み、あらゆる業種・価格帯においてテクノロジー活用が「差別化」から「生存条件」へと変化しつつあることを改めて示している。",
+    "collected_at": "2026-08-07T09:46:56.795606+09:00",
+    "market_impact": "中古品・リユース市場へのAI導入は、従来の人手による価格設定の非効率性を解消し、業界全体のデジタル変革を加速させる可能性がある。節約志向の消費者行動が根強い中、低価格を安定的に維持できる仕組みは競合他社との差別化要因となり、リサイクル小売セクターの競争環境を変える可能性がある。また、AI技術を供給する企業への需要増加という形で、テクノロジーセクターにも波及効果が期待される。"
+  },
+  {
+    "title": "Meta fined $567m in largest child safety ruling against social media giant",
+    "japanese_title": "Meta、子どもの安全問題で過去最大5億6700万ドルの制裁金命令―ソーシャルメディア規制の新時代へ",
+    "url": "https://www.bbc.co.uk/news/articles/cd7lz3wr2rlo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ニューメキシコ州の裁判官が、Instagram・Facebook・WhatsAppを運営するMetaに対し、子どもへの有害行為を理由に5億6700万ドル（約850億円）の支払いを命じた。",
+      "2. これはソーシャルメディア企業に対する子どもの安全に関する訴訟として、史上最大規模の制裁金となる。",
+      "3. Metaのプラットフォームが未成年ユーザーに与える悪影響について、司法が具体的な財務的責任を認定した画期的な判決である。"
+    ],
+    "points": [
+      "・ 史上最大規模：子どもの安全に関してソーシャルメディアへ科された制裁金として前例のない金額であり、業界全体へのシグナルとなる",
+      "・ 規制の連鎖反応：米国内の他州やEU・英国など各国規制当局がこの判決を参照し、追加規制・訴訟を強化する可能性が高い",
+      "・ ビジネスモデルへの直撃：未成年ユーザーを対象とした広告・アルゴリズム設計そのものが法的リスクとして認識され、プラットフォーム設計の抜本的見直しを迫られる"
+    ],
+    "prediction": "同判決を契機に、米国・EU・英国をはじめ各国でSNS企業を対象とした子ども保護立法・規制強化の動きが加速し、コンプライアンスコストの増大がテック企業の収益構造を中長期的に圧迫すると見られる。Metaは控訴する可能性が高いが、訴訟リスクが長期化することで機関投資家のESG評価に悪影響を与え、資本調達コストが上昇する懸念がある。さらに、未成年ユーザーの扱いをめぐる国際的な規制の分断が深まれば、グローバルなプラットフォーム運営コストが大幅に増加し、デジタル経済の成長鈍化につながるリスクも否定できない。",
+    "ai_interpretation": "この判決の本質は、単なる罰金に留まらず「プラットフォーム企業は自社サービスがもたらす社会的害悪に対して財務的責任を負う」という法的パラダイムシフトを示している点にある。これはタバコ産業や製薬業界がかつて経験したような、ビジネスモデルそのものを問い直す歴史的な転換点となる可能性を秘めている。グローバル経済的には、デジタル広告市場の急成長を支えてきた「注意経済（Attention Economy）」モデルへの規制コストが本格的に織り込まれる時代の幕開けを意味しており、テック主導の経済成長モデルの持続可能性が根本から問われていると言えよう。",
+    "collected_at": "2026-08-07T09:47:20.306263+09:00",
+    "market_impact": "Meta株をはじめ、TikTok・Snapなど同業他社の株価にも規制リスクとして波及する可能性があり、テクノロジーセクター全体に慎重なムードをもたらすことが予想される。広告収益を主軸とするSNSビジネスモデルに対する投資家の評価が厳しくなり、コンプライアンスコストの増大が各社の利益率を圧迫するリスクがある。為替への直接的影響は限定的だが、米国テック株の下落はドル建て資産のリスクオフ心理を高める一因となり得る。"
+  },
+  {
+    "title": "Argos is getting a makeover - but can it attract new shoppers?",
+    "japanese_title": "アルゴス50年目の大改革――アマゾンに対抗できるか？英国老舗小売業の再生戦略",
+    "url": "https://www.bbc.co.uk/news/articles/c2lqvwewgp2o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 英国の老舗カタログ小売チェーン「アルゴス」が創業50年を迎える中、ブランドの刷新・リニューアルを進めている。",
+      "2. アマゾンをはじめとするデジタルネイティブな競合他社の台頭により、従来型ビジネスモデルが苦境に立たされてきた。",
+      "3. 新たなオーナーのもとで経営再建を図り、新規顧客の獲得と競争力の回復を目指している。"
+    ],
+    "points": [
+      "・ 創業50年という長い歴史を持つブランドの「リブランディング」戦略の実効性",
+      "・ アマゾン等のプラットフォーム型ECとの差別化をどのように図るか",
+      "・ 新オーナー体制のもとでの店舗網・デジタル投資のバランス戦略"
+    ],
+    "prediction": "英国の高インフレ・高金利環境が続く中、消費者の節約志向は強く、価格競争力と利便性を両立できるかどうかがアルゴス再生の鍵を握る。グローバルに見ても、伝統的小売業のデジタル転換は世界共通の課題であり、アルゴスの成否は他国の同業者にとっても重要な参考事例となるだろう。オムニチャネル戦略の成熟度が今後の生存を左右すると予測される。",
+    "ai_interpretation": "このニュースは、単一企業の再建話にとどまらず、「レガシー小売業のデジタル時代における存在意義」という普遍的な問いを提示している。アマゾンが物流・価格・利便性で圧倒的優位に立つ現代において、老舗ブランドが生き残るためには「体験価値」や「信頼性」といった非価格競争力の再構築が不可欠である。これはグローバル経済における「プラットフォーム独占への対抗」という構造的課題を象徴しており、規制政策や中小小売業の将来にも示唆を与えている。",
+    "collected_at": "2026-08-07T09:47:38.919563+09:00",
+    "market_impact": "英国小売業界では、伝統的な実店舗型チェーンとEコマース大手との競争が依然として激しく、アルゴスの動向は英国内需消費の指標の一つとなり得る。ポンド相場や英国消費者信頼感指数にも間接的な影響を与える可能性があり、小売セクター全体の投資家心理にも注目が集まる。特に親会社セインズベリーズのグループ戦略にも波及効果が及ぶとみられる。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-08-07",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-08-07.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-08-07.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-08-06",
+    "href": "2026-08-06.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
