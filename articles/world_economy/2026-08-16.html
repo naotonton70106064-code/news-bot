@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- ADSENSE-START -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1944739806788973"
+     crossorigin="anonymous"></script>
+  <!-- ADSENSE-END -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "I drove Tesla FSD, Rivian Autonomy+ ‘hands-free’ driving systems. Here’s how they compare",
+    "japanese_title": "テスラFSD vs リビアンAutonomy+：ハンズフリー自動運転システム徹底比較レビュー",
+    "url": "https://www.cnbc.com/2026/08/15/rivian-tesla-self-driving-adas-fsd.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. リビアンはテスラの「ハンズフリー」自動運転技術に追いつくべく、独自の自動運転システム「Autonomy+」を開発・展開している。",
+      "2. リビアンはテスラFSDにはない追加の安全ガードレール（安全制御機能）を実装し、差別化を図っている。",
+      "3. EV市場における自動運転技術の競争が激化しており、テスラ一強の構図に新たな挑戦者が台頭しつつある。"
+    ],
+    "points": [
+      "・リビアンが「安全性の高さ」を競争優位性として打ち出している点（テスラとの差別化戦略）",
+      "・テスラFSDに対する消費者・規制当局の安全懸念が、競合他社に参入機会を与えている点",
+      "・自動運転技術の「完成度」よりも「信頼性・安全性」を重視する市場トレンドの変化"
+    ],
+    "prediction": "自動運転技術をめぐる競争は、テスラ・リビアンにとどまらず、ウェイモやゼネラルモーターズ（クルーズ）など他のプレイヤーも巻き込んだ多極化した構図へと発展するだろう。各国規制当局（特に米NHTSAやEUの監督機関）が安全基準の策定を加速させ、参入障壁の形成と業界再編が同時進行する可能性が高い。地政学的観点では、米中間の自動運転技術覇権争いとも連動し、技術標準をめぐる国際的な競争が一層激化することが予想される。",
+    "ai_interpretation": "このニュースの本質は、EV市場における「技術リーダーシップ」の定義が「先進性」から「安全性と信頼性」へとシフトしつつあることを示している。テスラが先行者利益を持ちながらも安全性への批判にさらされる中、後発のリビアンが「責任ある自動化」を訴求することで市場ポジションを獲得しようとする構図は、グローバルなテクノロジー競争における新たな勝ちパターンを示唆している。長期的には、自動運転技術の普及速度と規制整備のバランスが、EV関連産業の時価総額や雇用創出に直結する重要な経済変数となるだろう。",
+    "collected_at": "2026-08-16T04:26:55.270922+09:00",
+    "market_impact": "テスラの株価および市場シェアに対する競合プレッシャーが高まり、EV・自動運転セクター全体の競争環境が再編される可能性がある。リビアンの技術的前進は、同社への投資家の信頼回復につながり、株価や資金調達環境に好影響を与える可能性がある。また、自動運転技術の安全基準をめぐる規制当局の動向が、関連サプライチェーン産業にも波及する可能性がある。"
+  },
+  {
+    "title": "Housing investors say this is their worst market in at least 3 years",
+    "japanese_title": "住宅投資家が「過去3年で最悪の市場」と警告——対イラン戦争勃発で住宅ローン金利が急騰",
+    "url": "https://www.cnbc.com/2026/08/14/housing-investors-say-this-is-their-worst-market-in-at-least-3-years.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 住宅ローン金利は2月末に直近の低水準を記録したが、イランとの戦争開始直後から急激に上昇した。",
+      "2. 現在の住宅ローン金利は1年以上ぶりの高水準に達しており、住宅投資家の間で深刻な懸念が広がっている。",
+      "3. 住宅投資家たちは、少なくとも過去3年間で最も厳しい市場環境にあると訴えている。"
+    ],
+    "points": [
+      "・ 住宅ローン金利の急騰が、既に脆弱だった住宅市場の需要をさらに圧迫している点",
+      "・ イランとの軍事衝突という地政学的イベントが、金融市場・エネルギー価格を通じて不動産市場に直接影響を与えている点",
+      "・ 「少なくとも3年で最悪」という投資家の評価が、コロナ禍以降の回復局面が完全に転換した可能性を示唆している点"
+    ],
+    "prediction": "イランとの紛争が長期化すれば、原油価格の上昇インフレ再燃→金融引き締め長期化という悪循環が生じ、住宅ローン金利の高止まりが続く恐れがある。住宅市場の低迷は個人消費の冷え込みを通じて米国GDPを押し下げ、世界経済全体の成長鈍化を招く可能性がある。地政学リスクが収束しない限り、投資家のリスク回避姿勢は継続し、不動産・株式市場ともに不安定な状況が続くと予想される。",
+    "ai_interpretation": "このニュースの本質は、「地政学リスクが実体経済（住宅市場）に極めて速やかに波及する構造」を浮き彫りにしている点にある。戦争勃発という単一のイベントが、金利・投資心理・市場流動性を連鎖的に悪化させるメカニズムは、現代のグローバル金融システムの脆弱性を改めて示している。特に米国の住宅市場は消費全体の先行指標とも言われるだけに、この悪化傾向が長引けば世界経済のソフトランディングシナリオが崩れるリスクを真剣に検討すべき局面と言える。",
+    "collected_at": "2026-08-16T04:27:13.945345+09:00",
+    "market_impact": "地政学リスクの高まりを受けて安全資産への逃避が起き、米国債利回りが上昇することで住宅ローン金利のさらなる上昇圧力が生じる可能性がある。不動産セクター全体の冷え込みは、建設・金融・家電などの関連産業にも波及し、景気減速を加速させるリスクがある。また、ドル高傾向が強まれば新興国市場の資本流出にも繋がり、グローバルな金融不安定化が懸念される。"
+  },
+  {
+    "title": "GM reaches up to $4.5 billion parts deal designed to avoid supply chain troubles",
+    "japanese_title": "GM、サプライチェーン強化へ最大45億ドルの部品調達契約を締結｜自動車業界の供給網再構築加速",
+    "url": "https://www.cnbc.com/2026/08/11/gm-makes-4point5-billion-parts-deal-to-bolster-supply-chain.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ゼネラルモーターズ（GM）は、自動車部品の安定調達を目的とした最大45億ドル規模の大型調達契約を締結した。",
+      "2. この契約は、コロナ禍以降に深刻化した半導体不足や物流混乱など、グローバルなサプライチェーン問題への対応策として位置づけられる。",
+      "3. GMを含む世界の自動車メーカーが経験してきた数年間の供給網の混乱を教訓に、調達の安定化・多元化を図る戦略的な動きである。"
+    ],
+    "points": [
+      "・ 契約規模が最大45億ドルと極めて大型であり、GMの供給網安定化に対する強い戦略的意思を示している",
+      "・ 数年にわたるサプライチェーン危機（半導体不足・物流混乱等）が、自動車業界の調達戦略を根本から変えつつある",
+      "・ 長期契約による安定調達モデルは、EV（電気自動車）シフトに必要な部品確保とも連動する可能性がある"
+    ],
+    "prediction": "GMのこの動きは、自動車業界における「ジャストインタイム方式」から「戦略的在庫・長期契約方式」への構造的転換を加速させる先行事例となる可能性が高い。地政学的リスク（米中対立・ロシア問題等）が供給網の地域分散を促している中、北米ローカライゼーションの流れはさらに強まるとみられる。また、こうした動きはトヨタ・フォルクスワーゲン等の競合他社にも同様の大型調達契約の締結を促し、グローバルな部品市場の再編を引き起こす可能性がある。",
+    "ai_interpretation": "このニュースの本質は、単なる調達契約ではなく、**グローバル化の「脆弱性」を認識した製造業の戦略的パラダイムシフト**を象徴している。効率性を最優先とした20世紀型サプライチェーンモデルが限界を迎え、「強靭性（レジリエンス）」を重視した新たな産業構造への移行が、GMという巨大企業の行動を通じて可視化された瞬間と言える。世界経済全体においても、コスト最適化よりもリスク分散・安定供給を優先する動きが主流となりつつあり、これは脱グローバル化（デグローバリゼーション）の一断面として記録されるべき重要な転換点である。",
+    "collected_at": "2026-08-16T04:27:34.101394+09:00",
+    "market_impact": "自動車部品メーカーや素材関連企業への大型発注が見込まれ、北米を中心にサプライヤー株や製造業セクターにポジティブな影響を与える可能性がある。為替面では、米国内調達比率の上昇がドル需要を下支えする一方、海外サプライヤーへの影響は限定的となる可能性がある。自動車産業全体においても、同様の長期調達契約締結の動きが他社へ波及し、業界標準として定着する可能性がある。"
+  },
+  {
+    "title": "Why some companies are paying more than $1 million to get through the Panama Canal",
+    "japanese_title": "パナマ運河の通過料金が100万ドル超え——ホルムズ海峡閉鎖と水位低下が世界物流を直撃",
+    "url": "https://www.npr.org/2026/08/14/nx-s1-5929414/why-some-companies-are-paying-more-than-1-million-to-get-through-the-panama-canal",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ホルムズ海峡が事実上閉鎖状態となり、代替ルートとしてパナマ運河への需要が急増している。",
+      "2. 需要増加に加え、気候変動に伴う水位低下が重なり、パナマ運河の通過料金が100万ドル（約1.5億円）を超える事例が発生している。",
+      "3. 世界の主要海上輸送ルートが同時に機能不全に陥るという、前例のない物流危機が深刻化している。"
+    ],
+    "points": [
+      "・ホルムズ海峡閉鎖という地政学リスクと、気候変動による水位低下という環境リスクが「複合危機」として同時発生している点",
+      "・パナマ運河の通過枠（スロット）がオークション形式で取引され、価格が市場原理で急騰している構造的問題",
+      "・スエズ運河・ホルムズ海峡・パナマ運河という世界三大海上チョークポイントが相次いで機能低下している異常事態"
+    ],
+    "prediction": "中東情勢が長期化すれば、ホルムズ海峡の通航制限が続き、パナマ運河への需要集中と高騰は当面解消されない見通しだ。気候変動による降水量減少はパナマ運河の水位問題を構造的課題とし、短期的な解決が困難なため、企業は喜望峰回りなど超長距離代替ルートへのシフトを余儀なくされる可能性がある。これにより世界のサプライチェーン再編が加速し、製造拠点の地産地消化や在庫戦略の見直しを迫られる企業が増加するだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる「運河の値上がり」ではなく、**地政学・気候変動・インフラ脆弱性という三つのリスクが同時に顕在化した世界経済の構造的転換点**を示していることだ。グローバリゼーションが前提としてきた「安価で安定した海上輸送」という基盤が崩れつつあり、企業や国家はサプライチェーンの強靭化を戦略の中核に置く必要性に迫られている。長期的には、輸送コストの恒常的な上昇が「脱グローバル化・地域経済圏の強化」を後押しする歴史的なトレンドをさらに加速させる重要な転機となり得る。",
+    "collected_at": "2026-08-16T04:27:55.461201+09:00",
+    "market_impact": "原油・LNGを含むエネルギー輸送コストの急騰が、世界的なインフレ再燃リスクを高めており、特に製造業やエネルギー輸入依存国の経済に打撃を与える。海運株や物流関連企業には短期的な収益押し上げ効果が見込まれる一方、コスト転嫁による消費財価格の上昇が懸念される。ドル高圧力が強まる可能性があり、新興国通貨や輸入依存国の為替にも下押し圧力がかかりやすい状況だ。"
+  },
+  {
+    "title": "Businesses feel the strain as the deadline for Trump's 50% Canadian tariff approaches",
+    "japanese_title": "トランプ政権のカナダへの50%関税期限迫る——建設業界を直撃する米加貿易摩擦の深刻な影響",
+    "url": "https://www.npr.org/2026/08/13/nx-s1-5927326-e1/businesses-feel-the-strain-as-the-deadline-for-trumps-50-canadian-tariff-approaches",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. トランプ大統領がカナダからの輸入品に対し50%の関税を課す期限が今月末に迫り、カナダ産建材に依存する建設業者が深刻なコスト圧力に直面している。",
+      "2. 建設業界をはじめとする多くの企業が、関税発動を前提とした経営判断を迫られており、サプライチェーンの見直しや価格転嫁の対応に追われている。",
+      "3. 米加間の貿易摩擦が経済的な不確実性を高め、北米全体のビジネス環境に緊張が広がっている。"
+    ],
+    "points": [
+      "・カナダ産木材や建設資材はアメリカの住宅建設に不可欠であり、50%関税は建設コストの大幅上昇に直結する",
+      "・関税による最終的なコスト増は消費者（住宅購入者）に転嫁される可能性が高く、住宅市場の冷え込みが懸念される",
+      "・カナダ側の報復関税措置次第では、両国間の貿易戦争が一段と激化するリスクがある"
+    ],
+    "prediction": "関税が実際に発動された場合、北米のサプライチェーンは大規模な再編を余儀なくされ、短期的には建設・製造業のコスト急騰と景気減速が同時進行する可能性がある。中長期的には、カナダはEUやアジア諸国との貿易多様化を加速させ、アメリカへの経済的依存度を下げる戦略にシフトすることが予想される。また、この米加対立はNAFTA/USMCA体制そのものの信頼性を揺るがし、地政学的な北米同盟関係にも亀裂をもたらすリスクをはらんでいる。",
+    "ai_interpretation": "このニュースの本質は、「関税」という政策ツールが外交カードとして乱用されることで、最終的には自国の産業・消費者を傷つけるという保護主義の逆説を浮き彫りにしている点にある。建設業界への打撃は、単なる業界問題にとどまらず、住宅供給不足やインフレという形でアメリカ社会全体に波及するものであり、政治的な強硬姿勢と経済的合理性の乖離が鮮明だ。グローバル経済への示唆としては、経済的相互依存が深い同盟国間でさえ関税リスクが現実化する時代において、企業はサプライチェーンの地政学的リスク管理を最優先課題として再構築する必要があることを強く示している。",
+    "collected_at": "2026-08-16T04:28:16.416252+09:00",
+    "market_impact": "カナダドルは対米ドルで下落圧力を受けやすくなり、為替市場においても北米通貨の不安定さが続く可能性がある。木材・鉄鋼・アルミニウムなどカナダ産建材の価格高騰はアメリカ国内の住宅・建設コストを押し上げ、インフレ再燃リスクを高める。グローバル市場では米加関係悪化が投資家心理を冷やし、リスクオフの動きを誘発する恐れもある。"
+  },
+  {
+    "title": "Selena Gomez sued for alleged fraud over mental health company",
+    "japanese_title": "セレーナ・ゴメスがメンタルヘルス企業への詐欺疑惑で提訴―著名人投資案件の信頼性に疑問符",
+    "url": "https://www.bbc.co.uk/news/articles/c8jn2811we4o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 歌手・俳優のセレーナ・ゴメスが、メンタルヘルス関連企業に関する詐欺疑惑で投資家から訴訟を起こされた。",
+      "2. 投資家側は、ゴメスが約束していた「積極的な関与（アクティブロール）」を果たさなかったと主張している。",
+      "3. 著名人の名声を活用した投資勧誘における責任の所在が改めて問われる事例となっている。"
+    ],
+    "points": [
+      "・著名人を「看板」にした投資勧誘における法的責任の範囲が問われている",
+      "・メンタルヘルス産業はコロナ禍以降に急拡大しており、投資詐欺リスクも増大している",
+      "・SECなど金融規制当局によるインフルエンサーを活用した証券勧誘への監視強化の動きと連動する可能性がある"
+    ],
+    "prediction": "本訴訟の行方次第では、著名人が関与する投資案件に対する情報開示義務や関与の実態証明が法的に厳格化される先例となる可能性がある。米国のメンタルヘルステック業界では資金調達における透明性への要求が高まり、投資家保護の観点から新たな規制枠組みの整備が促進されるだろう。グローバルに広がるセレブリティ主導のスタートアップ投資モデルにも、慎重な見直しを迫る動きが波及する可能性がある。",
+    "ai_interpretation": "本件の本質は、著名人の「ブランド力」と「実質的関与」の乖離という構造的問題であり、インフルエンサーエコノミーが金融・投資領域に侵食した際のガバナンスの脆弱性を象徴している。メンタルヘルスという社会的共感を得やすいテーマを活用した資金調達モデルは世界的に広がっており、著名人の関与を「信用の代替」とする慣行への根本的な問い直しを促すニュースといえる。グローバル経済においてESGやウェルネス分野への投資が拡大する中、実態を伴わない「名義貸し型」ブランディングへの法的・倫理的規制が今後の重要な論点となるだろう。",
+    "collected_at": "2026-08-16T04:28:35.662999+09:00",
+    "market_impact": "メンタルヘルス関連スタートアップ市場は近年急成長しているが、本件はセレブリティ投資案件全般への投資家心理を冷やす可能性がある。エンターテインメント業界と投資市場を結ぶインフルエンサーエコノミーへの規制強化議論が加速する恐れもある。直接的な為替・株式市場への影響は限定的だが、ヘルステック分野の資金調達環境に間接的な影響を与えうる。"
+  },
+  {
+    "title": "I got an £89 refund – how to cancel and  avoid unwanted subscriptions",
+    "japanese_title": "英国首相がサブスクリプション罠を規制強化：消費者が£89返金を獲得した実例と解約方法",
+    "url": "https://www.bbc.co.uk/news/articles/ckg6x3n5erpo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 英国首相がサブスクリプション（定期購読）の「罠」に対する取り締まり強化を発表し、消費者保護が大きな政策テーマとして浮上した。",
+      "2. 読者からは望まぬサブスクリプションに知らぬ間に加入させられ、£89（約1万7000円）の返金を勝ち取った事例など、被害と解決策の実体験が共有された。",
+      "3. 無料トライアルからの自動課金、解約手続きの複雑化など、企業側の不透明な商慣行が消費者の不満を招いている実態が明らかになった。"
+    ],
+    "points": [
+      "・ 英国政府による「サブスクリプション罠」規制は、消費者保護法の強化という政治的アピールと経済的実効性を兼ねた政策",
+      "・ £89という具体的な返金事例が示すように、個人レベルでも被害回復が可能であることが広く認知され始めている",
+      "・ 自動更新・解約困難・隠れた課金など、デジタルサービス特有の不透明な商慣行がグローバルで共通課題となっている"
+    ],
+    "prediction": "英国での規制強化を契機に、G7各国でサブスクリプション商慣行に関する法整備が加速する可能性が高く、グローバルに展開するテック企業はコンプライアンス対応コストの増大を迫られるだろう。一方で、透明性の高い解約・更新プロセスを先行導入した企業はブランド信頼度を高め、長期的な顧客ロイヤルティ競争で優位に立てる可能性がある。消費者の「サブスク疲れ」が顕在化する中、サブスクリプション経済は量的拡大から質的信頼構築フェーズへの転換期を迎えつつある。",
+    "ai_interpretation": "このニュースの本質は、デジタル経済の成長を牽引してきたサブスクリプションモデルが、その成長の歪みとして「消費者搾取」という構造的問題を抱えていることへの社会的反発の表れである。政府の介入は単なる消費者保護に留まらず、デジタルビジネスモデルの持続可能性そのものに問いを投げかけており、企業は短期収益最大化から長期的な顧客との信頼関係構築へのパラダイムシフトを求められている。グローバル経済全体においても、プラットフォーム資本主義への規制強化という大きな潮流の一部として位置づけられ、今後の立法・訴訟・消費者行動の変化に注視が必要である。",
+    "collected_at": "2026-08-16T04:28:58.014487+09:00",
+    "market_impact": "サブスクリプション型ビジネスモデルを主軸とするNetflix・Spotify・Amazonなどのグローバルプラットフォーム企業にとって、規制強化は収益モデルの見直しを迫るリスクとなり得る。英国での規制が先行事例となることで、EU・米国・日本など他の主要市場にも同様の消費者保護立法が波及する可能性がある。特にフィンテック・SaaS・メディア産業は、解約フローの透明化対応コストが増大し、短期的に顧客獲得単価（CAC）の上昇圧力を受ける可能性がある。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-08-16",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-08-16.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-08-16.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-08-15",
+    "href": "2026-08-15.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
