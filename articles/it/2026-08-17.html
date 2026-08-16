@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- ADSENSE-START -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1944739806788973"
+     crossorigin="anonymous"></script>
+  <!-- ADSENSE-END -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Anthropic CEO says AI backlash is ‘fundamentally a crisis of trust’",
+    "japanese_title": "AnthropicのCEOが語る「AIへの反発は信頼の危機」──ダリオ・アモデイ氏が悲観論への批判に反論",
+    "url": "https://techcrunch.com/2026/08/16/anthropic-ceo-says-ai-backlash-is-fundamentally-a-crisis-of-trust/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. AnthropicのCEOダリオ・アモデイ氏は、AIに対する社会的な反発の本質は「信頼の危機」であると主張した。",
+      "2. アモデイ氏は、自身がAIに対して過度に悲観的な見方を広めているという批判に対して反論した。",
+      "3. AI業界のリーダーとして、技術の透明性や社会との信頼構築の重要性を訴えている。"
+    ],
+    "points": [
+      "・ AIへの反発を単なる技術的問題ではなく「信頼の問題」と捉えている点が独自の視点",
+      "・ 悲観論者というレッテルに対して積極的に反論しており、自社のブランドイメージ戦略とも関連",
+      "・ AI安全性の議論をリードするAnthropicの立場が、業界全体の方向性に影響を与える可能性"
+    ],
+    "prediction": "AI規制の議論が各国で活発化する中、アモデイ氏のような業界リーダーの発言は政策立案にも影響を与えると考えられる。「信頼の構築」というフレームが普及すれば、AI企業は透明性向上や説明責任の強化へとさらに舵を切るだろう。一方で、信頼回復が具体的な行動を伴わない場合、批判はむしろ強まるリスクもある。",
+    "ai_interpretation": "このニュースの本質は、AI技術の進化スピードと社会の受容スピードの「ギャップ」にある。アモデイ氏が「信頼の危機」という言葉を使ったことは、技術論から人間関係・社会関係の文脈へと議論の軸をシフトさせる試みと読める。つまりこれは、AI企業が単なる技術提供者から「社会的な対話の担い手」へと役割を再定義しようとしている重要な転換点を示している。",
+    "collected_at": "2026-08-17T04:22:31.945857+09:00",
+    "background": "ChatGPTの登場以降、生成AIの急速な普及に伴い、雇用喪失・プライバシー侵害・偽情報拡散などへの懸念から社会的な反発が強まっている。アモデイ氏はAIの安全性を重視する企業Anthropicを率いており、リスクに関する発言が「悲観的すぎる」と一部から批判されてきた。こうした状況を受けて、同氏は自らの立場と発言の意図を改めて説明する必要に迫られた。"
+  },
+  {
+    "title": "TechCrunch Mobility: The shifting flight path of electric air taxis",
+    "japanese_title": "電動エアタクシーの未来と課題：空飛ぶクルマ市場の転換点を徹底分析",
+    "url": "https://techcrunch.com/2026/08/16/techcrunch-mobility-the-shifting-flight-path-of-electric-air-taxis/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. TechCrunch Mobilityが電動エアタクシー（eVTOL）業界の最新動向と市場の変化について報告している。",
+      "2. 空飛ぶクルマ産業は技術的・規制的・財務的な複合的課題に直面し、当初の楽観的な見通しから現実路線へと軌道修正が進んでいる。",
+      "3. 交通モビリティの未来における電動航空機の位置づけが、業界全体で再評価されている段階にある。"
+    ],
+    "points": [
+      "・規制認証（型式証明）取得の長期化が事業計画全体に大きな遅延をもたらしている点",
+      "・資金調達環境の悪化により、複数のeVTOL企業が経営危機または事業縮小を余儀なくされている現状",
+      "・軍・防衛用途や貨物輸送など、当初の「都市型旅客輸送」以外への用途転換が模索されている動き"
+    ],
+    "prediction": "2025〜2026年にかけて、規制をクリアした一部プレイヤーによる限定的な商業運航が始まる可能性がある一方、資金力のない企業の淘汰がさらに進むと予想される。市場は「百花繚乱」から「少数精鋭」へと集約フェーズに入り、生き残った企業が業界標準を形成していくだろう。長期的には都市間短距離輸送の新たな選択肢として定着する可能性を秘めている。",
+    "ai_interpretation": "電動エアタクシー産業の「飛行経路の変化」というメタファーは、この産業が単なる技術的挑戦を超え、ビジネスモデル・規制・社会受容性という三重の壁に直面していることを示唆している。過度な期待（ハイプ）から現実的な実装フェーズへの移行は、EVや自動運転が辿った道と本質的に同じ構造であり、イノベーションの「幻滅期」を経て成熟する過程と見ることができる。最終的にこの産業の成否は、技術力よりも「誰が最後まで資金と規制対応力を維持できるか」という持久戦の様相を呈している。",
+    "collected_at": "2026-08-17T04:22:51.101893+09:00",
+    "background": "電動エアタクシー産業は2010年代後半から多くのスタートアップや大手企業が参入し、莫大な投資を集めてきた。しかし、FAA（米国連邦航空局）などの規制認証の遅れや開発コストの膨張により、多くの企業が計画を見直す事態となっている。Joby Aviation、Archer Aviation、Liliumなど主要プレイヤーの明暗が分かれ始め、業界の再編が加速している。"
+  },
+  {
+    "title": "Woman claims her stepfather used Grok to transform childhood photo into explicit imagery",
+    "japanese_title": "義父がAI「Grok」で幼少期の写真を性的画像に変換か――継娘が告発、AI悪用による児童性的虐待の深刻な実態",
+    "url": "https://techcrunch.com/2026/08/15/woman-claims-her-stepfather-used-grok-to-transform-childhood-photo-into-explicit-imagery/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. ある女性が、義父がxAIのチャットボット「Grok」を使用して自分の子ども時代の写真を性的な画像に変換したと告発した。",
+      "2. 被害女性は「AIツールが日常の写真を児童性的虐待素材（CSAM）に変えている」と強く非難し、問題提起を行った。",
+      "3. 既存の安全フィルターをくぐり抜けてAIが性的コンテンツ生成に悪用されている実態が改めて浮き彫りとなった。"
+    ],
+    "points": [
+      "・ 実在する人物の幼少期写真という「無害な日常画像」がAIによって性的コンテンツに転用されるという新たな被害形態",
+      "・ 「Grok」という著名AIサービスが具体的に名指しされたことで、AI企業のコンテンツモデレーション責任が改めて問われている",
+      "・ 被害者本人が公に声を上げたことで、AI悪用による性的被害が「見知らぬ他人」だけでなく近親者によっても起こりうることが示された"
+    ],
+    "prediction": "AI企業に対する規制当局の圧力がさらに強まり、生成AIにおける児童保護に関するより厳格なガイドラインや法的規制の整備が加速するとみられる。xAI（Grok）は安全対策の強化を迫られ、コンテンツフィルタリングの見直しを余儀なくされる可能性が高い。また、この種の事案を対象とした刑事立件の前例づくりが各国で進み、AI生成CSAMに対する法的定義の明確化も急務となるだろう。",
+    "ai_interpretation": "このニュースの本質は、技術の民主化が「加害の民主化」をも招きうるという現代社会の根本的なジレンマにある。高度な専門知識がなくても誰でもAIツールを使えるようになったことで、性的虐待の手段・形態が劇的に低コスト化・多様化しており、既存の法律や倫理規範の更新が技術進化に追いついていない現状が露呈している。「画像は現実の行為ではない」という議論が成立しにくくなりつつある今、AI生成コンテンツを巡る法的・倫理的枠組みの再構築は、テクノロジー企業だけでなく社会全体が取り組むべき喫緊の課題といえる。",
+    "collected_at": "2026-08-17T04:23:12.113555+09:00",
+    "background": "生成AIの画像変換技術が急速に普及する中、そのフィルタリング機能の不備を突いた性的コンテンツの生成が社会問題化している。特にディープフェイク技術やAI画像生成ツールを用いた児童性的虐待素材（CSAM）の作成は、世界各国の法執行機関が頭を抱える新たな脅威となっている。今回の事案は、イーロン・マスク率いるxAIが開発した「Grok」が、その悪用ツールとして名指しされた点で特に注目を集めている。"
+  },
+  {
+    "title": "Samsung Galaxy Z Fold 8 Ultra review: The ultra foldable with an ultra price",
+    "japanese_title": "Samsung Galaxy Z Fold 8 Ultra レビュー：最高峰の折りたたみスマホは超高額な価格に見合うか？",
+    "url": "https://arstechnica.com/gadgets/2026/08/samsung-galaxy-z-fold-8-ultra-review-the-ultra-foldable-with-an-ultra-price/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. SamsungがGalaxy Z Fold 8 Ultraをリリースし、高品質なハードウェアを武器に大きな変更なしで市場をリード。",
+      "2. 「Ultra」の名を冠した本機は、折りたたみスマートフォンの最高峰として位置づけられているが、価格も超高額。",
+      "3. ハードウェアの完成度が高いため、今年は大幅な刷新を行わずとも競争力を維持できると評価されている。"
+    ],
+    "points": [
+      "・ハードウェアの完成度が高く、大きなデザイン変更なしでも十分な競争力を持つと評価",
+      "・「Ultra」グレードの採用により、同社のGalaxy Sシリーズと同様のプレミアム戦略を折りたたみ機にも展開",
+      "・価格が非常に高額であり、一般ユーザーへの普及よりもハイエンド市場の獲得を優先している姿勢が明確"
+    ],
+    "prediction": "Galaxy Z Fold 8 Ultraの超高額な価格設定は、一般層への普及を妨げる可能性があり、折りたたみスマホ市場全体の拡大に課題を残す。一方で、Samsungブランドの信頼性とハードウェア品質の高さから、富裕層やビジネスユーザーへの訴求は継続するとみられる。今後は価格競争力のある中国メーカーとの差別化をどう図るかが鍵となるだろう。",
+    "ai_interpretation": "このレビューの本質は、「革新がなくても品質で勝負できる」というSamsungの自信と戦略的余裕を示している。「Ultra」というブランド拡張は単なる製品差別化ではなく、折りたたみスマホをニッチな製品からプレミアムカテゴリーとして確立しようとする意図の表れだ。しかし超高額な価格設定は、折りたたみスマホの大衆化という業界全体の課題に逆行するリスクも内包している。",
+    "collected_at": "2026-08-17T04:23:28.449493+09:00",
+    "background": "Samsungは折りたたみスマートフォン市場において長年のリーダーとして君臨しており、Galaxy Z Foldシリーズはその象徴的な製品である。近年、中国メーカー（Huawei・Xiaomiなど）の台頭により折りたたみ市場の競争が激化している。こうした状況の中、Samsungは「Ultra」グレードを導入することでプレミアムセグメントをさらに強化する戦略に出た。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-08-17",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-08-16",
+    "href": "2026-08-16.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
