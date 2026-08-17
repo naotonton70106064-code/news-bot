@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- ADSENSE-START -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1944739806788973"
+     crossorigin="anonymous"></script>
+  <!-- ADSENSE-END -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Spotify’s new Playlist Notes let users and editors explain their song picks",
+    "japanese_title": "Spotifyが「プレイリストノート」機能を導入——ユーザーと編集者が選曲理由を説明できる新機能",
+    "url": "https://techcrunch.com/2026/08/17/spotifys-new-playlist-notes-let-users-and-editors-explain-their-song-picks/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Spotifyは、ユーザーが自分のプレイリストに選曲の理由やストーリーを記載できる新機能「Playlist Notes」を発表した。",
+      "2. この機能はユーザーだけでなく、Spotifyの編集チームも「RapCaviar」などの人気公式プレイリストに活用する予定である。",
+      "3. 音楽体験に「文脈」や「物語性」を加えることで、リスナーとコンテンツの繋がりを深めることが狙いだ。"
+    ],
+    "points": [
+      "・ユーザーが自分の選曲にストーリーや感情的な理由を付加できることで、プレイリストが「パーソナルな表現手段」になる",
+      "・公式編集プレイリスト（RapCaviarなど）にも適用されることで、編集者の「キュレーターとしての専門性」が可視化される",
+      "・テキストによるコンテキスト付加は、音楽発見（ディスカバリー）体験を豊かにし、アーティストへの関心向上にも寄与する可能性がある"
+    ],
+    "prediction": "この機能が普及すれば、プレイリストはただの曲集から「読める・共感できるコンテンツ」へと進化し、ユーザーの滞在時間増加につながる可能性が高い。また、インフルエンサーや音楽メディアがSpotify上で独自の解説付きプレイリストを展開するなど、新たなコンテンツ文化が生まれることも考えられる。将来的にはAIによる自動ノート生成機能なども追加され、パーソナライズ体験がさらに深化するかもしれない。",
+    "ai_interpretation": "このニュースの本質は、Spotifyが「音楽を聴く場所」から「音楽について語る場所」へとプラットフォームの性質を拡張しようとしている点にある。音楽体験に言語的な文脈を加えることは、単なる機能追加ではなく、コミュニティ形成とユーザーロイヤルティを高める戦略的な一手と言える。これはSNSと音楽の融合という大きなトレンドに沿ったもので、Spotifyが「音楽版note・Medium」的な方向性を模索している可能性を示唆している。",
+    "collected_at": "2026-08-18T04:30:08.222310+09:00",
+    "background": "近年、音楽ストリーミング市場ではApple MusicやAmazon Musicとの競争が激化しており、Spotifyは差別化のためにソーシャル・コミュニティ機能の強化を続けてきた。従来のプレイリストは曲のリストのみで、選曲の意図や背景が伝わりにくいという課題があった。こうした状況を受け、音楽に「語り」を加えることでユーザーエンゲージメントを高める施策として本機能が開発されたと考えられる。"
+  },
+  {
+    "title": "Higgsfield raises $400M Series B, quadrupling its valuation in 8 months to $5.4B",
+    "japanese_title": "AI動画生成スタートアップ「Higgsfield」が約600億円のシリーズB調達——8ヶ月で評価額4倍の5,400億円超に",
+    "url": "https://techcrunch.com/2026/08/17/higgsfield-raises-400m-series-b-quadrupling-its-valuation-in-8-months-to-5-4b/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. 元Snap幹部のAlex Mashrabov氏が創業したHiggsfieldが4億ドル（約600億円）のシリーズB資金調達を完了した。",
+      "2. 企業評価額はわずか8ヶ月で4倍となり、54億ドル（約8,100億円）に達した。",
+      "3. 同社はAI画像・動画生成ツールを提供しており、急成長する生成AIコンテンツ市場の中心的プレイヤーとなっている。"
+    ],
+    "points": [
+      "・ 8ヶ月で評価額が4倍という異例のスピードでの価値上昇は、投資家のAI動画生成市場への強気姿勢を如実に示している",
+      "・ 元Snap幹部という創業者の経歴が、ソーシャルメディア・クリエイターエコノミーとの親和性を高めている",
+      "・ 4億ドルという大型調達により、モデル開発・インフラ強化・グローバル展開への加速が可能になる"
+    ],
+    "prediction": "調達資金を活用してモデルの性能向上やプロクリエイター向け機能の拡充が進むと見られ、Adobe・Canvaなど既存ツールとの競合が激化するだろう。また、これほどの評価額に達したことでIPO（新規株式公開）や大手テック企業による買収の候補としても注目される可能性が高い。AI動画生成市場全体のさらなる資金流入を呼び込む呼び水となることも予想される。",
+    "ai_interpretation": "このニュースの本質は、単なる資金調達の成功を超え、「AI生成コンテンツ」が産業インフラとして認知され始めたことの象徴である。評価額の急騰は技術力だけでなく、クリエイターエコノミーの主流化という構造的トレンドへの期待を反映している。一方で、これほど急速なバリュエーション上昇はバブル的リスクも孕んでおり、収益モデルの実証が今後の真価を問う試金石となるだろう。",
+    "collected_at": "2026-08-18T04:30:26.857277+09:00",
+    "background": "生成AIブームを背景に、テキストから動画・画像を生成するツールへの需要が爆発的に拡大している。OpenAIのSoraやRunwayなど競合が乱立する中、Higgsfieldはクリエイター向けの直感的なUIと高品質な生成技術で差別化を図ってきた。元Snapの幹部という創業者のバックグラウンドも、ビジュアルコンテンツ領域での信頼性と実績を裏付けている。"
+  },
+  {
+    "title": "Reddit begins testing a new audio and video experience, similar to popular TikTok videos",
+    "japanese_title": "RedditがTikTok風の音声・動画機能をテスト開始——テキスト投稿をコンテンツとして再生可能に",
+    "url": "https://techcrunch.com/2026/08/17/reddit-begins-testing-a-new-audio-and-video-experience-similar-to-popular-tiktok-videos/",
+    "source": "TechCrunch",
+    "category": "it",
+    "summary_lines": [
+      "1. Redditは人気投稿を音声・動画形式で視聴できる新機能のテストを開始した。",
+      "2. ユーザーはこれまでのテキスト閲覧に加え、Reddit上のストーリーを「観る・聴く」ことが可能になる。",
+      "3. この体験はTikTokのような短尺動画フォーマットに類似したものとされている。"
+    ],
+    "points": [
+      "・既存のテキスト投稿を新たなメディア形式（音声・動画）に変換するという独自のアプローチ",
+      "・TikTokを意識したUI/UXの採用によるショート動画市場への参入姿勢",
+      "・Redditの膨大なテキストコンテンツ資産をAI等で音声・映像化する技術的可能性"
+    ],
+    "prediction": "テスト結果が好評であれば、全ユーザーへの段階的なロールアウトが進められるとみられる。また、クリエイターエコノミーとの連携や広告フォーマットの多様化にも波及し、Redditの収益モデル強化につながる可能性がある。一方で、テキスト文化を重視するコアユーザーからの反発や、コンテンツの質の変化に対する懸念も生じるかもしれない。",
+    "ai_interpretation": "このニュースの本質は、Redditが「テキストコミュニティ」というアイデンティティを保ちながらも、動画・音声という現代の消費トレンドへ適応しようとする戦略的転換点を示している点にある。テキストという既存資産を別メディアに変換するアプローチは、コンテンツ制作コストを抑えつつリーチを拡大できる点で非常に合理的である。これはRedditだけの話にとどまらず、あらゆるテキスト型プラットフォームがマルチモーダル化を迫られるという、デジタルメディア全体の構造変化を象徴するニュースといえる。",
+    "collected_at": "2026-08-18T04:30:44.591943+09:00",
+    "background": "近年、TikTokやInstagram Reelsに代表される短尺動画コンテンツが世界的に爆発的な人気を博しており、主要プラットフォームはこぞってこの形式を取り入れている。Redditはこれまでテキストベースのコミュニティとして独自の地位を築いてきたが、若年層ユーザーの獲得や滞在時間の延長という課題に直面している。こうした市場環境の変化に対応するため、Redditは既存のテキスト資産を動画・音声コンテンツへと転換する戦略に乗り出したと見られる。"
+  },
+  {
+    "title": "Hidden Airtag reveals Amazon is trashing rare books to train AI",
+    "japanese_title": "隠しAirTagが暴露：AmazonがAI学習のために希少本を廃棄していた衝撃の実態",
+    "url": "https://arstechnica.com/tech-policy/2026/08/hidden-airtag-reveals-amazon-is-trashing-rare-books-to-train-ai/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. Amazonが希少な書籍をAIのトレーニングデータとして使用した後、廃棄していることが隠しAirTagの追跡によって発覚した。",
+      "2. Amazonの当該チームは「本を食べようとするティラノサウルス」をロゴとして使用しており、その姿勢を象徴的に示している。",
+      "3. 貴重な文化的資産である希少本が、商業的なAI開発のために消費・破壊されているという倫理的問題が浮上している。"
+    ],
+    "points": [
+      "・ 希少本・絶版本という代替不可能な文化的財産が不可逆的に失われている点",
+      "・ AirTagという消費者向けデバイスが企業の不正行為を暴く内部告発ツールとして機能した点",
+      "・ Amazonが「本を食い尽くす恐竜」をチームロゴにしている点が企業文化の象徴として問題視される"
+    ],
+    "prediction": "この暴露を受け、希少本の保護や著作権に関する法的・規制的な議論が加速する可能性がある。AI学習データの調達方法に関する透明性を求める声が高まり、Amazonは公式な説明や方針変更を迫られるだろう。また、他のAI企業による類似の慣行についても調査・監視の目が向けられることが予想される。",
+    "ai_interpretation": "このニュースの本質は、デジタル時代における「文化的資産の搾取」という構造的問題を象徴している。AI開発という現代の「ゴールドラッシュ」において、企業が短期的な競争優位のために非可逆的な文化的損失を引き起こしているという深刻な倫理的矛盾が露呈した。「知識を守るはずの本屋が知識の源を破壊する」という逆説は、テクノロジー企業の利益追求と社会的責任のバランスが根本から問い直されるべきことを示唆している。",
+    "collected_at": "2026-08-18T04:31:02.231685+09:00",
+    "background": "大規模言語モデル（LLM）の開発競争が激化する中、AI企業は質の高い学習データを大量に必要としており、書籍はその重要な供給源となっている。Amazonはeコマースの巨人として膨大な書籍在庫へのアクセス権を持ち、AI開発部門がその資産を活用しようとしている背景がある。著作権や文化保護の観点から議論が続く中、今回の内部告発的な暴露は業界全体の不透明な慣行に光を当てることになった。"
+  },
+  {
+    "title": "Nvidia discloses $21B stake in SpaceX",
+    "japanese_title": "NvidiaがSpaceXに約3.2兆円の巨額出資を公表——マスク氏のデータセンター独占契約後に明らかに",
+    "url": "https://arstechnica.com/information-technology/2026/08/nvidia-discloses-21b-stake-in-spacex/",
+    "source": "Ars Technica - All content",
+    "category": "it",
+    "summary_lines": [
+      "1. Nvidiaがイーロン・マスク率いるSpaceXに対し、総額210億ドル（約3.2兆円）の出資を保有していることを公式に開示した。",
+      "2. この情報開示は、マスク氏がNvidiaのGPUをSpaceXのデータセンターに独占的に採用すると発表した直後のタイミングで行われた。",
+      "3. 両社の関係が単なるビジネス取引を超え、資本関係を伴う深い戦略的パートナーシップへと発展していることが浮き彫りになった。"
+    ],
+    "points": [
+      "・210億ドルという出資額はNvidiaによる単一企業への出資としては異例の規模であり、SpaceXへの戦略的重要性の高さを示している",
+      "・「独占的なデータセンター採用」という契約内容が、単なる取引ではなく長期的な囲い込み戦略である可能性がある",
+      "・NvidiaとマスクのビジネスエコシステムがSpaceX・xAI・Teslaなどをまたぐ形で拡大しており、AI・宇宙・EV分野での影響力がさらに増大する懸念もある"
+    ],
+    "prediction": "SpaceXのStarlinkを活用したAIインフラ構築にNvidiaのGPUが中核として組み込まれ、宇宙×AIという新たな産業領域で両社の存在感が急速に高まるとみられる。また、この資本関係の開示により、他のテック企業やAIスタートアップもNvidiaとの資本提携を求める動きが活発化する可能性がある。一方で、独占的な調達契約に対する独占禁止法上の審査が将来的に問題となるリスクも否定できない。",
+    "ai_interpretation": "このニュースの本質は、AIインフラの覇権争いが「販売・購買関係」から「資本を通じた利害共同体の形成」へとフェーズが移行していることを象徴している点にある。NvidiaはGPUを売るだけでなく、戦略的出資によって主要顧客との関係を固定化し、競合他社（AMD・Intelなど）の参入を構造的に阻む防衛線を築きつつある。マスクのエコシステムとNvidiaの計算資源が一体化することで、AI時代における「インフラの垂直統合」が新たな競争優位の源泉となることを示す先行事例といえる。",
+    "collected_at": "2026-08-18T04:31:29.512239+09:00",
+    "background": "AIブームを背景にNvidiaのGPUは世界中のデータセンターで引く手あまたとなっており、テック企業との資本・業務提携を強化する動きが加速していた。イーロン・マスクはSpaceXのインフラ強化に向けてNvidia製品を独占採用する方針を表明しており、両社の連携は既定路線として業界内で注目されていた。こうした状況の中、Nvidiaが今回の出資規模を正式に開示したことで、両社の関係の深さが改めて明確となった。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-08-18",
+  "currentCategory": "it",
+  "otherCategories": [],
+  "prevDate": {
+    "date": "2026-08-17",
+    "href": "2026-08-17.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
