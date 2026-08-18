@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- ADSENSE-START -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1944739806788973"
+     crossorigin="anonymous"></script>
+  <!-- ADSENSE-END -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日のニュース</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 20px; font-weight: 600; }
+    .date { font-size: 13px; color: #888; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+    .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
+    .source { font-size: 11px; color: #888; white-space: nowrap; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
+    .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
+    .detail.open { display: block; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
+    .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
+    .actions { display: none; }
+    .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
+    .posted { opacity: 0.4; pointer-events: none; }
+    .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+  </div>
+  <div class="header">
+    <h1>今日のニュース</h1>
+    <span class="date" id="date"></span>
+  </div>
+  <div class="container" id="container"></div>
+  <div class="related-section" id="related-section" style="display:none;">
+    <h2>関連リンク</h2>
+    <div id="related-content"></div>
+  </div>
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+
+  <script>
+    (function() {
+      const path = window.location.pathname.replace(/\\/g, "/");
+      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
+      const knownCats = ["it", "japan_economy", "world_economy"];
+      let backHref;
+      if (m && knownCats.indexOf(m[1]) >= 0) {
+        backHref = "../../index.html?cat=" + m[1];
+      } else {
+        backHref = "../index.html?cat=it";
+      }
+      const link = document.getElementById("back-link");
+      if (link) link.setAttribute("href", backHref);
+    })();
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
+
+    const articles = [
+  {
+    "title": "Hims & Hers CEO says FTC lawsuit misunderstands how the company works",
+    "japanese_title": "Hims & Hers CEO、FTCの訴訟は「事業モデルの誤解」と反論──GLP-1複合薬とAI戦略の行方",
+    "url": "https://www.cnbc.com/2026/08/18/hims-hers-ceo-andrew-dudum-ftc-lawsuit-glp-1s-ai.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米テレヘルス企業Hims & HersのCEOアンドリュー・デュダム氏が、FTC（米連邦取引委員会）による同社への訴訟に対し、「同社のビジネスモデルを誤解している」とCNBCのインタビューで反論した。",
+      "2. 訴訟の焦点はGLP-1系薬剤（オゼンピック類似の肥満・糖尿病治療薬）のコンパウンド（調合薬）販売に関する規制上の適法性であり、FTCは消費者保護の観点から問題視している。",
+      "3. デュダム氏はAI活用による医療サービスの効率化も強調し、同社が革新的なヘルスケアプラットフォームとしての正当性を主張している。"
+    ],
+    "points": [
+      "・ FTCがテレヘルス企業のコンパウンド薬販売を本格的に規制ターゲットとした初の大型事例となる可能性",
+      "・ GLP-1系薬剤の供給不足を背景に急成長したコンパウンド薬市場の法的グレーゾーンが問われている",
+      "・ AIを医療診断・処方支援に活用するビジネスモデルへの規制当局の見解が今後の業界標準を左右する"
+    ],
+    "prediction": "FTCの訴訟が長期化した場合、米国のテレヘルス・デジタル医療スタートアップ全体の事業モデルが見直しを迫られ、規制コンプライアンスコストの上昇が業界再編を加速させる可能性がある。GLP-1薬の供給正常化が進むにつれ、コンパウンド薬の市場規模は自然縮小する見通しもあるが、Hims & Hersが法廷で勝訴すれば、AIヘルスケアプラットフォームの規制上の地位が確立される重要な先例となる。",
+    "ai_interpretation": "このニュースの本質は、医療のデジタル化・民主化と既存規制体制の衝突を象徴しており、「誰が医療の門番を担うべきか」という根本的な問いを提起している。Hims & Hers的なモデルが普及すれば医療アクセスの平等化に貢献する一方、品質・安全管理の観点でのリスクも内包しており、グローバルなデジタルヘルス規制の方向性を占う試金石となりうる。AIと医療の融合が進む中、今回の訴訟結果は米国のみならず、EU・アジア諸国の規制当局にも大きな参考事例を提供することになるだろう。",
+    "collected_at": "2026-08-19T04:34:01.707749+09:00",
+    "market_impact": "Hims & Hers株（HIMS）はFTC訴訟を受けて投資家心理が悪化しており、テレヘルスセクター全体にも規制リスクへの警戒感が広がる可能性がある。GLP-1コンパウンド薬市場はノボノルディスクやイーライリリーなどの正規メーカーとの競合・規制摩擦が激化しており、製薬業界の競争構図にも影響を与えうる。また、AIを活用した医療プラットフォームへの規制強化の先例となれば、デジタルヘルス投資全般に冷や水を浴びせるリスクがある。"
+  },
+  {
+    "title": "Disney-owned ABC files First Amendment lawsuit against FCC",
+    "japanese_title": "ディズニー傘下ABCがFCCを提訴——修正第1条に基づく「報復的規制」への法的対抗",
+    "url": "https://www.cnbc.com/2026/08/18/disney-abc-first-amendment-lawsuit-fcc.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. ディズニー傘下のABCテレビが、米連邦通信委員会（FCC）による調査および放送免許更新手続きを「番組内容に対する報復的キャンペーン」と主張し、訴訟を提起した。",
+      "2. ABCは合衆国憲法修正第1条（言論・報道の自由）を根拠に、FCCの行為が違憲であると訴えている。",
+      "3. この訴訟は、トランプ政権下での政府によるメディアへの圧力強化という大きな文脈の中で発生しており、米国メディア業界全体に影響を与える可能性がある。"
+    ],
+    "points": [
+      "・ FCCによる放送免許の更新手続きが「政治的報復ツール」として機能しうるという前例的な問題",
+      "・ 修正第1条を盾にした大手メディアの法的反撃という構図が、他のメディア企業に波及する可能性",
+      "・ 政府とメディアの対立激化が、米国の「報道の自由度」に関する国際的評価を低下させるリスク"
+    ],
+    "prediction": "この訴訟の行方は米国のメディア規制の在り方を根本から問い直す契機となり、連邦裁判所の判断次第ではFCCの権限範囲が大幅に制限される可能性がある。政府によるメディアへの干渉が常態化すれば、報道機関の自己検閲が進み、民主主義的な情報流通そのものが歪められるリスクがある。地政学的には、権威主義的メディア統制を批判してきた米国の立場に矛盾が生じ、外交的な影響力の低下にもつながりかねない。",
+    "ai_interpretation": "このニュースの本質は、単なる企業対政府の法廷闘争ではなく、「規制権限の政治的武器化」という民主主義の根幹に関わる問題である。FCCのような独立機関が政権の意向に沿って動くならば、米国の制度的チェック機能そのものへの信頼が損なわれ、長期的には企業の表現活動や報道活動を萎縮させるリスクがある。グローバル経済の観点からは、米国市場における法の支配と表現の自由の安定性が揺らぐことで、メディア・テック企業への外国投資家の信頼にも悪影響を与えうる重大な局面といえる。",
+    "collected_at": "2026-08-19T04:34:29.084729+09:00",
+    "market_impact": "ディズニー（DIS）株をはじめ、メディア・エンターテインメントセクター全体に不透明感が広がり、短期的な株価への下押し圧力となる可能性がある。また、メディア企業に対する規制リスクの高まりは、広告市場や放送権取引にも慎重ムードをもたらし得る。さらに、米国内の報道の自由を巡る法的リスクは、外国メディア企業の対米投資判断にも影響を与えるおそれがある。"
+  },
+  {
+    "title": "American Airlines to add seatback screens, bigger first class in race to catch up to Delta and United",
+    "japanese_title": "アメリカン航空、シートバックスクリーン導入と拡張ファーストクラスでデルタ・ユナイテッドに対抗する大規模刷新を発表",
+    "url": "https://www.cnbc.com/2026/08/18/american-airlines-seatback-screens.html",
+    "source": "Business News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. アメリカン航空は、ライバルのデルタ航空・ユナイテッド航空に後れを取ったプレミアムサービス強化のため、シートバックスクリーンの搭載と拡大されたファーストクラス席の導入を計画している。",
+      "2. 同社は長年にわたりプレミアム旅客向けの設備投資を怠ってきたとされており、顧客満足度や収益性でライバル2社に差をつけられている状況だ。",
+      "3. 今回の施策は、高単価な座席販売と付加価値サービスの拡充により、収益構造の改善と競争力回復を目指す戦略的転換を意味する。"
+    ],
+    "points": [
+      "・ デルタ・ユナイテッドとの「プレミアム格差」がアメリカン航空の業績低迷の主因となっている点",
+      "・ シートバックスクリーンという「基本装備」の欠如が示す、過去のコスト削減戦略の失敗",
+      "・ プレミアム旅客市場（ビジネスクラス・ファーストクラス）が航空会社の収益を左右する主戦場となっている業界トレンド"
+    ],
+    "prediction": "アメリカン航空の投資回収には数年単位の時間を要するため、短期的には財務負担が増加し、株価や格付けへの影響が懸念される。一方、プレミアム需要は世界的に堅調であり、成功すれば法人需要の取り込みと客単価向上による収益改善が期待できる。米国内の航空3強競争がさらに激化することで、消費者にとってはサービス品質向上という恩恵がもたらされるだろう。",
+    "ai_interpretation": "このニュースの本質は、単なる機内設備の刷新ではなく、「コスト競争」から「価値競争」へという航空ビジネスモデルの根本的なシフトを象徴している。デルタ・ユナイテッドが早期にプレミアム化戦略へ舵を切った結果、アメリカン航空は後追いを余儀なくされており、先行者優位の大きさを示す好例といえる。グローバル経済全体で富裕層・上位中間層向けプレミアムサービス市場が拡大する「K字型回復」の構造的トレンドが、航空業界においても鮮明に表れている点が最大の示唆である。",
+    "collected_at": "2026-08-19T04:34:52.609098+09:00",
+    "market_impact": "アメリカン航空の大規模設備投資は、航空機内装・エンターテインメントシステム関連企業（パナソニックアビオニクス等）への需要増加につながる可能性がある。また、プレミアム旅客の争奪戦が激化することで、米国航空業界全体の運賃体系や収益構造に変化をもたらし、競合他社も追随投資を迫られる局面が生じうる。長期的には航空セクター全体の設備投資コスト上昇が業界の利益率を圧迫するリスクも存在する。"
+  },
+  {
+    "title": "'Profits won.' The child safety trial against Meta kicks off in federal court",
+    "japanese_title": "メタ社「子どもの安全」裁判開廷――FacebookとInstagramの依存性問題で4州が連邦裁判所に提訴",
+    "url": "https://www.npr.org/2026/08/18/nx-s1-5935458/meta-child-safety-social-media-addiction-trial-opening",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国4州がメタ社を相手取り、FacebookおよびInstagramが子どもの精神的健康に害を与えることを知りながら危険性を隠蔽したとして連邦裁判所で裁判が開始された。",
+      "2. 原告側は「メタは子どもを意図的に依存させる設計を行い、その危険性について虚偽の説明をした」と主張している。",
+      "3. 本裁判はビッグテック企業に対する子どもの安全をめぐる最も注目度の高い法廷闘争の一つであり、業界全体に波及する可能性がある。"
+    ],
+    "points": [
+      "・「利益が勝った」という原告側の表現は、メタが社会的責任より収益を優先したという核心的な主張を示唆している",
+      "・連邦裁判所での審理であるため、判決次第でアメリカ全土に適用される先例となり得る",
+      "・メタが「危険性を知りながら隠蔽した」という「欺瞞性」の立証が裁判の最大の争点となる"
+    ],
+    "prediction": "本裁判の判決は、米国内でのソーシャルメディア規制立法（子ども向けSNS利用制限法など）の動きを加速させる可能性が高く、EU・英国・日本などでも類似規制の検討が強まるとみられる。メタが敗訴した場合、巨額の賠償金支払いに加え、アルゴリズム設計の根本的変更を強いられる可能性があり、同社のビジネスモデルそのものへの打撃となり得る。グローバルなデジタルプラットフォーム規制の「新たな基準」を設定する歴史的裁判となる公算が大きい。",
+    "ai_interpretation": "このニュースの本質は、テクノロジー企業の「設計による依存誘導（Addictive Design）」が法的責任の対象となるかという前例のない問いに社会が答えを出そうとしている点にある。タバコや製薬業界における過去の大型訴訟と同様に、ビッグテックが「知っていながら隠した」という構図が成立するか否かが、デジタル経済の倫理的・法的枠組みを根本から変え得る分水嶺となっている。長期的には、プラットフォーム企業のビジネスモデルがユーザーの「エンゲージメント最大化」から「ウェルビーイング重視」へと転換を迫られる時代の到来を象徴する事案と言えるだろう。",
+    "collected_at": "2026-08-19T04:35:16.046676+09:00",
+    "market_impact": "メタ社（META）の株価は訴訟リスクと規制強化への懸念から短期的な下落圧力を受ける可能性があり、広告収益モデルへの信頼性低下も懸念される。ソーシャルメディア業界全体（TikTok、Snapchatなど）にも同様の規制強化の波が及ぶ可能性があり、デジタル広告市場全体の縮小につながるリスクがある。一方、未成年者向けオンライン安全技術やペアレンタルコントロール関連企業には追い風となる可能性がある。"
+  },
+  {
+    "title": "The grueling fight over who profits from AI music",
+    "japanese_title": "AI音楽の収益配分をめぐる熾烈な争い――アーティスト・レーベル・AI企業の三つ巴の戦い",
+    "url": "https://www.npr.org/sections/planet-money/2026/08/18/g-s1-138852/grueling-fight-over-who-profits-from-ai-music",
+    "source": "NPR Topics: Business",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. AIは数秒で楽曲を生成できるようになったが、その収益を誰がどのように受け取るべきかという複雑な権利問題が浮上している。",
+      "2. 音楽レーベル、アーティスト、AI開発企業の間で、著作権・ロイヤリティをめぐる法的・商業的争いが本格化し始めている。",
+      "3. AIによる音楽生成の急速な普及が、従来の音楽産業のビジネスモデルと収益構造を根本から揺るがしている。"
+    ],
+    "points": [
+      "・AIが学習データとして使用した既存楽曲に対する著作権料・補償の有無が最大の争点",
+      "・アーティストやミュージシャン組合によるロビー活動・訴訟が増加し、法整備を急かす動きが強まっている",
+      "・AI生成楽曲がストリーミングプラットフォームに大量流入することで、人間アーティストへのロイヤリティが希薄化するリスク"
+    ],
+    "prediction": "米国・EU・日本などの主要国でAI著作権に関する立法・判例が形成されていく過程で、グローバルなビジネスルールの断片化が進む可能性が高い。音楽産業での先例は、映像・文章・画像など他のクリエイティブ産業にも波及し、AI企業のライセンス費用負担が増大することでAI開発コスト構造全体に影響を与えるだろう。長期的には、収益配分の透明性を担保するブロックチェーン技術の活用など、新たなビジネスエコシステムの形成が促進されると予測される。",
+    "ai_interpretation": "このニュースの本質は、「AIによる価値創造」と「人間の創造的労働への正当な報酬」という根本的なジレンマが、音楽産業を最初の主戦場として表面化したことを示している。音楽は著作権の仕組みが比較的整備された産業であるがゆえに、AI時代の知的財産権モデルの試金石となり、その結論がテクノロジー産業全体の収益モデルに影響する歴史的転換点と言える。グローバル経済的には、AIによる生産性向上の恩恵をいかに社会全体で公平に分配するかという問いに対し、法律・市場・倫理の三つの軸で回答を模索する重要なケーススタディとなっている。",
+    "collected_at": "2026-08-19T04:35:41.225474+09:00",
+    "market_impact": "グローバル音楽市場（約260億ドル規模）において、ストリーミング収益の配分モデルが見直しを迫られており、SpotifyやApple Musicなどのプラットフォーム企業にも波及する可能性がある。著作権をめぐる法的不確実性は、AI開発企業への投資判断にも影響を与え、テック株や音楽関連株のボラティリティを高めるリスクがある。また、各国での規制整備の動きが加速することで、AIスタートアップの事業環境に地域差が生じる恐れもある。"
+  },
+  {
+    "title": "Global borrowing costs hit fresh highs on oil, AI and inflation",
+    "japanese_title": "世界の借入コストが過去最高水準に急騰｜原油・AI・インフレが米英独日の長期金利を押し上げ",
+    "url": "https://www.bbc.co.uk/news/articles/c1k1x1zdywdo?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 米国・英国・ドイツ・日本の長期国債金利が相次いで上昇し、世界的な借入コストが新たな高水準に達した。",
+      "2. 原油価格の高騰、AI関連投資の拡大、根強いインフレが複合的に金利上昇を引き起こしている。",
+      "3. 主要先進国が一斉に高金利局面を迎えるという、近年まれに見るグローバルな金融環境が形成されつつある。"
+    ],
+    "points": [
+      "・ 米・英・独・日という主要4か国の金利が\"同時\"に上昇している点は異例であり、協調的な金融緩和への回帰が遠のく可能性を示す",
+      "・ AI関連投資ブームが財政支出や設備投資需要を押し上げ、金利上昇の新たな構造的要因となっている点は従来のインフレ議論とは質的に異なる",
+      "・ 原油価格の再騰がエネルギーコストを通じてインフレ再燃リスクを高め、中央銀行の利下げシナリオを後退させている"
+    ],
+    "prediction": "各国中央銀行は「高金利の長期維持（Higher for Longer）」政策を余儀なくされ、2024〜2025年に期待されていた利下げサイクルの開始が大幅に遅れる可能性が高い。新興国では資本流出と通貨安が加速し、対外債務負担が増大することで財政危機リスクが浮上する国が出てくるだろう。地政学的緊張（中東情勢・ウクライナ情勢）が原油供給を更に不安定化させれば、インフレと金利のスパイラルが長期化するシナリオも現実味を帯びる。",
+    "ai_interpretation": "このニュースの本質は、「インフレ」という従来の циклический（循環的）要因に加え、「AI投資」という構造的・長期的な需要拡大要因が金利上昇を後押ししている点にある。これは単なる景気過熱ではなく、技術革命と地政学リスクが融合した「新しい高金利時代」の到来を示唆しており、過去の利下げ局面とは根本的に異なるパラダイムシフトと解釈すべきだ。グローバル経済にとって、低金利を前提に構築されてきたビジネスモデル・財政運営・資産価格の全面的な見直しが迫られる歴史的転換点に差し掛かっている可能性がある。",
+    "collected_at": "2026-08-19T04:36:02.351841+09:00",
+    "market_impact": "長期金利の上昇は株式市場のバリュエーション（特に割高なグロース株・ハイテク株）を圧迫し、世界的な株安リスクを高める。為替市場では金利差を背景にドル高圧力が継続し、新興国通貨や円への売り圧力が強まる懸念がある。また不動産・インフラ・スタートアップなど資金調達コストに敏感なセクターへのダメージが特に大きくなる見通しだ。"
+  },
+  {
+    "title": "Job vacancies at five-year low as smaller firms scale back recruitment",
+    "japanese_title": "英国の求人数が5年ぶりの低水準に－中小企業が人件費・運営コスト高騰で採用を縮小",
+    "url": "https://www.bbc.co.uk/news/articles/cn9nwx090v9o?at_medium=RSS&at_campaign=rss",
+    "source": "BBC News",
+    "category": "world_economy",
+    "summary_lines": [
+      "1. 英国の求人件数が5年ぶりの低水準に落ち込み、中小企業を中心に採用活動の縮小が顕著となっている。",
+      "2. 英国国家統計局（ONS）によると、採用縮小の主因は人件費および事業運営コストの上昇であると中小企業側は説明している。",
+      "3. 大企業と比較して体力の乏しい中小企業がコスト圧力に耐えきれず、雇用市場の冷え込みを主導している構図が浮き彫りとなった。"
+    ],
+    "points": [
+      "・ 求人数が5年ぶり低水準という数字は、コロナ禍後の雇用ブームが完全に終焉を迎えたことを示す重要な節目",
+      "・ コスト高の主因として「最低賃金引き上げ」や「雇用主国民保険料増額」などの政策的要因が中小企業を直撃している点",
+      "・ 中小企業セクターの採用抑制は、英国GDPの約60%を支える同セクターの経営悪化を示す先行指標となり得る"
+    ],
+    "prediction": "英国の雇用市場の冷え込みが続けば、イングランド銀行は年内に追加利下げに踏み切る可能性が高まり、金融政策の転換が為替や債券市場に波及するとみられる。一方、慢性的な人手不足が続いていた業種では構造的なミスマッチが解消されず、スキル格差問題が長期化するリスクも残る。地政学的には、英国経済の停滞がEUとの経済的再接近論議を再燃させる一因となる可能性もある。",
+    "ai_interpretation": "このニュースの本質は、単なる「求人減少」ではなく、**コスト増加策と中小企業の体力の限界**が衝突した構造的問題の顕在化にある。賃上げや社会保障費増大という政策目標と、それを支えきれない中小企業の現実との乖離は、英国固有の問題にとどまらず、先進国共通の「包括的成長の難しさ」を象徴している。グローバル経済への示唆としては、政策コストを価格転嫁できない中小企業の採用抑制が、やがて消費・生産性・イノベーションの三重の停滞をもたらすという警告として読み取るべきである。",
+    "collected_at": "2026-08-19T04:36:23.255683+09:00",
+    "market_impact": "英国労働市場の軟化はイングランド銀行（BOE）の利下げ判断を後押しする材料となり得るため、英ポンドへの下押し圧力につながる可能性がある。また、消費関連セクターや小売・サービス業においては、雇用縮小が個人消費の伸び悩みを招き、景気回復シナリオに影を落とす恐れがある。グローバル市場にとっては、英国経済の減速がヨーロッパ全体の需要低下懸念を強めるシグナルとして受け取られる可能性がある。"
+  }
+];
+    const relatedLinks = {
+  "currentDate": "2026-08-19",
+  "currentCategory": "world_economy",
+  "otherCategories": [
+    {
+      "key": "it",
+      "name": "IT・テクノロジー",
+      "href": "../it/2026-08-19.html"
+    },
+    {
+      "key": "japan_economy",
+      "name": "日本経済",
+      "href": "../japan_economy/2026-08-19.html"
+    }
+  ],
+  "prevDate": {
+    "date": "2026-08-18",
+    "href": "2026-08-18.html"
+  },
+  "nextDate": null,
+  "weekly": null
+};
+    const container = document.getElementById("container");
+
+    function cleanText(text) {
+  if (!text) return "";
+  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+    function isValidTitle(t) {
+      if (!t) return false;
+      const s = String(t).trim();
+      if (!s) return false;
+      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
+    }
+
+    function hasContent(t) {
+      return !!(t && String(t).trim());
+    }
+
+    articles.forEach((article, i) => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
+
+      const summaryHTML = (article.summary_lines || [])
+        .map(l => `<div class="summary-line">${l}</div>`)
+        .join("");
+
+      const points = article.points || [];
+      const pointsHTML = points
+        .map(l => `<div class="detail-point">${l}</div>`)
+        .join("");
+
+      const sections = [];
+      if (hasContent(article.background)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">背景・経緯</div>
+            <div class="detail-text">${cleanText(article.background)}</div>
+          </div>`);
+      }
+      if (hasContent(article.market_impact)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">市場への影響</div>
+            <div class="detail-text">${cleanText(article.market_impact)}</div>
+          </div>`);
+      }
+      if (points.length > 0) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">注目ポイント</div>
+            ${pointsHTML}
+          </div>`);
+      }
+      if (hasContent(article.prediction)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="detail-label">今後の予測</div>
+            <div class="detail-text">${cleanText(article.prediction)}</div>
+          </div>`);
+      }
+      if (hasContent(article.ai_interpretation)) {
+        sections.push(`
+          <div class="detail-section">
+            <div class="ai-badge">AIの解釈</div>
+            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
+          </div>`);
+      }
+
+      card.innerHTML = `
+        <div class="card-main">
+          <div class="card-top">
+            <div class="title">${displayTitle}</div>
+            <div class="source">${article.source}</div>
+          </div>
+          <div class="summary-lines">${summaryHTML}</div>
+          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
+        </div>
+        <div class="detail" id="detail-${i}">
+          ${sections.join("")}
+          <div class="detail-footer">
+            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
+            <div class="actions" id="actions-${i}">
+              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
+              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+    function toggle(i) {
+      const detail = document.getElementById(`detail-${i}`);
+      const btn = document.getElementById(`btn-${i}`);
+      const isOpen = detail.classList.contains("open");
+      detail.classList.toggle("open", !isOpen);
+      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+    }
+
+    function post(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
+      alert("投稿しました！（X連携は次のステップで実装します）");
+    }
+
+    function skip(e, i) {
+      e.stopPropagation();
+      const card = e.target.closest(".card");
+      card.classList.add("posted");
+      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+    }
+
+    (function renderRelatedLinks() {
+      if (!relatedLinks || typeof relatedLinks !== "object") return;
+      const groups = [];
+
+      const others = relatedLinks.otherCategories || [];
+      if (others.length > 0) {
+        const linksHTML = others
+          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
+          .join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">同じ日の他カテゴリ</div>
+            <div class="related-links">${linksHTML}</div>
+          </div>`);
+      }
+
+      const prev = relatedLinks.prevDate;
+      const next = relatedLinks.nextDate;
+      if (prev || next) {
+        const navHTML = [
+          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
+          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
+        ].filter(Boolean).join("");
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">日付ナビ</div>
+            <div class="related-nav-row">${navHTML}</div>
+          </div>`);
+      }
+
+      const weekly = relatedLinks.weekly;
+      if (weekly && weekly.href) {
+        groups.push(`
+          <div class="related-group">
+            <div class="related-group-title">週次サマリー</div>
+            <div class="related-links">
+              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
+            </div>
+          </div>`);
+      }
+
+      if (groups.length === 0) return;
+      const section = document.getElementById("related-section");
+      const content = document.getElementById("related-content");
+      content.innerHTML = groups.join("");
+      section.style.display = "block";
+    })();
+  </script>
+</body>
+</html>
