@@ -8,7 +8,7 @@
 - dashboard_*.html（リポジトリ直下のレガシーダッシュボード）
 
 既にマーカー付きで挿入済みの場合は内容を最新化（冪等）。
-新規生成分は dashboard.html / generate_index.py / weekly.py のテンプレート側に
+新規生成分は templates/dashboard.html / generate_index.py / weekly.py のテンプレート側に
 同じブロックが入っているため、このスクリプトはデプロイ済み既存分のバックフィル専用。
 
 マーカー:

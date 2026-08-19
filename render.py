@@ -1,7 +1,7 @@
 """記事ページの HTML を生成時（サーバサイド）にレンダリングする共通モジュール。
 
 JS に依存せず <body> 内へ記事本文が直接書き出されるようにするため、
-dashboard.html テンプレートのプレースホルダを Python 側で埋める。
+templates/dashboard.html のプレースホルダを Python 側で埋める。
 main.py（新規生成）と rebuild_article_pages.py（既存分の再生成）の両方から使う。
 """
 import html as _html
@@ -9,7 +9,8 @@ import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
-TEMPLATE_PATH = Path("dashboard.html")
+# テンプレートは公開ルートに置かない（未置換のプレースホルダのまま配信されるため）
+TEMPLATE_PATH = Path("templates") / "dashboard.html"
 
 CATEGORY_DISPLAY_NAMES = {
     "it": "IT・テクノロジー",
