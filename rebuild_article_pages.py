@@ -7,7 +7,9 @@ HTML ソースに存在する」状態にそろえる。
 対象:
   - articles/{category}/YYYY-MM-DD.json  -> articles/{category}/YYYY-MM-DD.html
   - articles/YYYY-MM-DD.json（旧IT構造）  -> articles/YYYY-MM-DD.html
-  - news_YYYYMMDD.json（初期のレガシー）  -> dashboard_YYYYMMDD.html
+
+リポジトリ直下の dashboard_YYYYMMDD.html は articles/YYYY-MM-DD.html と
+内容が完全重複していたため削除済み（どこからもリンクされていなかった）。
 
 実行: python rebuild_article_pages.py
 """
@@ -86,22 +88,6 @@ def main():
         )
         count += 1
     print("  [legacy/articles直下] 再生成完了")
-
-    # 3. 初期レガシー: news_YYYYMMDD.json -> dashboard_YYYYMMDD.html
-    for json_file in sorted(Path(".").glob("news_*.json")):
-        m = re.fullmatch(r"news_(\d{4})(\d{2})(\d{2})", json_file.stem)
-        if not m:
-            continue
-        date_str = "-".join(m.groups())
-        articles = load_json(json_file)
-        if not articles:
-            continue
-        out = Path(f"dashboard_{m.group(1)}{m.group(2)}{m.group(3)}.html")
-        if not out.exists():
-            continue
-        write_page(out, articles, date_str, "it", None, 0, template)
-        count += 1
-    print("  [legacy/リポジトリ直下] 再生成完了")
 
     print(f"記事ページを {count} 件再生成しました")
 

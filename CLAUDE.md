@@ -60,7 +60,7 @@ collector.py        →  main.py            →  generate_index.py
 ### ディレクトリ構造の互換性
 - 現行: `articles/{category}/{YYYY-MM-DD}.{json,html}` および `articles/{category}/weekly-{YYYY-WNN}.html`
 - 旧構造: `articles/{YYYY-MM-DD}.{json,html}` (IT 専用、初期実装の名残)。`generate_index` はこれを IT の週に統合するが、リンク先は `articles/{date}.html` (旧パス) のまま出す — `articles/it/{date}.html` は存在しないので混同しないこと
-- `weekly.load_week_articles` は IT カテゴリのときだけ旧構造も追加で読み込む。`news_YYYYMMDD.json` / `dashboard_YYYYMMDD.html` (リポジトリ直下) も初期化期のレガシーで、日次パイプラインからは触らないが `rebuild_article_pages.py` は静的化のため再生成対象に含めている (`articles/{date}.html` と内容が重複している点に注意)
+- `weekly.load_week_articles` は IT カテゴリのときだけ旧構造も追加で読み込む。`news_YYYYMMDD.json` (リポジトリ直下) は初期化期のレガシーデータで、現行パイプラインからは触らない (`articles/{date}.json` と内容が重複)。対になっていた `dashboard_YYYYMMDD.html` は重複コンテンツだったため削除済み — 再生成しないこと
 
 ### GitHub Actions の責務
 両ワークフローとも (1) スクリプト実行、(2) `articles/`・`index.html`・`collected_urls.json` を `git add` してコミット&push、(3) リポジトリ全体を Pages アーティファクトとして upload &deploy、を行う。差分がなければコミットはスキップされる (`git diff --staged --quiet || git commit`)。
