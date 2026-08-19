@@ -63,4 +63,6 @@ collector.py        →  main.py            →  generate_index.py
 - `weekly.load_week_articles` は IT カテゴリのときだけ旧構造も追加で読み込む。`news_YYYYMMDD.json` (リポジトリ直下) は初期化期のレガシーデータで、現行パイプラインからは触らない (`articles/{date}.json` と内容が重複)。対になっていた `dashboard_YYYYMMDD.html` は重複コンテンツだったため削除済み — 再生成しないこと
 
 ### GitHub Actions の責務
-両ワークフローとも (1) スクリプト実行、(2) `articles/`・`index.html`・`collected_urls.json` を `git add` してコミット&push、(3) リポジトリ全体を Pages アーティファクトとして upload &deploy、を行う。差分がなければコミットはスキップされる (`git diff --staged --quiet || git commit`)。
+両ワークフローとも (1) スクリプト実行、(2) `articles/`・`index.html`・`collected_urls.json` を `git add` してコミット&push、(3) 「公開対象から templates/ を除外」ステップで作業ツリーの `templates/` を `$RUNNER_TEMP` へ退避、(4) リポジトリ全体 (`path: '.'`) を Pages アーティファクトとして upload &deploy、を行う。差分がなければコミットはスキップされる (`git diff --staged --quiet || git commit`)。
+
+**upload の前に必ず `templates/` を退避すること。** `path: '.'` でリポジトリ全体が配信されるため、退避しないと未置換プレースホルダのままのテンプレートが `/templates/dashboard.html` として公開される。退避はコミット&push の後に行うのでリポジトリの内容には影響せず、除外ステップは `index.html` / `articles/` の存在も併せて検証している (欠落したらジョブが失敗する)。

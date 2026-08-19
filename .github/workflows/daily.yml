@@ -45,6 +45,22 @@ jobs:
           git diff --staged --quiet || git commit -m "ニュース更新: $(date '+%Y-%m-%d')"
           git push
 
+      # templates/ は記事ページ生成用のテンプレート本体で、未置換のプレースホルダが
+      # 残った空ページになるため公開しない。リポジトリへのコミット&pushは上のステップで
+      # 完了済みなので、ここで作業ツリーから退避してもリポジトリの内容には影響しない。
+      - name: 公開対象から templates/ を除外
+        run: |
+          if [ -d templates ]; then
+            mkdir -p "$RUNNER_TEMP/excluded"
+            mv templates "$RUNNER_TEMP/excluded/"
+          fi
+          test ! -e templates
+          test -f index.html
+          test -d articles
+          echo "公開する直下HTML:"
+          ls *.html
+          echo "公開する記事HTML: $(find articles -name '*.html' | wc -l) 件"
+
       - name: GitHub Pagesのアーティファクトをアップロード
         uses: actions/upload-pages-artifact@v3
         with:
