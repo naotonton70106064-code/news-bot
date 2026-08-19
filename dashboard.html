@@ -7,7 +7,8 @@
   <!-- ADSENSE-END -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>今日のニュース</title>
+  <title>__PAGE_TITLE__</title>
+  <meta name="description" content="__META_DESCRIPTION__">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
@@ -63,213 +64,48 @@
     .site-footer-links a:hover { text-decoration: underline; }
     /* === SITE-FOOTER-CSS-END === */
   </style>
+  <noscript>
+    <style>
+      /* JS 無効時は折りたたみ部分をすべて展開して表示する */
+      .detail { display: block !important; }
+      .expand-btn { display: none !important; }
+    </style>
+  </noscript>
 </head>
 <body>
   <div class="back-nav">
-    <a href="../../index.html" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
+    <a href="__BACK_HREF__" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
   </div>
   <div class="header">
-    <h1>今日のニュース</h1>
-    <span class="date" id="date"></span>
+    <h1>__HEADING__</h1>
+    <span class="date">__DATE_TEXT__（__ARTICLE_COUNT__件）</span>
   </div>
-  <div class="container" id="container"></div>
-  <div class="related-section" id="related-section" style="display:none;">
-    <h2>関連リンク</h2>
-    <div id="related-content"></div>
-  </div>
+  <main class="container" id="container">
+__ARTICLES_HTML__
+  </main>
+__RELATED_HTML__
   <div class="footer-note">
     本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
   </div>
   <!-- SITE-FOOTER-HTML-START -->
   <div class="site-footer-links">
-    <a href="../../privacy.html">プライバシーポリシー</a>
-    <a href="../../about.html">運営者情報</a>
-    <a href="../../contact.html">お問い合わせ</a>
+    <a href="__ROOT__privacy.html">プライバシーポリシー</a>
+    <a href="__ROOT__about.html">運営者情報</a>
+    <a href="__ROOT__contact.html">お問い合わせ</a>
   </div>
   <!-- SITE-FOOTER-HTML-END -->
 
   <script>
-    (function() {
-      const path = window.location.pathname.replace(/\\/g, "/");
-      const m = path.match(/articles\/([^\/]+)\/[^\/]+\.html?$/);
-      const knownCats = ["it", "japan_economy", "world_economy"];
-      let backHref;
-      if (m && knownCats.indexOf(m[1]) >= 0) {
-        backHref = "../../index.html?cat=" + m[1];
-      } else {
-        backHref = "../index.html?cat=it";
-      }
-      const link = document.getElementById("back-link");
-      if (link) link.setAttribute("href", backHref);
-    })();
-
-    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
-
-    const articles = __ARTICLES__;
-    const relatedLinks = __RELATED_LINKS__;
-    const container = document.getElementById("container");
-
-    function cleanText(text) {
-  if (!text) return "";
-  return text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-}
-
-    function isValidTitle(t) {
-      if (!t) return false;
-      const s = String(t).trim();
-      if (!s) return false;
-      return !/^[-—ー―ｰ_=・\s]+$/.test(s);
-    }
-
-    function hasContent(t) {
-      return !!(t && String(t).trim());
-    }
-
-    articles.forEach((article, i) => {
-      const card = document.createElement("div");
-      card.className = "card";
-
-      const displayTitle = isValidTitle(article.japanese_title) ? article.japanese_title : article.title;
-
-      const summaryHTML = (article.summary_lines || [])
-        .map(l => `<div class="summary-line">${l}</div>`)
-        .join("");
-
-      const points = article.points || [];
-      const pointsHTML = points
-        .map(l => `<div class="detail-point">${l}</div>`)
-        .join("");
-
-      const sections = [];
-      if (hasContent(article.background)) {
-        sections.push(`
-          <div class="detail-section">
-            <div class="detail-label">背景・経緯</div>
-            <div class="detail-text">${cleanText(article.background)}</div>
-          </div>`);
-      }
-      if (hasContent(article.market_impact)) {
-        sections.push(`
-          <div class="detail-section">
-            <div class="detail-label">市場への影響</div>
-            <div class="detail-text">${cleanText(article.market_impact)}</div>
-          </div>`);
-      }
-      if (points.length > 0) {
-        sections.push(`
-          <div class="detail-section">
-            <div class="detail-label">注目ポイント</div>
-            ${pointsHTML}
-          </div>`);
-      }
-      if (hasContent(article.prediction)) {
-        sections.push(`
-          <div class="detail-section">
-            <div class="detail-label">今後の予測</div>
-            <div class="detail-text">${cleanText(article.prediction)}</div>
-          </div>`);
-      }
-      if (hasContent(article.ai_interpretation)) {
-        sections.push(`
-          <div class="detail-section">
-            <div class="ai-badge">AIの解釈</div>
-            <div class="detail-text">${cleanText(article.ai_interpretation)}</div>
-          </div>`);
-      }
-
-      card.innerHTML = `
-        <div class="card-main">
-          <div class="card-top">
-            <div class="title">${displayTitle}</div>
-            <div class="source">${article.source}</div>
-          </div>
-          <div class="summary-lines">${summaryHTML}</div>
-          <button class="expand-btn" onclick="toggle(${i})" id="btn-${i}">詳細を見る ▾</button>
-        </div>
-        <div class="detail" id="detail-${i}">
-          ${sections.join("")}
-          <div class="detail-footer">
-            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
-            <div class="actions" id="actions-${i}">
-              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
-              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
-            </div>
-          </div>
-        </div>
-      `;
-      container.appendChild(card);
-    });
-
+    // 記事本文は生成時に HTML へ書き出し済み。JS は開閉のみを担当する。
     function toggle(i) {
-      const detail = document.getElementById(`detail-${i}`);
-      const btn = document.getElementById(`btn-${i}`);
-      const isOpen = detail.classList.contains("open");
+      var detail = document.getElementById("detail-" + i);
+      var btn = document.getElementById("btn-" + i);
+      if (!detail || !btn) return;
+      var isOpen = detail.classList.contains("open");
       detail.classList.toggle("open", !isOpen);
-      btn.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
+      btn.setAttribute("aria-expanded", String(!isOpen));
+      btn.innerHTML = isOpen ? "詳細を見る &#9662;" : "詳細を閉じる &#9652;";
     }
-
-    function post(e, i) {
-      e.stopPropagation();
-      const card = e.target.closest(".card");
-      card.classList.add("posted");
-      document.getElementById(`actions-${i}`).innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
-      alert("投稿しました！（X連携は次のステップで実装します）");
-    }
-
-    function skip(e, i) {
-      e.stopPropagation();
-      const card = e.target.closest(".card");
-      card.classList.add("posted");
-      document.getElementById(`actions-${i}`).innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
-    }
-
-    (function renderRelatedLinks() {
-      if (!relatedLinks || typeof relatedLinks !== "object") return;
-      const groups = [];
-
-      const others = relatedLinks.otherCategories || [];
-      if (others.length > 0) {
-        const linksHTML = others
-          .map(o => `<a class="related-link" href="${o.href}">同じ日の${o.name}を見る →</a>`)
-          .join("");
-        groups.push(`
-          <div class="related-group">
-            <div class="related-group-title">同じ日の他カテゴリ</div>
-            <div class="related-links">${linksHTML}</div>
-          </div>`);
-      }
-
-      const prev = relatedLinks.prevDate;
-      const next = relatedLinks.nextDate;
-      if (prev || next) {
-        const navHTML = [
-          prev ? `<a class="related-link" href="${prev.href}">← 前日の記事へ (${prev.date})</a>` : "",
-          next ? `<a class="related-link" href="${next.href}">翌日の記事へ (${next.date}) →</a>` : "",
-        ].filter(Boolean).join("");
-        groups.push(`
-          <div class="related-group">
-            <div class="related-group-title">日付ナビ</div>
-            <div class="related-nav-row">${navHTML}</div>
-          </div>`);
-      }
-
-      const weekly = relatedLinks.weekly;
-      if (weekly && weekly.href) {
-        groups.push(`
-          <div class="related-group">
-            <div class="related-group-title">週次サマリー</div>
-            <div class="related-links">
-              <a class="related-link related-link-weekly" href="${weekly.href}">この週のまとめを見る (${weekly.id}) →</a>
-            </div>
-          </div>`);
-      }
-
-      if (groups.length === 0) return;
-      const section = document.getElementById("related-section");
-      const content = document.getElementById("related-content");
-      content.innerHTML = groups.join("");
-      section.style.display = "block";
-    })();
   </script>
 </body>
 </html>

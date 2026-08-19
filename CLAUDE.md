@@ -13,7 +13,8 @@ RSS フィードから取得したニュース記事を Anthropic Claude API で
 - 日次フルラン: `python main.py` — 収集 → 要約 → `articles/{category}/YYYY-MM-DD.{json,html}` を生成
 - インデックス再生成: `python generate_index.py` — `articles/` を走査して `index.html` を作り直す
 - 週次サマリー生成: `python weekly.py` — 前週分の記事を集約して `articles/{category}/weekly-YYYY-WNN.html` を作成
-- 既存記事への関連リンク再注入 (ワンショット): `python update_related_links.py` — 既存の `articles/{category}/*.html` に内部リンクセクションを冪等に挿入/更新
+- 既存記事ページの再生成 (冪等): `python rebuild_article_pages.py` — `articles/` 以下と直下のレガシー HTML を JSON から作り直す。テンプレート (`dashboard.html`) や `render.py` を変更したら実行する
+- 既存記事への関連リンク再注入 (ワンショット・**非推奨**): `python update_related_links.py` — JS 描画時代の旧テンプレート向け。現行のサーバサイド生成ページには実行しないこと
 - 既存記事へのフッターリンク注入 (ワンショット): `python add_footer_links.py` — 既存の `articles/` 以下全 HTML (旧構造含む) にプライバシーポリシー等へのフッターリンクを冪等に挿入/更新。新規生成分は `dashboard.html` / `weekly.py` のテンプレートに同ブロックが組み込み済み
 - 依存: `pip install feedparser anthropic python-dotenv` (CI と同じ)
 - `ANTHROPIC_API_KEY` を `.env` か環境変数で渡す必要がある (`summarizer.py` が起動時にロード)
@@ -43,16 +44,23 @@ collector.py        →  main.py            →  generate_index.py
 ### 要約フォーマットは `【...】` セクションマーカーで連結している
 `summarizer.PROMPTS` はカテゴリ別テンプレートで、`【日本語タイトル】`/`【3行要約】`/`【背景・経緯】` (IT) または `【市場への影響】` (経済) /`【注目ポイント】`/`【今後の予測】`/`【AIの解釈】` を出力させる。`main.parse_summary()` はこのマーカーを境界としてセクションを切り出すので、**プロンプトのマーカーを変えたら `parse_summary` も同時に更新する**。IT には `background`、経済カテゴリには `market_impact` フィールドが入る非対称なスキーマで、`main.process_category` と `weekly.generate_weekly_summary` (ranked のソートキー) がこの差を意識している。
 
-### HTML 生成はプレースホルダ置換テンプレート
-`dashboard.html` は静的 HTML テンプレートで、`__ARTICLES__` (記事 JSON 配列) と `__RELATED_LINKS__` (前後日/他カテゴリ/週次へのナビ JSON) を JS の中に持つ。`main.generate_article_page` がこの 2 つを `json.dumps` で差し替えて `articles/{category}/{date}.html` として書き出す。テンプレートの構造を変えるときは `dashboard.html` 側 (CSS+JS) と差し替え後の参照位置 (line 92-93 付近) を同期させる。
+### HTML はすべて生成時にサーバサイドレンダリングする (SSR)
+**JS を実行しなくても記事テキストが HTML ソースに存在する状態を必ず保つこと。** 以前は記事データを `<script>` 内の JS 変数に持たせ DOM を組み立てていたが、AdSense の審査 bot に「コンテンツのない空ページ」と判定されたため全ページを静的化した。
 
-### 関連リンクのロジックは 2 か所に複製されている
-`main.build_related_links()` と `update_related_links.build_related_links()` は同一の意味を持つ実装。前者は新規記事 HTML 生成時に呼ばれ、後者は既存 HTML へのバックフィル用ワンショット。**仕様変更時は両方を直す必要がある** (片方だけ更新すると、新旧記事で挙動が分かれる)。
+- `render.py` が記事ページのレンダラ (テンプレート = `dashboard.html`)。`__PAGE_TITLE__` / `__META_DESCRIPTION__` / `__HEADING__` / `__DATE_TEXT__` / `__ARTICLE_COUNT__` / `__ARTICLES_HTML__` / `__RELATED_HTML__` / `__BACK_HREF__` / `__ROOT__` を置換する。`__ROOT__` はルートまでの相対パス (`depth` から算出、`articles/{cat}/x.html` は 2、`articles/x.html` は 1、リポジトリ直下は 0)
+- `render.normalize_article()` が新旧スキーマ (`summary_lines`/`background`/`market_impact` と旧 `summary` 生テキスト) を吸収する。テキストは `esc()` でエスケープしてから `**強調**` を `<strong>` に変換する
+- `main.generate_article_page` (新規) と `rebuild_article_pages.py` (既存分) が同じ `render.render_page()` を呼ぶので、テンプレート変更後は後者を実行して全ページをそろえる
+- `generate_index.py` は各カテゴリの全週を `<section class="week-panel" data-cat data-page data-label>` として全部 HTML に書き出し、初期表示 (it の最新週) 以外に `hidden` を付ける。JS は既存 DOM の `hidden` を切り替えるだけ (カテゴリタブ・週送り) で、記事データを JS 側に持たない
+- 各ページの `<noscript>` は折りたたみ/非表示を強制解除するので、JS 完全無効でも全内容が見える
+- `weekly.py` は元から静的 HTML を出力しており変更不要
+
+### 関連リンクのロジック
+`render.build_related_links()` が正 (`main.py` はここから import する)。`update_related_links.py` にも旧実装のコピーが残るが**非推奨**で、現行テンプレートの出力に対して実行してはいけない。
 
 ### ディレクトリ構造の互換性
 - 現行: `articles/{category}/{YYYY-MM-DD}.{json,html}` および `articles/{category}/weekly-{YYYY-WNN}.html`
-- 旧構造: `articles/{YYYY-MM-DD}.{json,html}` (IT 専用、初期実装の名残)
-- `weekly.load_week_articles` は IT カテゴリのときだけ旧構造も追加で読み込む。`news_YYYYMMDD.json` / `dashboard_YYYYMMDD.html` (リポジトリ直下) も初期化期のレガシーで、現行パイプラインからは触らない
+- 旧構造: `articles/{YYYY-MM-DD}.{json,html}` (IT 専用、初期実装の名残)。`generate_index` はこれを IT の週に統合するが、リンク先は `articles/{date}.html` (旧パス) のまま出す — `articles/it/{date}.html` は存在しないので混同しないこと
+- `weekly.load_week_articles` は IT カテゴリのときだけ旧構造も追加で読み込む。`news_YYYYMMDD.json` / `dashboard_YYYYMMDD.html` (リポジトリ直下) も初期化期のレガシーで、日次パイプラインからは触らないが `rebuild_article_pages.py` は静的化のため再生成対象に含めている (`articles/{date}.html` と内容が重複している点に注意)
 
 ### GitHub Actions の責務
 両ワークフローとも (1) スクリプト実行、(2) `articles/`・`index.html`・`collected_urls.json` を `git add` してコミット&push、(3) リポジトリ全体を Pages アーティファクトとして upload &deploy、を行う。差分がなければコミットはスキップされる (`git diff --staged --quiet || git commit`)。

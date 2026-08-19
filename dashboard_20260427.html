@@ -7,123 +7,152 @@
   <!-- ADSENSE-END -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>今日のニュース</title>
+  <title>2026年4月27日のIT・テクノロジーニュースまとめ - AIニュースまとめ</title>
+  <meta name="description" content="2026年4月27日のIT・テクノロジーニュース3件をAIが要約。主な話題: Consumers lost $2.1 billion to social media scams in 2025, FTC reports／OpenAI ends Microsoft legal peril over its $50B Am">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: sans-serif; background: #f5f5f5; padding: 2rem; }
-    .header { max-width: 800px; margin: 0 auto 2rem; display: flex; justify-content: space-between; align-items: center; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
     h1 { font-size: 20px; font-weight: 600; }
     .date { font-size: 13px; color: #888; }
     .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
     .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
-    .card-main { padding: 1.25rem; cursor: pointer; }
-    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
     .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
     .source { font-size: 11px; color: #888; white-space: nowrap; }
-    .summary-short { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 10px; }
-    .card-footer { display: flex; justify-content: space-between; align-items: center; }
-    .expand-hint { font-size: 11px; color: #888; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
     .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
     .detail.open { display: block; }
-    .detail-text { font-size: 13px; color: #333; line-height: 1.8; white-space: pre-wrap; margin-bottom: 1rem; }
-    .detail-footer { display: flex; justify-content: space-between; align-items: center; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
     .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
     .actions { display: none; }
     .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
     .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
     .posted { opacity: 0.4; pointer-events: none; }
     .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
   </style>
+  <noscript>
+    <style>
+      /* JS 無効時は折りたたみ部分をすべて展開して表示する */
+      .detail { display: block !important; }
+      .expand-btn { display: none !important; }
+    </style>
+  </noscript>
 </head>
 <body>
-  <div class="header">
-    <h1>今日のニュース</h1>
-    <span class="date" id="date"></span>
+  <div class="back-nav">
+    <a href="index.html?cat=it" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
   </div>
-  <div class="container" id="container"></div>
+  <div class="header">
+    <h1>IT・テクノロジー 2026年4月27日のニュース</h1>
+    <span class="date">2026年4月27日（月）（3件）</span>
+  </div>
+  <main class="container" id="container">
+      <article class="card">
+        <div class="card-main">
+          <div class="card-top">
+            <h2 class="title">Consumers lost $2.1 billion to social media scams in 2025, FTC reports</h2>
+            <div class="source">TechCrunch</div>
+          </div>
+          <div class="summary-lines"><p class="summary-line">1. 2025年、消費者がソーシャルメディア詐欺によって失った金額は21億ドルに上ることがFTC（米国連邦取引委員会）の報告で明らかになった。</p><p class="summary-line">2. ソーシャルメディア詐欺による被害額は以前と比べて8倍に増加している。</p><p class="summary-line">3. ソーシャルメディアは、詐欺師が消費者に接触する手段の中で最も大きな被害をもたらす経路となっている。</p></div>
+          <button class="expand-btn" id="btn-0" aria-expanded="false" aria-controls="detail-0" onclick="toggle(0)">詳細を見る &#9662;</button>
+        </div>
+        <div class="detail" id="detail-0">
+          <div class="detail-section"><div class="detail-label">背景・ポイント</div><div class="detail-text">FTCの報告は、ソーシャルメディアが詐欺師にとって最も効果的な接触手段になりつつある深刻な実態を示している。被害額が8倍に急増していることは、詐欺の手口が年々巧妙化・拡大していることを示唆しており、利用者のリテラシー向上やプラットフォーム側の対策強化が急務となっている。</div></div>
+          <div class="detail-footer">
+            <a class="btn-link" href="https://techcrunch.com/2026/04/27/consumers-lost-2-1-billion-to-social-media-scams-in-2025-ftc-reports/" target="_blank" rel="noopener">元記事を読む &rarr;</a>
+          </div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="card-main">
+          <div class="card-top">
+            <h2 class="title">OpenAI ends Microsoft legal peril over its $50B Amazon deal</h2>
+            <div class="source">TechCrunch</div>
+          </div>
+          <div class="summary-lines"><p class="summary-line">1. OpenAIはAmazon Web Services（AWS）での製品販売を可能にするため、最大株主のMicrosoftから重要な譲歩を獲得した。</p><p class="summary-line">2. MicrosoftはAWSとの500億ドル規模の契約に関する法的リスクを回避する代わりに、収益分配協定でより多くの収益を得ることになった。</p><p class="summary-line">3. 両社はこの再交渉により、それぞれの利益を確保しつつ関係を継続する合意に至った。</p></div>
+          <button class="expand-btn" id="btn-1" aria-expanded="false" aria-controls="detail-1" onclick="toggle(1)">詳細を見る &#9662;</button>
+        </div>
+        <div class="detail" id="detail-1">
+          <div class="detail-section"><div class="detail-label">背景・ポイント</div><div class="detail-text">OpenAIはMicrosoftとの既存契約により、他クラウドプロバイダーへの製品展開に制約があったとみられるが、今回の合意でAWSとのビジネスが正式に可能となった。Microsoftは法的リスクを避けつつも収益分配の拡充という実利を得ており、AmazonとMicrosoftという競合クラウド企業の狭間でOpenAIが事業拡大を図る構図が鮮明になっている。</div></div>
+          <div class="detail-footer">
+            <a class="btn-link" href="https://techcrunch.com/2026/04/27/openai-ends-microsoft-legal-peril-over-its-50b-amazon-deal/" target="_blank" rel="noopener">元記事を読む &rarr;</a>
+          </div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="card-main">
+          <div class="card-top">
+            <h2 class="title">DeepMind’s David Silver just raised $1.1B to build an AI that learns without human data</h2>
+            <div class="source">TechCrunch</div>
+          </div>
+          <div class="summary-lines"><p class="summary-line">1. 元DeepMind研究者のデビッド・シルバー氏が設立した英国のAIスタートアップ「Ineffable Intelligence」が、11億ドル（約1,650億円）の資金調達に成功した。</p><p class="summary-line">2. 同社の企業評価額は51億ドル（約7,650億円）に達した。</p><p class="summary-line">3. 設立からわずか数ヶ月という超短期間での大型調達として注目を集めている。</p></div>
+          <button class="expand-btn" id="btn-2" aria-expanded="false" aria-controls="detail-2" onclick="toggle(2)">詳細を見る &#9662;</button>
+        </div>
+        <div class="detail" id="detail-2">
+          <div class="detail-section"><div class="detail-label">背景・ポイント</div><div class="detail-text">デビッド・シルバー氏はDeepMindで囲碁AIの「AlphaGo」開発などを主導した著名な研究者で、そのネームバリューが今回の大型調達を後押しした可能性が高い。同社は「人間のデータを使わずに学習するAI」の開発を目指しており、従来のAI開発とは異なるアプローチに大きな期待と投資家の関心が集まっている。</div></div>
+          <div class="detail-footer">
+            <a class="btn-link" href="https://techcrunch.com/2026/04/27/deepminds-david-silver-just-raised-1-1b-to-build-an-ai-that-learns-without-human-data/" target="_blank" rel="noopener">元記事を読む &rarr;</a>
+          </div>
+        </div>
+      </article>
+
+  </main>
+
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="privacy.html">プライバシーポリシー</a>
+    <a href="about.html">運営者情報</a>
+    <a href="contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
 
   <script>
-    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
-
-    // JSONデータを直接埋め込む（後でPythonが自動生成）
-    const articles = [
-  {
-    "title": "Consumers lost $2.1 billion to social media scams in 2025, FTC reports",
-    "url": "https://techcrunch.com/2026/04/27/consumers-lost-2-1-billion-to-social-media-scams-in-2025-ftc-reports/",
-    "source": "TechCrunch",
-    "summary": "【3行要約】\n1. 2025年、消費者がソーシャルメディア詐欺によって失った金額は21億ドルに上ることがFTC（米国連邦取引委員会）の報告で明らかになった。\n2. ソーシャルメディア詐欺による被害額は以前と比べて8倍に増加している。\n3. ソーシャルメディアは、詐欺師が消費者に接触する手段の中で最も大きな被害をもたらす経路となっている。\n\n【背景・ポイント】\nFTCの報告は、ソーシャルメディアが詐欺師にとって最も効果的な接触手段になりつつある深刻な実態を示している。被害額が8倍に急増していることは、詐欺の手口が年々巧妙化・拡大していることを示唆しており、利用者のリテラシー向上やプラットフォーム側の対策強化が急務となっている。",
-    "collected_at": "2026-04-27T20:10:25.077638"
-  },
-  {
-    "title": "OpenAI ends Microsoft legal peril over its $50B Amazon deal",
-    "url": "https://techcrunch.com/2026/04/27/openai-ends-microsoft-legal-peril-over-its-50b-amazon-deal/",
-    "source": "TechCrunch",
-    "summary": "【3行要約】\n1. OpenAIはAmazon Web Services（AWS）での製品販売を可能にするため、最大株主のMicrosoftから重要な譲歩を獲得した。\n2. MicrosoftはAWSとの500億ドル規模の契約に関する法的リスクを回避する代わりに、収益分配協定でより多くの収益を得ることになった。\n3. 両社はこの再交渉により、それぞれの利益を確保しつつ関係を継続する合意に至った。\n\n【背景・ポイント】\nOpenAIはMicrosoftとの既存契約により、他クラウドプロバイダーへの製品展開に制約があったとみられるが、今回の合意でAWSとのビジネスが正式に可能となった。Microsoftは法的リスクを避けつつも収益分配の拡充という実利を得ており、AmazonとMicrosoftという競合クラウド企業の狭間でOpenAIが事業拡大を図る構図が鮮明になっている。",
-    "collected_at": "2026-04-27T20:10:31.663027"
-  },
-  {
-    "title": "DeepMind’s David Silver just raised $1.1B to build an AI that learns without human data",
-    "url": "https://techcrunch.com/2026/04/27/deepminds-david-silver-just-raised-1-1b-to-build-an-ai-that-learns-without-human-data/",
-    "source": "TechCrunch",
-    "summary": "【3行要約】\n1. 元DeepMind研究者のデビッド・シルバー氏が設立した英国のAIスタートアップ「Ineffable Intelligence」が、11億ドル（約1,650億円）の資金調達に成功した。\n2. 同社の企業評価額は51億ドル（約7,650億円）に達した。\n3. 設立からわずか数ヶ月という超短期間での大型調達として注目を集めている。\n\n【背景・ポイント】\nデビッド・シルバー氏はDeepMindで囲碁AIの「AlphaGo」開発などを主導した著名な研究者で、そのネームバリューが今回の大型調達を後押しした可能性が高い。同社は「人間のデータを使わずに学習するAI」の開発を目指しており、従来のAI開発とは異なるアプローチに大きな期待と投資家の関心が集まっている。",
-    "collected_at": "2026-04-27T20:10:37.422364"
-  }
-];
-
-    const container = document.getElementById("container");
-
-    articles.forEach((article, i) => {
-      const lines = article.summary.split("\n").filter(l => l.trim());
-      const shortSummary = lines.slice(0, 3).join("\n");
-
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <div class="card-main" onclick="toggle(${i})">
-          <div class="card-top">
-            <div class="title">${article.title}</div>
-            <div class="source">${article.source}</div>
-          </div>
-          <div class="summary-short">${shortSummary}</div>
-          <div class="card-footer">
-            <span class="expand-hint" id="hint-${i}">詳細を見る ▾</span>
-          </div>
-        </div>
-        <div class="detail" id="detail-${i}">
-          <div class="detail-text">${article.summary}</div>
-          <div class="detail-footer">
-            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
-            <div class="actions">
-              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
-              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
-            </div>
-          </div>
-        </div>
-      `;
-      container.appendChild(card);
-    });
-
+    // 記事本文は生成時に HTML へ書き出し済み。JS は開閉のみを担当する。
     function toggle(i) {
-      const detail = document.getElementById(`detail-${i}`);
-      const hint = document.getElementById(`hint-${i}`);
-      const isOpen = detail.classList.contains("open");
+      var detail = document.getElementById("detail-" + i);
+      var btn = document.getElementById("btn-" + i);
+      if (!detail || !btn) return;
+      var isOpen = detail.classList.contains("open");
       detail.classList.toggle("open", !isOpen);
-      hint.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
-    }
-
-    function post(e, i) {
-      e.stopPropagation();
-      const card = e.target.closest(".card");
-      card.classList.add("posted");
-      e.target.closest(".actions").innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
-      alert("投稿しました！（X連携は次のステップで実装します）");
-    }
-
-    function skip(e, i) {
-      e.stopPropagation();
-      const card = e.target.closest(".card");
-      card.classList.add("posted");
-      e.target.closest(".actions").innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+      btn.setAttribute("aria-expanded", String(!isOpen));
+      btn.innerHTML = isOpen ? "詳細を見る &#9662;" : "詳細を閉じる &#9652;";
     }
   </script>
 </body>

@@ -7,123 +7,152 @@
   <!-- ADSENSE-END -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>今日のニュース</title>
+  <title>2026年4月29日のIT・テクノロジーニュースまとめ - AIニュースまとめ</title>
+  <meta name="description" content="2026年4月29日のIT・テクノロジーニュース3件をAIが要約。主な話題: Parallel Web Systems hits $2B valuation five months after its last big raise／Google Photos uses AI to make the iconic clo">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: sans-serif; background: #f5f5f5; padding: 2rem; }
-    .header { max-width: 800px; margin: 0 auto 2rem; display: flex; justify-content: space-between; align-items: center; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
     h1 { font-size: 20px; font-weight: 600; }
     .date { font-size: 13px; color: #888; }
     .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
     .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
-    .card-main { padding: 1.25rem; cursor: pointer; }
-    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
     .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
     .source { font-size: 11px; color: #888; white-space: nowrap; }
-    .summary-short { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 10px; }
-    .card-footer { display: flex; justify-content: space-between; align-items: center; }
-    .expand-hint { font-size: 11px; color: #888; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
     .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
     .detail.open { display: block; }
-    .detail-text { font-size: 13px; color: #333; line-height: 1.8; white-space: pre-wrap; margin-bottom: 1rem; }
-    .detail-footer { display: flex; justify-content: space-between; align-items: center; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
     .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
     .actions { display: none; }
     .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
     .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
     .posted { opacity: 0.4; pointer-events: none; }
     .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
   </style>
+  <noscript>
+    <style>
+      /* JS 無効時は折りたたみ部分をすべて展開して表示する */
+      .detail { display: block !important; }
+      .expand-btn { display: none !important; }
+    </style>
+  </noscript>
 </head>
 <body>
-  <div class="header">
-    <h1>今日のニュース</h1>
-    <span class="date" id="date"></span>
+  <div class="back-nav">
+    <a href="index.html?cat=it" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
   </div>
-  <div class="container" id="container"></div>
+  <div class="header">
+    <h1>IT・テクノロジー 2026年4月29日のニュース</h1>
+    <span class="date">2026年4月29日（水）（3件）</span>
+  </div>
+  <main class="container" id="container">
+      <article class="card">
+        <div class="card-main">
+          <div class="card-top">
+            <h2 class="title">Parallel Web Systems hits $2B valuation five months after its last big raise</h2>
+            <div class="source">TechCrunch</div>
+          </div>
+          <div class="summary-lines"><p class="summary-line">1. 元TwitterCEOのParag Agrawal氏が創業したAIエージェントツールスタートアップ「Parallel Web Systems」が、Sequoia主導で1億ドルの資金調達を実施した。</p><p class="summary-line">2. 今回の調達は、前回の1億ドル調達からわずか数ヶ月後に行われたものである。</p><p class="summary-line">3. この資金調達により、同社の評価額は200億ドル（約20億ドル）に達した。</p></div>
+          <button class="expand-btn" id="btn-0" aria-expanded="false" aria-controls="detail-0" onclick="toggle(0)">詳細を見る &#9662;</button>
+        </div>
+        <div class="detail" id="detail-0">
+          <div class="detail-section"><div class="detail-label">背景・ポイント</div><div class="detail-text">Parallel Web Systemsは、元Twitter（現X）CEOのParag Agrawal氏が設立したAIエージェントツール分野のスタートアップであり、短期間で連続的な大型調達を成功させている。わずか5ヶ月以内に合計2億ドルを調達し、評価額20億ドルを達成したことは、AIエージェント分野への投資家の強い関心と期待を示している。著名VCのSequoiaが主導したことも、同社への高い信頼を裏付けている。</div></div>
+          <div class="detail-footer">
+            <a class="btn-link" href="https://techcrunch.com/2026/04/29/parallel-web-systems-hits-2b-valuation-five-months-after-its-last-big-raise/" target="_blank" rel="noopener">元記事を読む &rarr;</a>
+          </div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="card-main">
+          <div class="card-top">
+            <h2 class="title">Google Photos uses AI to make the iconic closet from ‘Clueless’ a reality</h2>
+            <div class="source">TechCrunch</div>
+          </div>
+          <div class="summary-lines"><p class="summary-line">1. GoogleフォトがAI技術を活用した新機能を発表した。</p><p class="summary-line">2. この機能は、ユーザーのGoogleフォトライブラリに写っている服をもとに、デジタルワードローブを自動作成する。</p><p class="summary-line">3. 映画『クルーレス』の主人公が使っていた&quot;バーチャルクローゼット&quot;のような機能が現実になった形だ。</p></div>
+          <button class="expand-btn" id="btn-1" aria-expanded="false" aria-controls="detail-1" onclick="toggle(1)">詳細を見る &#9662;</button>
+        </div>
+        <div class="detail" id="detail-1">
+          <div class="detail-section"><div class="detail-label">背景・ポイント</div><div class="detail-text">映画『クルーレス』（1995年）には、コンピューターで服のコーディネートを管理する印象的なシーンがあり、当時から憧れの的だった。今回のGoogle PhotosのAI機能はそのビジョンを現代技術で実現するもので、ユーザーは自分の写真から自動的に整理されたデジタルワードローブを持てるようになる。写真ライブラリを活用するため、新たに服を登録する手間なく自分の持ち服を把握できる点が特徴だ。</div></div>
+          <div class="detail-footer">
+            <a class="btn-link" href="https://techcrunch.com/2026/04/29/google-photos-uses-ai-to-make-the-iconic-closet-from-clueless-a-reality/" target="_blank" rel="noopener">元記事を読む &rarr;</a>
+          </div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="card-main">
+          <div class="card-top">
+            <h2 class="title">More Gemini features are coming to Google TV</h2>
+            <div class="source">TechCrunch</div>
+          </div>
+          <div class="summary-lines"><p class="summary-line">1. Google TVに新たなGeminiの機能が追加された。</p><p class="summary-line">2. 「Nano Banana」と呼ばれるツールを使って写真を変換する機能が導入された。</p><p class="summary-line">3. 動画生成AIツール「Veo」を活用した動画変換機能も利用可能になった。</p></div>
+          <button class="expand-btn" id="btn-2" aria-expanded="false" aria-controls="detail-2" onclick="toggle(2)">詳細を見る &#9662;</button>
+        </div>
+        <div class="detail" id="detail-2">
+          <div class="detail-section"><div class="detail-label">背景・ポイント</div><div class="detail-text">GoogleはAIモデル「Gemini」をGoogle TVプラットフォームに統合し、エンターテインメント体験の強化を図っている。写真や動画をAIで変換・加工できる機能の追加により、テレビ視聴にとどまらないクリエイティブな用途への展開が期待される。GeminiをTVデバイスに組み込むことで、GoogleはリビングルームにおけるAI活用の幅を広げようとしている。</div></div>
+          <div class="detail-footer">
+            <a class="btn-link" href="https://techcrunch.com/2026/04/29/more-gemini-features-are-coming-to-google-tv/" target="_blank" rel="noopener">元記事を読む &rarr;</a>
+          </div>
+        </div>
+      </article>
+
+  </main>
+
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="privacy.html">プライバシーポリシー</a>
+    <a href="about.html">運営者情報</a>
+    <a href="contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
 
   <script>
-    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
-
-    // JSONデータを直接埋め込む（後でPythonが自動生成）
-    const articles = [
-  {
-    "title": "Parallel Web Systems hits $2B valuation five months after its last big raise",
-    "url": "https://techcrunch.com/2026/04/29/parallel-web-systems-hits-2b-valuation-five-months-after-its-last-big-raise/",
-    "source": "TechCrunch",
-    "summary": "【3行要約】\n1. 元TwitterCEOのParag Agrawal氏が創業したAIエージェントツールスタートアップ「Parallel Web Systems」が、Sequoia主導で1億ドルの資金調達を実施した。\n2. 今回の調達は、前回の1億ドル調達からわずか数ヶ月後に行われたものである。\n3. この資金調達により、同社の評価額は200億ドル（約20億ドル）に達した。\n\n【背景・ポイント】\nParallel Web Systemsは、元Twitter（現X）CEOのParag Agrawal氏が設立したAIエージェントツール分野のスタートアップであり、短期間で連続的な大型調達を成功させている。わずか5ヶ月以内に合計2億ドルを調達し、評価額20億ドルを達成したことは、AIエージェント分野への投資家の強い関心と期待を示している。著名VCのSequoiaが主導したことも、同社への高い信頼を裏付けている。",
-    "collected_at": "2026-04-29T20:12:30.915233"
-  },
-  {
-    "title": "Google Photos uses AI to make the iconic closet from ‘Clueless’ a reality",
-    "url": "https://techcrunch.com/2026/04/29/google-photos-uses-ai-to-make-the-iconic-closet-from-clueless-a-reality/",
-    "source": "TechCrunch",
-    "summary": "【3行要約】\n1. GoogleフォトがAI技術を活用した新機能を発表した。\n2. この機能は、ユーザーのGoogleフォトライブラリに写っている服をもとに、デジタルワードローブを自動作成する。\n3. 映画『クルーレス』の主人公が使っていた\"バーチャルクローゼット\"のような機能が現実になった形だ。\n\n【背景・ポイント】\n映画『クルーレス』（1995年）には、コンピューターで服のコーディネートを管理する印象的なシーンがあり、当時から憧れの的だった。今回のGoogle PhotosのAI機能はそのビジョンを現代技術で実現するもので、ユーザーは自分の写真から自動的に整理されたデジタルワードローブを持てるようになる。写真ライブラリを活用するため、新たに服を登録する手間なく自分の持ち服を把握できる点が特徴だ。",
-    "collected_at": "2026-04-29T20:12:37.728863"
-  },
-  {
-    "title": "More Gemini features are coming to Google TV",
-    "url": "https://techcrunch.com/2026/04/29/more-gemini-features-are-coming-to-google-tv/",
-    "source": "TechCrunch",
-    "summary": "【3行要約】\n1. Google TVに新たなGeminiの機能が追加された。\n2. 「Nano Banana」と呼ばれるツールを使って写真を変換する機能が導入された。\n3. 動画生成AIツール「Veo」を活用した動画変換機能も利用可能になった。\n\n【背景・ポイント】\nGoogleはAIモデル「Gemini」をGoogle TVプラットフォームに統合し、エンターテインメント体験の強化を図っている。写真や動画をAIで変換・加工できる機能の追加により、テレビ視聴にとどまらないクリエイティブな用途への展開が期待される。GeminiをTVデバイスに組み込むことで、GoogleはリビングルームにおけるAI活用の幅を広げようとしている。",
-    "collected_at": "2026-04-29T20:12:42.794803"
-  }
-];
-
-    const container = document.getElementById("container");
-
-    articles.forEach((article, i) => {
-      const lines = article.summary.split("\n").filter(l => l.trim());
-      const shortSummary = lines.slice(0, 3).join("\n");
-
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <div class="card-main" onclick="toggle(${i})">
-          <div class="card-top">
-            <div class="title">${article.title}</div>
-            <div class="source">${article.source}</div>
-          </div>
-          <div class="summary-short">${shortSummary}</div>
-          <div class="card-footer">
-            <span class="expand-hint" id="hint-${i}">詳細を見る ▾</span>
-          </div>
-        </div>
-        <div class="detail" id="detail-${i}">
-          <div class="detail-text">${article.summary}</div>
-          <div class="detail-footer">
-            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
-            <div class="actions">
-              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
-              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
-            </div>
-          </div>
-        </div>
-      `;
-      container.appendChild(card);
-    });
-
+    // 記事本文は生成時に HTML へ書き出し済み。JS は開閉のみを担当する。
     function toggle(i) {
-      const detail = document.getElementById(`detail-${i}`);
-      const hint = document.getElementById(`hint-${i}`);
-      const isOpen = detail.classList.contains("open");
+      var detail = document.getElementById("detail-" + i);
+      var btn = document.getElementById("btn-" + i);
+      if (!detail || !btn) return;
+      var isOpen = detail.classList.contains("open");
       detail.classList.toggle("open", !isOpen);
-      hint.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
-    }
-
-    function post(e, i) {
-      e.stopPropagation();
-      const card = e.target.closest(".card");
-      card.classList.add("posted");
-      e.target.closest(".actions").innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
-      alert("投稿しました！（X連携は次のステップで実装します）");
-    }
-
-    function skip(e, i) {
-      e.stopPropagation();
-      const card = e.target.closest(".card");
-      card.classList.add("posted");
-      e.target.closest(".actions").innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+      btn.setAttribute("aria-expanded", String(!isOpen));
+      btn.innerHTML = isOpen ? "詳細を見る &#9662;" : "詳細を閉じる &#9652;";
     }
   </script>
 </body>

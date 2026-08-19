@@ -7,123 +7,152 @@
   <!-- ADSENSE-END -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>今日のニュース</title>
+  <title>2026年4月24日のIT・テクノロジーニュースまとめ - AIニュースまとめ</title>
+  <meta name="description" content="2026年4月24日のIT・テクノロジーニュース3件をAIが要約。主な話題: ComfyUI hits $500M valuation as creators seek more control over AI-generated media／X launches standalone XChat app on iOS">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: sans-serif; background: #f5f5f5; padding: 2rem; }
-    .header { max-width: 800px; margin: 0 auto 2rem; display: flex; justify-content: space-between; align-items: center; }
+    body { font-family: sans-serif; background: #f5f5f5; padding: 1rem; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; display: flex; justify-content: space-between; align-items: center; }
     h1 { font-size: 20px; font-weight: 600; }
     .date { font-size: 13px; color: #888; }
     .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
     .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; overflow: hidden; }
-    .card-main { padding: 1.25rem; cursor: pointer; }
-    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .card-main { padding: 1.25rem; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
     .title { font-size: 14px; font-weight: 600; color: #111; line-height: 1.5; }
     .source { font-size: 11px; color: #888; white-space: nowrap; }
-    .summary-short { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 10px; }
-    .card-footer { display: flex; justify-content: space-between; align-items: center; }
-    .expand-hint { font-size: 11px; color: #888; }
+    .summary-lines { margin-bottom: 12px; }
+    .summary-line { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .expand-btn { font-size: 12px; color: #888; background: none; border: none; cursor: pointer; padding: 0; }
     .detail { display: none; border-top: 1px solid #eee; padding: 1.25rem; background: #fafafa; }
     .detail.open { display: block; }
-    .detail-text { font-size: 13px; color: #333; line-height: 1.8; white-space: pre-wrap; margin-bottom: 1rem; }
-    .detail-footer { display: flex; justify-content: space-between; align-items: center; }
+    .detail-section { margin-bottom: 1rem; }
+    .detail-label { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; color: #333; line-height: 1.7; }
+    .detail-point { font-size: 13px; color: #333; line-height: 1.8; padding: 2px 0; }
+    .ai-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; background: #EEEDFE; color: #3C3489; border-radius: 20px; margin-bottom: 8px; }
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #eee; margin-top: 12px; }
     .btn-link { font-size: 12px; color: #1a73e8; text-decoration: none; }
     .actions { display: none; }
     .btn-post { font-size: 12px; padding: 6px 16px; background: #111; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
     .btn-skip { font-size: 12px; padding: 6px 16px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; }
     .posted { opacity: 0.4; pointer-events: none; }
     .badge-posted { font-size: 11px; color: #22c55e; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-group { margin-bottom: 1rem; }
+    .related-group:last-child { margin-bottom: 0; }
+    .related-group-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .related-links { display: flex; flex-direction: column; gap: 8px; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    .related-link:active { background: #e8e8e8; }
+    .related-link-weekly { background: #EEEDFE; border-color: #d9d6f9; color: #3C3489; }
+    .related-link-weekly:hover { background: #e4e1fb; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+    }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
   </style>
+  <noscript>
+    <style>
+      /* JS 無効時は折りたたみ部分をすべて展開して表示する */
+      .detail { display: block !important; }
+      .expand-btn { display: none !important; }
+    </style>
+  </noscript>
 </head>
 <body>
-  <div class="header">
-    <h1>今日のニュース</h1>
-    <span class="date" id="date"></span>
+  <div class="back-nav">
+    <a href="index.html?cat=it" class="back-btn" id="back-link">&larr; 一覧に戻る</a>
   </div>
-  <div class="container" id="container"></div>
+  <div class="header">
+    <h1>IT・テクノロジー 2026年4月24日のニュース</h1>
+    <span class="date">2026年4月24日（金）（3件）</span>
+  </div>
+  <main class="container" id="container">
+      <article class="card">
+        <div class="card-main">
+          <div class="card-top">
+            <h2 class="title">ComfyUI hits $500M valuation as creators seek more control over AI-generated media</h2>
+            <div class="source">TechCrunch</div>
+          </div>
+          <div class="summary-lines"><p class="summary-line">1. ComfyUIが3,000万ドル（約45億円）の資金調達を完了した。</p><p class="summary-line">2. 同社の評価額は5億ドル（約750億円）に達した。</p><p class="summary-line">3. ComfyUIはクリエイターがAI生成の画像・動画・音声をより細かく制御できるツールを提供している。</p></div>
+          <button class="expand-btn" id="btn-0" aria-expanded="false" aria-controls="detail-0" onclick="toggle(0)">詳細を見る &#9662;</button>
+        </div>
+        <div class="detail" id="detail-0">
+          <div class="detail-section"><div class="detail-label">背景・ポイント</div><div class="detail-text">AIによるメディア生成ツールの需要が高まる中、クリエイターは単なる自動生成ではなく、出力結果に対してより高い制御性を求める傾向が強まっている。ComfyUIはそのニーズに応えるプラットフォームとして注目を集めており、今回の大型調達はその市場的価値を裏付けるものとなった。AI生成コンテンツ市場における「制御性」や「カスタマイズ性」が新たな競争軸として浮上していることを示している。</div></div>
+          <div class="detail-footer">
+            <a class="btn-link" href="https://techcrunch.com/2026/04/24/comfyui-hits-500m-valuation-as-creators-seek-more-control-over-ai-generated-media/" target="_blank" rel="noopener">元記事を読む &rarr;</a>
+          </div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="card-main">
+          <div class="card-top">
+            <h2 class="title">X launches standalone XChat app on iOS</h2>
+            <div class="source">TechCrunch</div>
+          </div>
+          <div class="summary-lines"><p class="summary-line">1. Xが「XChat」という新しいスタンドアロンアプリをiOS向けにリリースした。</p><p class="summary-line">2. このアプリはプライベートチャット機能を中心に設計されている。</p><p class="summary-line">3. メッセージの自動消去、音声・ビデオ通話など多彩な機能を搭載している。</p></div>
+          <button class="expand-btn" id="btn-1" aria-expanded="false" aria-controls="detail-1" onclick="toggle(1)">詳細を見る &#9662;</button>
+        </div>
+        <div class="detail" id="detail-1">
+          <div class="detail-section"><div class="detail-label">背景・ポイント</div><div class="detail-text">XChatは、X（旧Twitter）のメッセージング機能を独立したアプリとして切り出したもので、プライバシーを重視したコミュニケーションツールを目指している。消えるメッセージや通話機能など、WhatsAppやSignalといった既存のメッセージングアプリに対抗する機能が揃っており、Xがソーシャルメディアを超えた総合プラットフォームへの拡大を図っていることが伺える。</div></div>
+          <div class="detail-footer">
+            <a class="btn-link" href="https://techcrunch.com/2026/04/24/x-launches-xchat-app-ios-messaging-iphone/" target="_blank" rel="noopener">元記事を読む &rarr;</a>
+          </div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="card-main">
+          <div class="card-top">
+            <h2 class="title">Google to invest up to $40B in Anthropic in cash and compute</h2>
+            <div class="source">TechCrunch</div>
+          </div>
+          <div class="summary-lines"><p class="summary-line">1. GoogleはAI企業Anthropicに最大400億ドル（約6兆円）を現金およびコンピューティングリソースで投資する計画を発表した。</p><p class="summary-line">2. AI業界では各社が大規模な計算能力（コンピュートキャパシティ）の確保を巡って激しい競争を繰り広げている。</p><p class="summary-line">3. Anthropicはサイバーセキュリティに特化した強力なAIモデル「Mythos」の限定公開を行ったばかりである。</p></div>
+          <button class="expand-btn" id="btn-2" aria-expanded="false" aria-controls="detail-2" onclick="toggle(2)">詳細を見る &#9662;</button>
+        </div>
+        <div class="detail" id="detail-2">
+          <div class="detail-section"><div class="detail-label">背景・ポイント</div><div class="detail-text">GoogleによるAnthropicへの巨額投資は、OpenAIやMicrosoftなどとのAI覇権争いが激化する中、戦略的パートナーシップを強化する狙いがある。Anthropicは安全性を重視したAI開発で知られており、今回の投資によって研究開発やインフラ整備がさらに加速すると見られる。サイバーセキュリティ特化モデル「Mythos」の登場は、AIの企業・政府向け実用化が新たな段階に入ったことを示している。</div></div>
+          <div class="detail-footer">
+            <a class="btn-link" href="https://techcrunch.com/2026/04/24/google-to-invest-up-to-40b-in-anthropic-in-cash-and-compute/" target="_blank" rel="noopener">元記事を読む &rarr;</a>
+          </div>
+        </div>
+      </article>
+
+  </main>
+
+  <div class="footer-note">
+    本サイトの解釈・予測はAIによる見解であり、投資助言・専門的アドバイスではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="privacy.html">プライバシーポリシー</a>
+    <a href="about.html">運営者情報</a>
+    <a href="contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
 
   <script>
-    document.getElementById("date").textContent = new Date().toLocaleDateString("ja-JP", {year:"numeric",month:"long",day:"numeric",weekday:"short"});
-
-    // JSONデータを直接埋め込む（後でPythonが自動生成）
-    const articles = [
-  {
-    "title": "ComfyUI hits $500M valuation as creators seek more control over AI-generated media",
-    "url": "https://techcrunch.com/2026/04/24/comfyui-hits-500m-valuation-as-creators-seek-more-control-over-ai-generated-media/",
-    "source": "TechCrunch",
-    "summary": "【3行要約】\n1. ComfyUIが3,000万ドル（約45億円）の資金調達を完了した。\n2. 同社の評価額は5億ドル（約750億円）に達した。\n3. ComfyUIはクリエイターがAI生成の画像・動画・音声をより細かく制御できるツールを提供している。\n\n【背景・ポイント】\nAIによるメディア生成ツールの需要が高まる中、クリエイターは単なる自動生成ではなく、出力結果に対してより高い制御性を求める傾向が強まっている。ComfyUIはそのニーズに応えるプラットフォームとして注目を集めており、今回の大型調達はその市場的価値を裏付けるものとなった。AI生成コンテンツ市場における「制御性」や「カスタマイズ性」が新たな競争軸として浮上していることを示している。",
-    "collected_at": "2026-04-24T19:54:11.769277"
-  },
-  {
-    "title": "X launches standalone XChat app on iOS",
-    "url": "https://techcrunch.com/2026/04/24/x-launches-xchat-app-ios-messaging-iphone/",
-    "source": "TechCrunch",
-    "summary": "【3行要約】\n1. Xが「XChat」という新しいスタンドアロンアプリをiOS向けにリリースした。\n2. このアプリはプライベートチャット機能を中心に設計されている。\n3. メッセージの自動消去、音声・ビデオ通話など多彩な機能を搭載している。\n\n【背景・ポイント】\nXChatは、X（旧Twitter）のメッセージング機能を独立したアプリとして切り出したもので、プライバシーを重視したコミュニケーションツールを目指している。消えるメッセージや通話機能など、WhatsAppやSignalといった既存のメッセージングアプリに対抗する機能が揃っており、Xがソーシャルメディアを超えた総合プラットフォームへの拡大を図っていることが伺える。",
-    "collected_at": "2026-04-24T19:54:16.968295"
-  },
-  {
-    "title": "Google to invest up to $40B in Anthropic in cash and compute",
-    "url": "https://techcrunch.com/2026/04/24/google-to-invest-up-to-40b-in-anthropic-in-cash-and-compute/",
-    "source": "TechCrunch",
-    "summary": "【3行要約】\n1. GoogleはAI企業Anthropicに最大400億ドル（約6兆円）を現金およびコンピューティングリソースで投資する計画を発表した。\n2. AI業界では各社が大規模な計算能力（コンピュートキャパシティ）の確保を巡って激しい競争を繰り広げている。\n3. Anthropicはサイバーセキュリティに特化した強力なAIモデル「Mythos」の限定公開を行ったばかりである。\n\n【背景・ポイント】\nGoogleによるAnthropicへの巨額投資は、OpenAIやMicrosoftなどとのAI覇権争いが激化する中、戦略的パートナーシップを強化する狙いがある。Anthropicは安全性を重視したAI開発で知られており、今回の投資によって研究開発やインフラ整備がさらに加速すると見られる。サイバーセキュリティ特化モデル「Mythos」の登場は、AIの企業・政府向け実用化が新たな段階に入ったことを示している。",
-    "collected_at": "2026-04-24T19:54:23.464390"
-  }
-];
-
-    const container = document.getElementById("container");
-
-    articles.forEach((article, i) => {
-      const lines = article.summary.split("\n").filter(l => l.trim());
-      const shortSummary = lines.slice(0, 3).join("\n");
-
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <div class="card-main" onclick="toggle(${i})">
-          <div class="card-top">
-            <div class="title">${article.title}</div>
-            <div class="source">${article.source}</div>
-          </div>
-          <div class="summary-short">${shortSummary}</div>
-          <div class="card-footer">
-            <span class="expand-hint" id="hint-${i}">詳細を見る ▾</span>
-          </div>
-        </div>
-        <div class="detail" id="detail-${i}">
-          <div class="detail-text">${article.summary}</div>
-          <div class="detail-footer">
-            <a class="btn-link" href="${article.url}" target="_blank">元記事を読む →</a>
-            <div class="actions">
-              <button class="btn-post" onclick="post(event, ${i})">投稿する</button>
-              <button class="btn-skip" onclick="skip(event, ${i})">スキップ</button>
-            </div>
-          </div>
-        </div>
-      `;
-      container.appendChild(card);
-    });
-
+    // 記事本文は生成時に HTML へ書き出し済み。JS は開閉のみを担当する。
     function toggle(i) {
-      const detail = document.getElementById(`detail-${i}`);
-      const hint = document.getElementById(`hint-${i}`);
-      const isOpen = detail.classList.contains("open");
+      var detail = document.getElementById("detail-" + i);
+      var btn = document.getElementById("btn-" + i);
+      if (!detail || !btn) return;
+      var isOpen = detail.classList.contains("open");
       detail.classList.toggle("open", !isOpen);
-      hint.textContent = isOpen ? "詳細を見る ▾" : "詳細を閉じる ▴";
-    }
-
-    function post(e, i) {
-      e.stopPropagation();
-      const card = e.target.closest(".card");
-      card.classList.add("posted");
-      e.target.closest(".actions").innerHTML = '<span class="badge-posted">✓ 投稿済み</span>';
-      alert("投稿しました！（X連携は次のステップで実装します）");
-    }
-
-    function skip(e, i) {
-      e.stopPropagation();
-      const card = e.target.closest(".card");
-      card.classList.add("posted");
-      e.target.closest(".actions").innerHTML = '<span style="font-size:11px;color:#888;">スキップ済み</span>';
+      btn.setAttribute("aria-expanded", String(!isOpen));
+      btn.innerHTML = isOpen ? "詳細を見る &#9662;" : "詳細を閉じる &#9652;";
     }
   </script>
 </body>

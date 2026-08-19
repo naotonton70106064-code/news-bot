@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 from collector import collect_articles, collect_all, FEEDS
 from summarizer import summarize_article
+from render import render_page, build_related_links
 
 JST = ZoneInfo("Asia/Tokyo")
 
@@ -18,63 +19,6 @@ ALL_CATEGORIES = ["it", "japan_economy", "world_economy"]
 
 def now_jst():
     return datetime.now(JST)
-
-
-def build_related_links(date_str, category):
-    """記事ページの関連リンク情報を構築する。
-    存在するファイルのみリンク化する（前後日・他カテゴリ・週次サマリー）。"""
-    articles_root = Path("articles")
-    cat_dir = articles_root / category
-
-    other_categories = []
-    for other in ALL_CATEGORIES:
-        if other == category:
-            continue
-        target = articles_root / other / f"{date_str}.html"
-        if target.exists():
-            other_categories.append({
-                "key": other,
-                "name": CATEGORY_DISPLAY_NAMES[other],
-                "href": f"../{other}/{date_str}.html",
-            })
-
-    try:
-        current_dt = datetime.strptime(date_str, "%Y-%m-%d")
-    except ValueError:
-        current_dt = None
-
-    prev_link = None
-    next_link = None
-    if current_dt is not None and cat_dir.exists():
-        for delta in range(1, 366):
-            candidate = current_dt - timedelta(days=delta)
-            cand_str = candidate.strftime("%Y-%m-%d")
-            if (cat_dir / f"{cand_str}.html").exists():
-                prev_link = {"date": cand_str, "href": f"{cand_str}.html"}
-                break
-        for delta in range(1, 366):
-            candidate = current_dt + timedelta(days=delta)
-            cand_str = candidate.strftime("%Y-%m-%d")
-            if (cat_dir / f"{cand_str}.html").exists():
-                next_link = {"date": cand_str, "href": f"{cand_str}.html"}
-                break
-
-    weekly = None
-    if current_dt is not None:
-        iso_year, iso_week, _ = current_dt.isocalendar()
-        week_id = f"{iso_year}-W{iso_week:02d}"
-        weekly_file = cat_dir / f"weekly-{week_id}.html"
-        if weekly_file.exists():
-            weekly = {"id": week_id, "href": f"weekly-{week_id}.html"}
-
-    return {
-        "currentDate": date_str,
-        "currentCategory": category,
-        "otherCategories": other_categories,
-        "prevDate": prev_link,
-        "nextDate": next_link,
-        "weekly": weekly,
-    }
 
 
 def parse_summary(summary_text, category="it"):
@@ -129,12 +73,6 @@ def parse_summary(summary_text, category="it"):
 
 
 def generate_article_page(results, category="it"):
-    with open("dashboard.html", "r", encoding="utf-8") as f:
-        html = f.read()
-
-    articles_json = json.dumps(results, ensure_ascii=False, indent=2)
-    html = html.replace("__ARTICLES__", articles_json)
-
     # articles/{category}/ ディレクトリに保存
     articles_dir = Path("articles") / category
     articles_dir.mkdir(parents=True, exist_ok=True)
@@ -145,8 +83,9 @@ def generate_article_page(results, category="it"):
     # 関連リンク情報を計算して注入（自身を含めるためファイル保存後に再計算する場合もあるが、
     # 自身の存在は前後日・他カテゴリ計算に影響しないため先に計算してよい）
     related = build_related_links(date_str, category)
-    related_json = json.dumps(related, ensure_ascii=False, indent=2)
-    html = html.replace("__RELATED_LINKS__", related_json)
+
+    # 記事本文は生成時に HTML へ直接書き出す（JS 無しでもクローラに内容が見える）
+    html = render_page(results, date_str, category, related=related, depth=2)
 
     with open(output_filename, "w", encoding="utf-8") as f:
         f.write(html)

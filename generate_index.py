@@ -1,4 +1,10 @@
-"""記事一覧ページ（index.html）を自動生成するスクリプト"""
+"""記事一覧ページ（index.html）を自動生成するスクリプト。
+
+記事タイトル一覧は生成時に <body> 内の HTML として直接書き出す。
+JS はカテゴリタブ切り替えと週送りのために既存 DOM の表示/非表示を
+切り替えるだけで、JS が動かなくても内容が HTML ソースに存在する。
+"""
+import html as _html
 import json
 import re
 from pathlib import Path
@@ -9,6 +15,14 @@ CATEGORIES = {
     "japan_economy": "日本経済",
     "world_economy": "世界経済",
 }
+
+WEEKDAYS_JA = ["月", "火", "水", "木", "金", "土", "日"]
+
+
+def esc(text):
+    if text is None:
+        return ""
+    return _html.escape(str(text), quote=True)
 
 
 def _is_valid_title(t):
@@ -61,6 +75,7 @@ def load_category_data(category):
                 "date": date_str,
                 "count": len(articles),
                 "titles": [get_display_title(a) for a in articles],
+                "href": f"articles/{category}/{date_str}.html",
             })
         except (json.JSONDecodeError, KeyError):
             continue
@@ -99,6 +114,70 @@ def group_by_weeks(days):
     return weeks_data
 
 
+def render_day_card(day):
+    """1日分のカード HTML（日付・件数・記事タイトル一覧）"""
+    dt = datetime.strptime(day["date"], "%Y-%m-%d")
+    display = f"{dt.year}年{dt.month}月{dt.day}日（{WEEKDAYS_JA[dt.weekday()]}）"
+    titles_html = "".join(
+        f"<li>・{esc(t)}</li>" for t in day["titles"] if str(t).strip()
+    )
+    return (
+        f'        <a class="day-card" href="{esc(day["href"])}">\n'
+        f'          <h3 class="day-date">{esc(display)}</h3>\n'
+        f'          <div class="day-count">{day["count"]}件の記事</div>\n'
+        f'          <ul class="day-titles">{titles_html}</ul>\n'
+        f"        </a>\n"
+    )
+
+
+def render_panels(all_data, initial_category):
+    """全カテゴリ・全週分のパネル HTML を返す"""
+    parts = []
+    for cat_id, cat_name in CATEGORIES.items():
+        weeks = all_data.get(cat_id) or []
+        if not weeks:
+            hidden = "" if cat_id == initial_category else " hidden"
+            parts.append(
+                f'      <section class="week-panel" data-cat="{cat_id}" data-page="0"'
+                f' data-label="{esc(cat_name)}"{hidden}>\n'
+                f'        <h2 class="week-heading">{esc(cat_name)}</h2>\n'
+                f'        <div class="empty-message">まだ記事がありません</div>\n'
+                f"      </section>\n"
+            )
+            continue
+        for page, week in enumerate(weeks):
+            hidden = "" if (cat_id == initial_category and page == 0) else " hidden"
+            cards = "".join(render_day_card(d) for d in week["days"])
+            parts.append(
+                f'      <section class="week-panel" data-cat="{cat_id}" data-page="{page}"'
+                f' data-label="{esc(week["label"])}"{hidden}>\n'
+                f'        <h2 class="week-heading">{esc(cat_name)} {esc(week["label"])}</h2>\n'
+                f"{cards}"
+                f"      </section>\n"
+            )
+    return "".join(parts)
+
+
+def render_sidebar(all_weeklies, initial_category):
+    """週次サマリーリンクを全カテゴリ分書き出す"""
+    parts = []
+    for cat_id, cat_name in CATEGORIES.items():
+        weeklies = all_weeklies.get(cat_id) or []
+        hidden = "" if cat_id == initial_category else " hidden"
+        if weeklies:
+            links = "".join(
+                f'<a href="articles/{esc(w["filename"])}" class="sidebar-link">{esc(w["id"])}</a>'
+                for w in weeklies
+            )
+        else:
+            links = '<div class="sidebar-empty">まだありません</div>'
+        parts.append(
+            f'        <div class="sidebar-cat" data-cat="{cat_id}"{hidden}>'
+            f'<div class="sidebar-cat-name">{esc(cat_name)}</div>{links}</div>\n'
+        )
+    return "".join(parts)
+
+
 def generate_index():
     # 全カテゴリのデータ収集
     all_data = {}
@@ -114,6 +193,8 @@ def generate_index():
     legacy_days = []
     for json_file in legacy_jsons:
         date_str = json_file.stem
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_str):
+            continue
         try:
             with open(json_file, "r", encoding="utf-8") as f:
                 articles = json.load(f)
@@ -121,6 +202,8 @@ def generate_index():
                 "date": date_str,
                 "count": len(articles),
                 "titles": [get_display_title(a) for a in articles],
+                # 旧構造の記事ページは articles/ 直下にある（articles/it/ には無い）
+                "href": f"articles/{date_str}.html",
             })
         except (json.JSONDecodeError, KeyError):
             continue
@@ -152,11 +235,19 @@ def generate_index():
             if w["id"] not in existing_weekly_ids:
                 all_weeklies.setdefault("it", []).append(w)
 
-    # JSON化
-    categories_json = json.dumps(
-        {cat_id: {"name": cat_name, "weeks": all_data.get(cat_id, []), "weeklies": all_weeklies.get(cat_id, [])}
-         for cat_id, cat_name in CATEGORIES.items()},
-        ensure_ascii=False
+    initial_category = "it"
+    initial_weeks = all_data.get(initial_category) or []
+    initial_label = initial_weeks[0]["label"] if initial_weeks else CATEGORIES[initial_category]
+    prev_disabled = " disabled" if len(initial_weeks) <= 1 else ""
+    next_disabled = " disabled"  # 初期表示は最新週なので「次の週へ」は無効
+
+    panels_html = render_panels(all_data, initial_category)
+    sidebar_html = render_sidebar(all_weeklies, initial_category)
+
+    tabs_html = "".join(
+        f'    <button class="tab-btn{" active" if cat_id == initial_category else ""}"'
+        f' data-cat="{cat_id}" type="button">{esc(cat_name)}</button>\n'
+        for cat_id, cat_name in CATEGORIES.items()
     )
 
     html = f'''<!DOCTYPE html>
@@ -183,6 +274,8 @@ def generate_index():
     .layout {{ display: flex; max-width: 1100px; margin: 0 auto; min-height: calc(100vh - 250px); }}
     .sidebar {{ width: 220px; padding: 1.5rem 1rem; border-right: 1px solid #e5e5e5; background: #fff; flex-shrink: 0; }}
     .sidebar h2 {{ font-size: 14px; font-weight: 600; color: #555; margin-bottom: 12px; }}
+    .sidebar-cat[hidden] {{ display: none; }}
+    .sidebar-cat-name {{ display: none; font-size: 12px; font-weight: 600; color: #888; margin: 8px 0 4px; }}
     .sidebar-link {{ display: block; padding: 8px 12px; font-size: 13px; color: #1a73e8; text-decoration: none; border-radius: 6px; margin-bottom: 4px; }}
     .sidebar-link:hover {{ background: #f0f4ff; }}
     .sidebar-empty {{ font-size: 12px; color: #999; padding: 8px 12px; }}
@@ -193,6 +286,8 @@ def generate_index():
     .week-btn:hover {{ background: #f0f0f0; }}
     .week-btn:disabled {{ opacity: 0.3; cursor: default; }}
     .week-btn:disabled:hover {{ background: #fff; }}
+    .week-panel[hidden] {{ display: none; }}
+    .week-heading {{ display: none; font-size: 16px; font-weight: 600; margin: 1.5rem 0 0.75rem; }}
     .day-card {{ display: block; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; margin-bottom: 12px; text-decoration: none; color: inherit; transition: box-shadow 0.2s; }}
     .day-card:hover {{ box-shadow: 0 2px 8px rgba(0,0,0,0.08); }}
     .day-date {{ font-size: 15px; font-weight: 600; margin-bottom: 4px; }}
@@ -213,6 +308,14 @@ def generate_index():
       .tab-btn {{ padding: 10px 14px; font-size: 13px; }}
     }}
   </style>
+  <noscript>
+    <style>
+      /* JS 無効時はタブ・週送りが使えないため、全カテゴリ・全週を並べて表示する */
+      .week-panel[hidden], .sidebar-cat[hidden] {{ display: block !important; }}
+      .week-heading, .sidebar-cat-name {{ display: block !important; }}
+      .week-nav, .category-tabs {{ display: none !important; }}
+    </style>
+  </noscript>
 </head>
 <body>
   <div class="site-header">
@@ -221,24 +324,23 @@ def generate_index():
   </div>
 
   <div class="category-tabs" id="category-tabs">
-    <button class="tab-btn active" data-cat="it">IT・テクノロジー</button>
-    <button class="tab-btn" data-cat="japan_economy">日本経済</button>
-    <button class="tab-btn" data-cat="world_economy">世界経済</button>
-  </div>
+{tabs_html}  </div>
 
   <div class="layout">
     <aside class="sidebar">
       <h2>週次サマリー</h2>
-      <div id="sidebar-content"></div>
+      <div id="sidebar-content">
+{sidebar_html}      </div>
     </aside>
 
     <main class="main">
-      <div class="week-nav">
-        <button class="week-btn" id="btn-prev" onclick="prevWeek()">&#9664; 前の週へ</button>
-        <span class="week-label" id="week-label"></span>
-        <button class="week-btn" id="btn-next" onclick="nextWeek()">次の週へ &#9654;</button>
+      <div class="week-nav" id="week-nav">
+        <button class="week-btn" id="btn-prev" type="button" onclick="prevWeek()"{prev_disabled}>&#9664; 前の週へ</button>
+        <span class="week-label" id="week-label">{esc(initial_label)}</span>
+        <button class="week-btn" id="btn-next" type="button" onclick="nextWeek()"{next_disabled}>次の週へ &#9654;</button>
       </div>
-      <div id="articles-container"></div>
+      <div id="articles-container">
+{panels_html}      </div>
     </main>
   </div>
 
@@ -252,123 +354,62 @@ def generate_index():
   </footer>
 
   <script>
-    const validCategories = ["it", "japan_economy", "world_economy"];
-    const urlCat = new URLSearchParams(window.location.search).get("cat");
-    const initialCategory = validCategories.indexOf(urlCat) >= 0 ? urlCat : "it";
+    // 記事タイトル一覧は生成時に HTML へ書き出し済み。
+    // JS は既存 DOM の表示切り替え（カテゴリタブ・週送り）だけを担当する。
+    (function () {{
+      var validCategories = ["it", "japan_economy", "world_economy"];
+      var panels = Array.prototype.slice.call(document.querySelectorAll(".week-panel"));
+      var sidebarCats = Array.prototype.slice.call(document.querySelectorAll(".sidebar-cat"));
+      var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));
+      var labelEl = document.getElementById("week-label");
+      var prevBtn = document.getElementById("btn-prev");
+      var nextBtn = document.getElementById("btn-next");
 
-    const categories = {categories_json};
-    let currentCategory = initialCategory;
-    let currentPage = 0;
+      var currentCategory = "{initial_category}";
+      var currentPage = 0;
 
-    const weekdays = ["\\u65E5", "\\u6708", "\\u706B", "\\u6C34", "\\u6728", "\\u91D1", "\\u571F"];
-
-    function getArticlePath(category, date) {{
-      if (category === "it") {{
-        // 旧構造チェック: articles/直下にあるかカテゴリフォルダか
-        const catData = categories[category];
-        const weeks = catData.weeks;
-        for (const w of weeks) {{
-          for (const d of w.days) {{
-            if (d.date === date) {{
-              // 新構造のファイルがあればカテゴリパス、なければ旧パス
-              return "articles/it/" + date + ".html";
-            }}
-          }}
-        }}
-      }}
-      return "articles/" + category + "/" + date + ".html";
-    }}
-
-    function renderSidebar() {{
-      const container = document.getElementById("sidebar-content");
-      const weeklies = categories[currentCategory].weeklies || [];
-      if (weeklies.length === 0) {{
-        container.innerHTML = '<div class="sidebar-empty">まだありません</div>';
-        return;
-      }}
-      container.innerHTML = weeklies.map(w =>
-        '<a href="articles/' + w.filename + '" class="sidebar-link">' + w.id + '</a>'
-      ).join("");
-    }}
-
-    function renderWeek() {{
-      const catData = categories[currentCategory];
-      const weeks = catData.weeks;
-      const container = document.getElementById("articles-container");
-
-      if (!weeks || weeks.length === 0) {{
-        document.getElementById("week-label").textContent = catData.name;
-        document.getElementById("btn-prev").disabled = true;
-        document.getElementById("btn-next").disabled = true;
-        container.innerHTML = '<div class="empty-message">\\u307E\\u3060\\u8A18\\u4E8B\\u304C\\u3042\\u308A\\u307E\\u305B\\u3093</div>';
-        return;
+      function panelsOf(cat) {{
+        return panels.filter(function (p) {{ return p.dataset.cat === cat; }});
       }}
 
-      if (currentPage >= weeks.length) currentPage = weeks.length - 1;
-      if (currentPage < 0) currentPage = 0;
+      function render() {{
+        var list = panelsOf(currentCategory);
+        if (currentPage >= list.length) currentPage = list.length - 1;
+        if (currentPage < 0) currentPage = 0;
 
-      const week = weeks[currentPage];
-      document.getElementById("week-label").textContent = week.label;
-      document.getElementById("btn-prev").disabled = (currentPage >= weeks.length - 1);
-      document.getElementById("btn-next").disabled = (currentPage <= 0);
+        panels.forEach(function (p) {{
+          p.hidden = !(p.dataset.cat === currentCategory && Number(p.dataset.page) === currentPage);
+        }});
+        sidebarCats.forEach(function (s) {{
+          s.hidden = s.dataset.cat !== currentCategory;
+        }});
+        tabs.forEach(function (b) {{
+          b.classList.toggle("active", b.dataset.cat === currentCategory);
+        }});
 
-      container.innerHTML = "";
+        var active = list[currentPage];
+        labelEl.textContent = active ? active.dataset.label : "";
+        prevBtn.disabled = currentPage >= list.length - 1;
+        nextBtn.disabled = currentPage <= 0;
+      }}
 
-      week.days.forEach(day => {{
-        const dt = new Date(day.date + "T00:00:00");
-        const wd = weekdays[dt.getDay()];
-        const display = dt.getFullYear() + "\\u5E74" + (dt.getMonth()+1) + "\\u6708" + dt.getDate() + "\\u65E5";
+      window.prevWeek = function () {{ currentPage++; render(); }};
+      window.nextWeek = function () {{ currentPage--; render(); }};
 
-        let titlesHtml = day.titles.map(t => "<li>\\u30FB" + t + "</li>").join("");
-
-        const card = document.createElement("a");
-        card.href = getArticlePath(currentCategory, day.date);
-        card.className = "day-card";
-        card.innerHTML = '<div class="day-date">' + display + '\\uFF08' + wd + '\\uFF09</div>'
-          + '<div class="day-count">' + day.count + '\\u4EF6\\u306E\\u8A18\\u4E8B</div>'
-          + '<ul class="day-titles">' + titlesHtml + '</ul>';
-        container.appendChild(card);
+      tabs.forEach(function (btn) {{
+        btn.addEventListener("click", function () {{
+          currentCategory = btn.dataset.cat;
+          currentPage = 0;
+          render();
+        }});
       }});
-    }}
 
-    function switchCategory(cat) {{
-      currentCategory = cat;
-      currentPage = 0;
-      document.querySelectorAll(".tab-btn").forEach(btn => {{
-        btn.classList.toggle("active", btn.dataset.cat === cat);
-      }});
-      renderSidebar();
-      renderWeek();
-    }}
-
-    function prevWeek() {{
-      const weeks = categories[currentCategory].weeks;
-      if (currentPage < weeks.length - 1) {{
-        currentPage++;
-        renderWeek();
+      var urlCat = new URLSearchParams(window.location.search).get("cat");
+      if (validCategories.indexOf(urlCat) >= 0) {{
+        currentCategory = urlCat;
       }}
-    }}
-
-    function nextWeek() {{
-      if (currentPage > 0) {{
-        currentPage--;
-        renderWeek();
-      }}
-    }}
-
-    // タブクリックイベント
-    document.querySelectorAll(".tab-btn").forEach(btn => {{
-      btn.addEventListener("click", () => switchCategory(btn.dataset.cat));
-    }});
-
-    // 初期タブの見た目を初期カテゴリに合わせる
-    document.querySelectorAll(".tab-btn").forEach(btn => {{
-      btn.classList.toggle("active", btn.dataset.cat === currentCategory);
-    }});
-
-    // 初期表示
-    renderSidebar();
-    renderWeek();
+      render();
+    }})();
   </script>
 </body>
 </html>'''
