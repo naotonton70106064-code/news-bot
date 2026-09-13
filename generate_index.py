@@ -18,12 +18,14 @@ CATEGORIES = {
 
 WEEKDAYS_JA = ["月", "火", "水", "木", "金", "土", "日"]
 
-# 設計ケーススタディ（手書き Markdown、build_case_studies.py が生成）。
-# RSS カテゴリではないので CATEGORIES には入れず、マニフェスト case-studies/index.json が
-# 存在するときだけ 4 つ目のタブとして追加する（無ければ従来どおりの出力）。
-CASE_STUDIES_KEY = "case_studies"
-CASE_STUDIES_NAME = "設計ケーススタディ"
-CASE_STUDIES_MANIFEST = Path("case-studies") / "index.json"
+# 手書き Markdown コンテンツ（build_content.py が生成。ニュースとは別系統）。
+# トップのタブには入れず、左サイドバーから各一覧ページへ遷移させる。
+# 一覧ページ ({dir}/index.html) がリポジトリに存在するときだけリンクを出す
+# （build_content.py 未実行の環境 = 現在の main でも 404 リンクを出さない）。
+SIDEBAR_CONTENT_LINKS = [
+    {"dir": "case-studies", "label": "設計ケーススタディ"},
+    {"dir": "blog", "label": "管理人ブログ"},
+]
 
 
 def esc(text):
@@ -165,62 +167,20 @@ def render_panels(all_data, initial_category):
     return "".join(parts)
 
 
-def load_case_studies():
-    """case-studies/index.json（番号降順のリスト）を読む。無ければ None"""
-    if not CASE_STUDIES_MANIFEST.exists():
-        return None
-    try:
-        with open(CASE_STUDIES_MANIFEST, "r", encoding="utf-8") as f:
-            entries = json.load(f)
-    except (json.JSONDecodeError, OSError):
-        return None
-    return entries if isinstance(entries, list) else None
-
-
-def render_case_card(entry):
-    """ケーススタディ 1 本分のカード HTML"""
-    tags_html = "".join(
-        f'<span class="case-tag">#{esc(t)}</span>' for t in (entry.get("tags") or [])
+def render_sidebar_content_links():
+    """サイドバー下部のコンテンツ導線（一覧ページが存在するものだけ）。無ければ空文字"""
+    links = "".join(
+        f'        <a href="{esc(item["dir"])}/" class="sidebar-nav-link">{esc(item["label"])} &rarr;</a>\n'
+        for item in SIDEBAR_CONTENT_LINKS
+        if (Path(item["dir"]) / "index.html").exists()
     )
-    try:
-        dt = datetime.strptime(entry.get("date", ""), "%Y-%m-%d")
-        date_text = f"{dt.year}年{dt.month}月{dt.day}日"
-    except ValueError:
-        date_text = entry.get("date", "")
+    if not links:
+        return ""
     return (
-        f'        <a class="day-card case-card" href="{esc(entry.get("href", ""))}">\n'
-        f'          <div class="case-card-top">'
-        f'<span class="case-no">No. {int(entry.get("no", 0)):03d}</span>'
-        f'<span class="case-genre">{esc(entry.get("genre", ""))}</span>'
-        f'<span class="day-count">{esc(date_text)}</span></div>\n'
-        f'          <h3 class="day-date">{esc(entry.get("title", ""))}</h3>\n'
-        f'          <div class="case-tags">{tags_html}</div>\n'
-        f"        </a>\n"
-    )
-
-
-def render_case_studies_panel(entries, initial_category):
-    """ケーススタディはページ送り無しの 1 パネル"""
-    hidden = "" if CASE_STUDIES_KEY == initial_category else " hidden"
-    if entries:
-        cards = "".join(render_case_card(e) for e in entries)
-    else:
-        cards = '        <div class="empty-message">まだ記事がありません</div>\n'
-    return (
-        f'      <section class="week-panel" data-cat="{CASE_STUDIES_KEY}" data-page="0"'
-        f' data-label="全 {len(entries)} 本"{hidden}>\n'
-        f'        <h2 class="week-heading">{esc(CASE_STUDIES_NAME)}</h2>\n'
-        f"{cards}"
-        f"      </section>\n"
-    )
-
-
-def render_case_studies_sidebar(initial_category):
-    hidden = "" if CASE_STUDIES_KEY == initial_category else " hidden"
-    return (
-        f'        <div class="sidebar-cat" data-cat="{CASE_STUDIES_KEY}"{hidden}>'
-        f'<div class="sidebar-cat-name">{esc(CASE_STUDIES_NAME)}</div>'
-        f'<a href="case-studies/" class="sidebar-link">一覧ページを見る &rarr;</a></div>\n'
+        '      <hr class="sidebar-sep">\n'
+        '      <nav class="sidebar-nav" aria-label="コンテンツ">\n'
+        f"{links}"
+        "      </nav>\n"
     )
 
 
@@ -310,21 +270,13 @@ def generate_index():
     panels_html = render_panels(all_data, initial_category)
     sidebar_html = render_sidebar(all_weeklies, initial_category)
 
-    tab_items = list(CATEGORIES.items())
-
-    # 設計ケーススタディ（マニフェストがあるときだけタブを追加）
-    case_studies = load_case_studies()
-    if case_studies is not None:
-        tab_items.append((CASE_STUDIES_KEY, CASE_STUDIES_NAME))
-        panels_html += render_case_studies_panel(case_studies, initial_category)
-        sidebar_html += render_case_studies_sidebar(initial_category)
-
-    valid_categories_js = json.dumps([cat_id for cat_id, _ in tab_items])
+    sidebar_nav_html = render_sidebar_content_links()
+    valid_categories_js = json.dumps(list(CATEGORIES))
 
     tabs_html = "".join(
         f'    <button class="tab-btn{" active" if cat_id == initial_category else ""}"'
         f' data-cat="{cat_id}" type="button">{esc(cat_name)}</button>\n'
-        for cat_id, cat_name in tab_items
+        for cat_id, cat_name in CATEGORIES.items()
     )
 
     html = f'''<!DOCTYPE html>
@@ -350,7 +302,16 @@ def generate_index():
     .tab-btn.active {{ color: #111; border-bottom-color: #111; font-weight: 600; }}
     .layout {{ display: flex; max-width: 1100px; margin: 0 auto; min-height: calc(100vh - 250px); }}
     .sidebar {{ width: 220px; padding: 1.5rem 1rem; border-right: 1px solid #e5e5e5; background: #fff; flex-shrink: 0; }}
-    .sidebar h2 {{ font-size: 14px; font-weight: 600; color: #555; margin-bottom: 12px; }}
+    /* 週次サマリーは <details> のネイティブ開閉（JS 不要）。HTML 側で open を付けてあるので JS 無効時は開いた状態 */
+    .sidebar-weekly > summary {{ font-size: 14px; font-weight: 600; color: #555; margin-bottom: 12px; padding: 4px 0; cursor: pointer; list-style: none; user-select: none; }}
+    .sidebar-weekly > summary::-webkit-details-marker {{ display: none; }}
+    .sidebar-weekly > summary::before {{ content: "\\25B6"; display: inline-block; width: 1.2em; font-size: 10px; color: #888; transition: transform 0.15s; }}
+    .sidebar-weekly[open] > summary::before {{ transform: rotate(90deg); }}
+    .sidebar-weekly > summary:hover {{ color: #111; }}
+    .sidebar-sep {{ border: none; border-top: 1px solid #e5e5e5; margin: 1rem 0; }}
+    .sidebar-nav {{ display: flex; flex-direction: column; gap: 4px; }}
+    .sidebar-nav-link {{ display: block; padding: 10px 12px; font-size: 14px; font-weight: 600; color: #111; text-decoration: none; border: 1px solid #e5e5e5; border-radius: 8px; background: #f8f9fa; }}
+    .sidebar-nav-link:hover {{ background: #f0f0f0; }}
     .sidebar-cat[hidden] {{ display: none; }}
     .sidebar-cat-name {{ display: none; font-size: 12px; font-weight: 600; color: #888; margin: 8px 0 4px; }}
     .sidebar-link {{ display: block; padding: 8px 12px; font-size: 13px; color: #1a73e8; text-decoration: none; border-radius: 6px; margin-bottom: 4px; }}
@@ -372,12 +333,6 @@ def generate_index():
     .day-titles {{ list-style: none; font-size: 13px; color: #444; line-height: 1.8; }}
     .day-titles .more {{ color: #888; }}
     .empty-message {{ text-align: center; padding: 3rem; color: #888; font-size: 14px; }}
-    .case-card-top {{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; color: #888; }}
-    .case-no {{ display: inline-block; font-weight: 600; padding: 2px 8px; background: #111; color: #fff; border-radius: 20px; }}
-    .case-genre {{ display: inline-block; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; }}
-    .case-card .day-count {{ margin-bottom: 0; }}
-    .case-tags {{ font-size: 12px; color: #666; }}
-    .case-tag {{ display: inline-block; padding: 1px 8px; background: #eee; border-radius: 20px; margin-right: 4px; }}
     .footer {{ border-top: 1px solid #e5e5e5; padding: 2rem 1rem; text-align: center; background: #fff; }}
     .footer-links {{ margin-bottom: 8px; }}
     .footer-links a {{ font-size: 13px; color: #1a73e8; text-decoration: none; margin: 0 12px; }}
@@ -387,6 +342,8 @@ def generate_index():
       .layout {{ flex-direction: column; }}
       .sidebar {{ width: 100%; border-right: none; border-bottom: 1px solid #e5e5e5; padding: 1rem; }}
       .sidebar-link {{ display: inline-block; margin-right: 4px; }}
+      .sidebar-nav {{ flex-direction: row; flex-wrap: wrap; }}
+      .sidebar-nav-link {{ flex: 1 1 auto; text-align: center; }}
       .main {{ padding: 1rem; }}
       .tab-btn {{ padding: 10px 14px; font-size: 13px; }}
     }}
@@ -411,10 +368,12 @@ def generate_index():
 
   <div class="layout">
     <aside class="sidebar">
-      <h2>週次サマリー</h2>
-      <div id="sidebar-content">
-{sidebar_html}      </div>
-    </aside>
+      <details class="sidebar-weekly" id="sidebar-weekly" open>
+        <summary>週次サマリー</summary>
+        <div id="sidebar-content">
+{sidebar_html}        </div>
+      </details>
+{sidebar_nav_html}    </aside>
 
     <main class="main">
       <div class="week-nav" id="week-nav">
@@ -486,6 +445,13 @@ def generate_index():
           render();
         }});
       }});
+
+      // 週次サマリーの開閉は <details> がネイティブに処理する。モバイル幅では初期状態だけ閉じる
+      // （サイドバーが記事一覧の上に縦積みされるため）。JS 無効時は HTML の open のまま = 開いた状態。
+      var weekly = document.getElementById("sidebar-weekly");
+      if (weekly && window.matchMedia && window.matchMedia("(max-width: 768px)").matches) {{
+        weekly.open = false;
+      }}
 
       var urlCat = new URLSearchParams(window.location.search).get("cat");
       if (validCategories.indexOf(urlCat) >= 0) {{
