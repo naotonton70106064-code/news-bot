@@ -16,6 +16,7 @@ RSS フィードから取得したニュース記事を Anthropic Claude API で
 - 既存記事ページの再生成 (冪等): `python rebuild_article_pages.py` — `articles/` 以下と直下のレガシー HTML を JSON から作り直す。テンプレート (`templates/dashboard.html`) や `render.py` を変更したら実行する
 - 既存記事への関連リンク再注入 (ワンショット・**非推奨**): `python update_related_links.py` — JS 描画時代の旧テンプレート向け。現行のサーバサイド生成ページには実行しないこと
 - 既存記事へのフッターリンク注入 (ワンショット): `python add_footer_links.py` — 既存の `articles/` 以下全 HTML (旧構造含む) にプライバシーポリシー等へのフッターリンクを冪等に挿入/更新。新規生成分は `templates/dashboard.html` / `weekly.py` のテンプレートに同ブロックが組み込み済み
+- ケーススタディのビルド (ローカル専用): `python build_case_studies.py` — `content/case-studies/*.md` から `case-studies/{slug}/index.html`・`case-studies/index.html`・`case-studies/index.json` を生成。生成物は手動でコミットする (CI は実行しない)。追加依存 `pip install markdown pygments pyyaml` はローカルのみ
 - 依存: `pip install feedparser anthropic python-dotenv` (CI と同じ)
 - `ANTHROPIC_API_KEY` を `.env` か環境変数で渡す必要がある (`summarizer.py` が起動時にロード)
 
@@ -62,7 +63,15 @@ collector.py        →  main.py            →  generate_index.py
 - 旧構造: `articles/{YYYY-MM-DD}.{json,html}` (IT 専用、初期実装の名残)。`generate_index` はこれを IT の週に統合するが、リンク先は `articles/{date}.html` (旧パス) のまま出す — `articles/it/{date}.html` は存在しないので混同しないこと
 - `weekly.load_week_articles` は IT カテゴリのときだけ旧構造も追加で読み込む。`news_YYYYMMDD.json` (リポジトリ直下) は初期化期のレガシーデータで、現行パイプラインからは触らない (`articles/{date}.json` と内容が重複)。対になっていた `dashboard_YYYYMMDD.html` は重複コンテンツだったため削除済み — 再生成しないこと
 
-### GitHub Actions の責務
-両ワークフローとも (1) スクリプト実行、(2) `articles/`・`index.html`・`collected_urls.json` を `git add` してコミット&push、(3) 「公開対象から templates/ を除外」ステップで作業ツリーの `templates/` を `$RUNNER_TEMP` へ退避、(4) リポジトリ全体 (`path: '.'`) を Pages アーティファクトとして upload &deploy、を行う。差分がなければコミットはスキップされる (`git diff --staged --quiet || git commit`)。
+### 設計ケーススタディ (手書き Markdown、ニュースとは別系統)
+- ソース: `content/case-studies/NNN-slug.md` (`_template.md` が雛形。`_` 始まりは無視)。frontmatter は `title` / `no` / `genre` / `date` / `xPostedAt` / `tags[]` / `ads` (+任意 `description`)。**ファイル名の 3 桁連番・frontmatter `no`・本文 h1 `# 設計ケーススタディ NN:` の三者一致をビルド時に検証する** (公開後の URL を変えないため。スラッグは変更しない)
+- 出力 URL: `/case-studies/NNN-slug/` (実体 `case-studies/NNN-slug/index.html`、`__ROOT__` は `../../`)。一覧は `/case-studies/`
+- レンダラは `build_case_studies.py` + `templates/case_study.html` / `templates/case_studies_index.html`。Python-Markdown (`fenced_code` / `codehilite(guess_lang=False)` / `tables` / `toc` / `sane_lists`) + Pygments で**ビルド時に静的ハイライト** (JS なし)。フェンスブロックの原文と `<pre>` の内容が一致することを assert しており、ASCII 図が崩れるとビルドが失敗する。`smarty` 等の記号自動変換は入れないこと
+- **広告出し分け**: `render.render_ads_head()` / `render_ads_unit()` が AdSense コードの単一ソース。frontmatter `ads: false` なら head ローダも記事下ユニットも出さない (自動広告も出ない)。ニュース側の `templates/dashboard.html` は同じコードが直書きで常に ads=true 相当 (既存 HTML を書き換えないため据え置き)
+- `generate_index.py` は `case-studies/index.json` が存在するときだけ「設計ケーススタディ」タブを追加する (`CATEGORIES` には入れない。RSS カテゴリ追加の「4 か所」ルールの対象外)。マニフェストが無ければ従来と同じ出力
+- `content/` は `templates/` と同様に Pages への upload 前に退避される (生の .md を公開しない)
 
-**upload の前に必ず `templates/` を退避すること。** `path: '.'` でリポジトリ全体が配信されるため、退避しないと未置換プレースホルダのままのテンプレートが `/templates/dashboard.html` として公開される。退避はコミット&push の後に行うのでリポジトリの内容には影響せず、除外ステップは `index.html` / `articles/` の存在も併せて検証している (欠落したらジョブが失敗する)。
+### GitHub Actions の責務
+両ワークフローとも (1) スクリプト実行、(2) `articles/`・`index.html`・`collected_urls.json` を `git add` してコミット&push、(3) 「公開対象から templates/ と content/ を除外」ステップで作業ツリーの `templates/` と `content/` を `$RUNNER_TEMP` へ退避、(4) リポジトリ全体 (`path: '.'`) を Pages アーティファクトとして upload &deploy、を行う。差分がなければコミットはスキップされる (`git diff --staged --quiet || git commit`)。
+
+**upload の前に必ず `templates/` と `content/` を退避すること。** `path: '.'` でリポジトリ全体が配信されるため、退避しないと未置換プレースホルダのままのテンプレートが `/templates/dashboard.html` として公開される。退避はコミット&push の後に行うのでリポジトリの内容には影響せず、除外ステップは `index.html` / `articles/` の存在も併せて検証している (欠落したらジョブが失敗する)。

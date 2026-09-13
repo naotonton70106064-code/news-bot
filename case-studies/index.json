@@ -1,0 +1,17 @@
+[
+  {
+    "no": 10,
+    "slug": "010-email-duplicate",
+    "title": "通知メールの重複送信をどう防ぐか",
+    "genre": "信頼性設計",
+    "date": "2026-09-13",
+    "xPostedAt": null,
+    "tags": [
+      "冪等性",
+      "メッセージング",
+      "DB"
+    ],
+    "ads": true,
+    "href": "case-studies/010-email-duplicate/"
+  }
+]

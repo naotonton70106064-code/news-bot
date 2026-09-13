@@ -46,15 +46,19 @@ jobs:
           git push
 
       # templates/ は記事ページ生成用のテンプレート本体で、未置換のプレースホルダが
-      # 残った空ページになるため公開しない。リポジトリへのコミット&pushは上のステップで
-      # 完了済みなので、ここで作業ツリーから退避してもリポジトリの内容には影響しない。
-      - name: 公開対象から templates/ を除外
+      # 残った空ページになるため公開しない。content/ はケーススタディの Markdown ソース
+      # （生成物は case-studies/ に別途コミット済み）で、生の .md を公開しないため同様に退避する。
+      # リポジトリへのコミット&pushは上のステップで完了済みなので、ここで作業ツリーから
+      # 退避してもリポジトリの内容には影響しない。
+      - name: 公開対象から templates/ と content/ を除外
         run: |
-          if [ -d templates ]; then
-            mkdir -p "$RUNNER_TEMP/excluded"
-            mv templates "$RUNNER_TEMP/excluded/"
-          fi
-          test ! -e templates
+          mkdir -p "$RUNNER_TEMP/excluded"
+          for d in templates content; do
+            if [ -d "$d" ]; then
+              mv "$d" "$RUNNER_TEMP/excluded/"
+            fi
+            test ! -e "$d"
+          done
           test -f index.html
           test -d articles
           echo "公開する直下HTML:"

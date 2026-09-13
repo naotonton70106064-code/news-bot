@@ -18,6 +18,13 @@ CATEGORIES = {
 
 WEEKDAYS_JA = ["月", "火", "水", "木", "金", "土", "日"]
 
+# 設計ケーススタディ（手書き Markdown、build_case_studies.py が生成）。
+# RSS カテゴリではないので CATEGORIES には入れず、マニフェスト case-studies/index.json が
+# 存在するときだけ 4 つ目のタブとして追加する（無ければ従来どおりの出力）。
+CASE_STUDIES_KEY = "case_studies"
+CASE_STUDIES_NAME = "設計ケーススタディ"
+CASE_STUDIES_MANIFEST = Path("case-studies") / "index.json"
+
 
 def esc(text):
     if text is None:
@@ -158,6 +165,65 @@ def render_panels(all_data, initial_category):
     return "".join(parts)
 
 
+def load_case_studies():
+    """case-studies/index.json（番号降順のリスト）を読む。無ければ None"""
+    if not CASE_STUDIES_MANIFEST.exists():
+        return None
+    try:
+        with open(CASE_STUDIES_MANIFEST, "r", encoding="utf-8") as f:
+            entries = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+    return entries if isinstance(entries, list) else None
+
+
+def render_case_card(entry):
+    """ケーススタディ 1 本分のカード HTML"""
+    tags_html = "".join(
+        f'<span class="case-tag">#{esc(t)}</span>' for t in (entry.get("tags") or [])
+    )
+    try:
+        dt = datetime.strptime(entry.get("date", ""), "%Y-%m-%d")
+        date_text = f"{dt.year}年{dt.month}月{dt.day}日"
+    except ValueError:
+        date_text = entry.get("date", "")
+    return (
+        f'        <a class="day-card case-card" href="{esc(entry.get("href", ""))}">\n'
+        f'          <div class="case-card-top">'
+        f'<span class="case-no">No. {int(entry.get("no", 0)):03d}</span>'
+        f'<span class="case-genre">{esc(entry.get("genre", ""))}</span>'
+        f'<span class="day-count">{esc(date_text)}</span></div>\n'
+        f'          <h3 class="day-date">{esc(entry.get("title", ""))}</h3>\n'
+        f'          <div class="case-tags">{tags_html}</div>\n'
+        f"        </a>\n"
+    )
+
+
+def render_case_studies_panel(entries, initial_category):
+    """ケーススタディはページ送り無しの 1 パネル"""
+    hidden = "" if CASE_STUDIES_KEY == initial_category else " hidden"
+    if entries:
+        cards = "".join(render_case_card(e) for e in entries)
+    else:
+        cards = '        <div class="empty-message">まだ記事がありません</div>\n'
+    return (
+        f'      <section class="week-panel" data-cat="{CASE_STUDIES_KEY}" data-page="0"'
+        f' data-label="全 {len(entries)} 本"{hidden}>\n'
+        f'        <h2 class="week-heading">{esc(CASE_STUDIES_NAME)}</h2>\n'
+        f"{cards}"
+        f"      </section>\n"
+    )
+
+
+def render_case_studies_sidebar(initial_category):
+    hidden = "" if CASE_STUDIES_KEY == initial_category else " hidden"
+    return (
+        f'        <div class="sidebar-cat" data-cat="{CASE_STUDIES_KEY}"{hidden}>'
+        f'<div class="sidebar-cat-name">{esc(CASE_STUDIES_NAME)}</div>'
+        f'<a href="case-studies/" class="sidebar-link">一覧ページを見る &rarr;</a></div>\n'
+    )
+
+
 def render_sidebar(all_weeklies, initial_category):
     """週次サマリーリンクを全カテゴリ分書き出す"""
     parts = []
@@ -244,10 +310,21 @@ def generate_index():
     panels_html = render_panels(all_data, initial_category)
     sidebar_html = render_sidebar(all_weeklies, initial_category)
 
+    tab_items = list(CATEGORIES.items())
+
+    # 設計ケーススタディ（マニフェストがあるときだけタブを追加）
+    case_studies = load_case_studies()
+    if case_studies is not None:
+        tab_items.append((CASE_STUDIES_KEY, CASE_STUDIES_NAME))
+        panels_html += render_case_studies_panel(case_studies, initial_category)
+        sidebar_html += render_case_studies_sidebar(initial_category)
+
+    valid_categories_js = json.dumps([cat_id for cat_id, _ in tab_items])
+
     tabs_html = "".join(
         f'    <button class="tab-btn{" active" if cat_id == initial_category else ""}"'
         f' data-cat="{cat_id}" type="button">{esc(cat_name)}</button>\n'
-        for cat_id, cat_name in CATEGORIES.items()
+        for cat_id, cat_name in tab_items
     )
 
     html = f'''<!DOCTYPE html>
@@ -295,6 +372,12 @@ def generate_index():
     .day-titles {{ list-style: none; font-size: 13px; color: #444; line-height: 1.8; }}
     .day-titles .more {{ color: #888; }}
     .empty-message {{ text-align: center; padding: 3rem; color: #888; font-size: 14px; }}
+    .case-card-top {{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; color: #888; }}
+    .case-no {{ display: inline-block; font-weight: 600; padding: 2px 8px; background: #111; color: #fff; border-radius: 20px; }}
+    .case-genre {{ display: inline-block; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; }}
+    .case-card .day-count {{ margin-bottom: 0; }}
+    .case-tags {{ font-size: 12px; color: #666; }}
+    .case-tag {{ display: inline-block; padding: 1px 8px; background: #eee; border-radius: 20px; margin-right: 4px; }}
     .footer {{ border-top: 1px solid #e5e5e5; padding: 2rem 1rem; text-align: center; background: #fff; }}
     .footer-links {{ margin-bottom: 8px; }}
     .footer-links a {{ font-size: 13px; color: #1a73e8; text-decoration: none; margin: 0 12px; }}
@@ -357,7 +440,7 @@ def generate_index():
     // 記事タイトル一覧は生成時に HTML へ書き出し済み。
     // JS は既存 DOM の表示切り替え（カテゴリタブ・週送り）だけを担当する。
     (function () {{
-      var validCategories = ["it", "japan_economy", "world_economy"];
+      var validCategories = {valid_categories_js};
       var panels = Array.prototype.slice.call(document.querySelectorAll(".week-panel"));
       var sidebarCats = Array.prototype.slice.call(document.querySelectorAll(".sidebar-cat"));
       var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));

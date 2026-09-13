@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- ADSENSE-START -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1944739806788973"
+     crossorigin="anonymous"></script>
+  <!-- ADSENSE-END -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>設計ケーススタディ 10: 通知メールの重複送信をどう防ぐか - AIニュースまとめ</title>
+  <meta name="description" content="リトライで同じ通知メールが 2 通届く問題を題材に、送信ジョブの冪等性をどこで担保するかを設計ケーススタディとして整理する。">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f5; color: #111; padding: 1rem; -webkit-text-size-adjust: 100%; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .case-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 12px; color: #666; }
+    .case-no { display: inline-block; font-weight: 600; padding: 2px 8px; background: #111; color: #fff; border-radius: 20px; }
+    .case-genre { display: inline-block; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; }
+    .case-tag { display: inline-block; padding: 2px 8px; background: #eee; color: #555; border-radius: 20px; }
+    .case-date { color: #888; }
+    .case-x { color: #888; }
+    .case-x a { color: #1a73e8; text-decoration: none; }
+
+    /* ---- 本文（Markdown 由来） ---- */
+    .article-body { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.5rem; font-size: 15px; line-height: 1.85; color: #222; overflow-wrap: anywhere; }
+    .article-body h1 { font-size: 22px; font-weight: 700; line-height: 1.5; margin: 0 0 1.25rem; padding-bottom: 12px; border-bottom: 2px solid #e5e5e5; }
+    .article-body h2 { font-size: 17px; font-weight: 700; margin: 2rem 0 0.75rem; padding-left: 10px; border-left: 4px solid #111; line-height: 1.5; }
+    .article-body h3 { font-size: 15px; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+    .article-body h4 { font-size: 14px; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #333; }
+    .article-body p { margin: 0 0 1rem; }
+    .article-body ul, .article-body ol { margin: 0 0 1rem 1.5rem; }
+    .article-body li { margin-bottom: 4px; }
+    .article-body li > ul, .article-body li > ol { margin-bottom: 0; }
+    .article-body blockquote { margin: 0 0 1rem; padding: 8px 14px; border-left: 4px solid #ddd; background: #fafafa; color: #555; }
+    .article-body blockquote p:last-child { margin-bottom: 0; }
+    .article-body hr { border: none; border-top: 1px solid #e5e5e5; margin: 1.5rem 0; }
+    .article-body a { color: #1a73e8; }
+    .article-body strong { font-weight: 700; }
+    .article-body img { max-width: 100%; height: auto; }
+    .article-body .table-wrap { overflow-x: auto; margin: 0 0 1rem; }
+    .article-body table { border-collapse: collapse; font-size: 13px; min-width: 50%; }
+    .article-body th, .article-body td { border: 1px solid #ddd; padding: 6px 10px; text-align: left; vertical-align: top; }
+    .article-body th { background: #f5f5f5; font-weight: 600; }
+
+    /* ---- コードブロック / ASCII 図（最優先: 桁がずれない） ----
+       ・white-space: pre で折り返さず、はみ出しは pre の中だけ横スクロール
+       ・字間・リガチャ・iOS の文字拡大を無効化して等幅を厳密に保つ
+       ・全角混在図のために 1:2 幅の CJK 等幅フォントをスタック先頭に置く */
+    .article-body pre,
+    .article-body code {
+      font-family: "BIZ UDGothic", "Noto Sans Mono CJK JP", "Source Han Mono", "Osaka-Mono",
+                   ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+      font-variant-ligatures: none;
+      font-feature-settings: "liga" 0, "calt" 0;
+      letter-spacing: 0;
+    }
+    .article-body pre {
+      white-space: pre;
+      overflow-x: auto;
+      overflow-wrap: normal;
+      word-break: normal;
+      max-width: 100%;
+      tab-size: 4;
+      -moz-tab-size: 4;
+      font-size: 13px;
+      line-height: 1.45;
+      background: #f6f8fa;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0 0 1rem;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+    .article-body pre code { font: inherit; white-space: inherit; background: none; padding: 0; border: 0; color: inherit; }
+    .article-body p code, .article-body li code, .article-body td code, .article-body h2 code, .article-body h3 code {
+      font-size: 0.88em; background: #f0f0f0; padding: 1px 5px; border-radius: 4px; color: #c7254e;
+    }
+    .codehilite { margin: 0 0 1rem; }
+    .codehilite pre { margin: 0; }
+    /* Pygments のトークン色（ビルド時に埋め込み、JS 不要） */
+    pre { line-height: 125%; }
+    td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+    span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+    td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+    span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+    .codehilite .hll { background-color: #ffffcc }
+    .codehilite { background: #f8f8f8; }
+    .codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+    .codehilite .err { border: 1px solid #F00 } /* Error */
+    .codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+    .codehilite .o { color: #666 } /* Operator */
+    .codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+    .codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+    .codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+    .codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+    .codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+    .codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+    .codehilite .gd { color: #A00000 } /* Generic.Deleted */
+    .codehilite .ge { font-style: italic } /* Generic.Emph */
+    .codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+    .codehilite .gr { color: #E40000 } /* Generic.Error */
+    .codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+    .codehilite .gi { color: #008400 } /* Generic.Inserted */
+    .codehilite .go { color: #717171 } /* Generic.Output */
+    .codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+    .codehilite .gs { font-weight: bold } /* Generic.Strong */
+    .codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+    .codehilite .gt { color: #04D } /* Generic.Traceback */
+    .codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+    .codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+    .codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+    .codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+    .codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+    .codehilite .kt { color: #B00040 } /* Keyword.Type */
+    .codehilite .m { color: #666 } /* Literal.Number */
+    .codehilite .s { color: #BA2121 } /* Literal.String */
+    .codehilite .na { color: #687822 } /* Name.Attribute */
+    .codehilite .nb { color: #008000 } /* Name.Builtin */
+    .codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+    .codehilite .no { color: #800 } /* Name.Constant */
+    .codehilite .nd { color: #A2F } /* Name.Decorator */
+    .codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+    .codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+    .codehilite .nf { color: #00F } /* Name.Function */
+    .codehilite .nl { color: #767600 } /* Name.Label */
+    .codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+    .codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+    .codehilite .nv { color: #19177C } /* Name.Variable */
+    .codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+    .codehilite .w { color: #BBB } /* Text.Whitespace */
+    .codehilite .mb { color: #666 } /* Literal.Number.Bin */
+    .codehilite .mf { color: #666 } /* Literal.Number.Float */
+    .codehilite .mh { color: #666 } /* Literal.Number.Hex */
+    .codehilite .mi { color: #666 } /* Literal.Number.Integer */
+    .codehilite .mo { color: #666 } /* Literal.Number.Oct */
+    .codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+    .codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+    .codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+    .codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+    .codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+    .codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+    .codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+    .codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+    .codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+    .codehilite .sx { color: #008000 } /* Literal.String.Other */
+    .codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+    .codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+    .codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+    .codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+    .codehilite .fm { color: #00F } /* Name.Function.Magic */
+    .codehilite .vc { color: #19177C } /* Name.Variable.Class */
+    .codehilite .vg { color: #19177C } /* Name.Variable.Global */
+    .codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+    .codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+    .codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+
+    /* ---- 記事下の広告（ads: true のときだけ出力される） ---- */
+    .article-ad { max-width: 800px; margin: 1.5rem auto 0; }
+
+    /* ---- 関連リンク ---- */
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+      .article-body { padding: 1.1rem; font-size: 14px; }
+      .article-body h1 { font-size: 19px; }
+    }
+
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../" class="back-btn">&larr; ケーススタディ一覧に戻る</a>
+  </div>
+  <main class="container">
+    <div class="case-meta">
+      <span class="case-no">No. 010</span>
+      <span class="case-genre">信頼性設計</span>
+      <span class="case-date">2026年9月13日</span>
+      <span class="case-tag">#冪等性</span>
+      <span class="case-tag">#メッセージング</span>
+      <span class="case-tag">#DB</span>
+    </div>
+    <article class="article-body">
+<h1 id="設計ケーススタディ-10-通知メールの重複送信をどう防ぐか">設計ケーススタディ 10: 通知メールの重複送信をどう防ぐか</h1>
+<h2 id="problem">Problem</h2>
+<p>注文確定時に「ご注文ありがとうございます」メールを送るバッチがある。
+構成は次のとおりで、送信 API のタイムアウト時にジョブが自動リトライされる。</p>
+<div class="codehilite"><pre><span></span><code>+----------+     +-----------+     +------------+     +-----------+
+|  Orders  | --&gt; | Job Queue | --&gt; | Mail Worker| --&gt; | Mail API  |
+|  (DB)    |     | (Redis)   |     | (Python)   |     | (SaaS)    |
++----------+     +-----------+     +------------+     +-----------+
+                                         |  timeout -&gt; retry
+                                         +------------------+
+                                                            |
+                                              same job runs again
+</code></pre></div>
+
+<p>障害時に Mail API が「受け付けたが応答を返す前に切断」すると、
+リトライで <strong>同じ注文に対して 2 通目</strong> が送られる。実際に月に数件、顧客から指摘があった。</p>
+<p>制約:</p>
+<ul>
+<li>Mail API 側に重複排除の仕組みは無い（Idempotency-Key 非対応）</li>
+<li>Worker は複数プロセスで並列実行される</li>
+<li>注文テーブルに列を追加するのは可能だが、送信履歴の専用テーブルは無かった</li>
+</ul>
+<h2 id="question">Question</h2>
+<p>「送信したかどうか」を <strong>どこで・どの粒度で</strong> 記録すれば、並列リトライがあっても 1 注文 1 通に収まるか。</p>
+<h2 id="自分の回答">自分の回答</h2>
+<p><code>orders</code> テーブルに <code>mail_sent_at</code> 列を足し、送信前にフラグを立ててから送る案にした。</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">-- 送信前にフラグを立てる（先に立てた者だけが送る）</span>
+<span class="k">UPDATE</span><span class="w"> </span><span class="n">orders</span>
+<span class="w">   </span><span class="k">SET</span><span class="w"> </span><span class="n">mail_sent_at</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
+<span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">:</span><span class="n">order_id</span>
+<span class="w">   </span><span class="k">AND</span><span class="w"> </span><span class="n">mail_sent_at</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
+<span class="c1">-- 更新行数が 1 のときだけ送信処理へ進む</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">send_order_mail</span><span class="p">(</span><span class="n">order_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">"UPDATE orders SET mail_sent_at = NOW() "</span>
+        <span class="s2">"WHERE id = </span><span class="si">%s</span><span class="s2"> AND mail_sent_at IS NULL"</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">order_id</span><span class="p">,),</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">rowcount</span>
+    <span class="k">if</span> <span class="n">rows</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span>  <span class="c1"># 既に誰かが送っている（or 送信中）</span>
+    <span class="n">mail_api</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">order_id</span><span class="p">)</span>
+</code></pre></div>
+
+<h2 id="なぜそう考えたか">なぜそう考えたか</h2>
+<ul>
+<li><code>UPDATE ... WHERE mail_sent_at IS NULL</code> は 1 行に対する原子的な CAS なので、
+  並列に走っても更新できるのは 1 プロセスだけになる</li>
+<li>テーブル追加なしで済み、変更範囲が最小</li>
+<li>「送信済みかどうか」は注文の属性として自然に読める</li>
+</ul>
+<p>却下した案:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>案</th>
+<th>却下理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Redis の <code>SETNX</code> でロック</td>
+<td>Redis 障害時に判定が消える。DB と二重管理になる</td>
+</tr>
+<tr>
+<td>Mail API 側で重複排除</td>
+<td>非対応。乗り換えは別プロジェクト</td>
+</tr>
+<tr>
+<td>リトライを止める</td>
+<td>本当のネットワーク障害で未送信のまま残る</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="aiレビュー">AIレビュー</h2>
+<p>AI に上の案をレビューさせたところ、主に次の 3 点の指摘があった。</p>
+<blockquote>
+<ol>
+<li>フラグを「送信前」に立てると、送信に失敗した場合にフラグだけ残って <strong>永久に未送信</strong> になる。
+   <code>mail_sent_at</code> は「送信完了」ではなく「送信を試みた」の意味になっている。</li>
+<li>Mail API のタイムアウト（受理されたか不明）と、明確な失敗（4xx）を区別していない。
+   前者は再送してはいけないが、後者は再送してよい。</li>
+<li><code>orders</code> に列を足すと、将来「再送」や「別種の通知」を扱うときに列が増殖する。
+   通知の送信履歴は注文とは別のライフサイクルを持つ。</li>
+</ol>
+</blockquote>
+<h2 id="再考気づき">再考・気づき</h2>
+<p>指摘 1 が決定的だった。自分の案は「重複」は防ぐが「欠落」を生む。
+状態を 3 つ（未送信 / 送信中 / 送信済み）に分け、送信履歴を別テーブルにした。</p>
+<div class="codehilite"><pre><span></span><code>            claim (INSERT ... ON CONFLICT DO NOTHING)
+  [none] ---------------------------------------------&gt; [sending]
+                                                           |
+                       +-----------------------------------+
+                       |                                   |
+                  API 2xx / timeout                    API 4xx
+                       |                                   |
+                       v                                   v
+                   [sent]                              [failed]
+                                                           |
+                                          retry (UPDATE failed -&gt; sending)
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">order_mail_log</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="n">order_id</span><span class="w">    </span><span class="nb">BIGINT</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="k">REFERENCES</span><span class="w"> </span><span class="n">orders</span><span class="p">(</span><span class="n">id</span><span class="p">),</span>
+<span class="w">    </span><span class="k">state</span><span class="w">       </span><span class="nb">TEXT</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">CHECK</span><span class="w"> </span><span class="p">(</span><span class="k">state</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'sending'</span><span class="p">,</span><span class="w"> </span><span class="s1">'sent'</span><span class="p">,</span><span class="w"> </span><span class="s1">'failed'</span><span class="p">)),</span>
+<span class="w">    </span><span class="n">attempts</span><span class="w">    </span><span class="nb">INT</span><span class="w">  </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">    </span><span class="n">updated_at</span><span class="w">  </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span>
+<span class="p">);</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">send_order_mail</span><span class="p">(</span><span class="n">order_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># 1. claim: PRIMARY KEY 衝突で「誰かが先に取った」ことが分かる</span>
+    <span class="n">claimed</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">"INSERT INTO order_mail_log (order_id, state, attempts) "</span>
+        <span class="s2">"VALUES (</span><span class="si">%s</span><span class="s2">, 'sending', 1) ON CONFLICT (order_id) DO NOTHING"</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">order_id</span><span class="p">,),</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">rowcount</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">claimed</span><span class="p">:</span>
+        <span class="c1"># failed のものだけ再挑戦できる</span>
+        <span class="n">claimed</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">"UPDATE order_mail_log SET state='sending', attempts=attempts+1, updated_at=NOW() "</span>
+            <span class="s2">"WHERE order_id=</span><span class="si">%s</span><span class="s2"> AND state='failed'"</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">order_id</span><span class="p">,),</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">rowcount</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">claimed</span><span class="p">:</span>
+        <span class="k">return</span>  <span class="c1"># sending / sent は触らない</span>
+
+    <span class="c1"># 2. send</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">mail_api</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">order_id</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">MailApiClientError</span><span class="p">:</span>          <span class="c1"># 4xx: 受理されていないので再送可</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"UPDATE order_mail_log SET state='failed' WHERE order_id=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="p">(</span><span class="n">order_id</span><span class="p">,))</span>
+        <span class="k">raise</span>
+    <span class="k">except</span> <span class="n">MailApiTimeout</span><span class="p">:</span>              <span class="c1"># 受理されたか不明: 再送しない側に倒す</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"UPDATE order_mail_log SET state='sent' WHERE order_id=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="p">(</span><span class="n">order_id</span><span class="p">,))</span>
+        <span class="k">return</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"UPDATE order_mail_log SET state='sent' WHERE order_id=</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="p">(</span><span class="n">order_id</span><span class="p">,))</span>
+</code></pre></div>
+
+<p>タイムアウトを <code>sent</code> に倒すのは「1 通も届かない」より「まれに 2 通届く」方がまだ良い、
+という業務判断ではなく、その逆——今回は <strong>顧客からの指摘が重複側</strong> だったので欠落側に倒した。
+ここは業務ごとに決める値であって、コードで決まる値ではない。</p>
+<h2 id="設計ポイント">設計ポイント</h2>
+<ul>
+<li>冪等性は「送ったか」ではなく <strong>「送ろうとしたか / 送れたか / 失敗したか」の状態遷移</strong> として持つ</li>
+<li>claim は <code>INSERT ... ON CONFLICT</code> か <code>UPDATE ... WHERE state = ...</code> のような <strong>DB の原子操作 1 つ</strong> に寄せる</li>
+<li>「不明（timeout）」をどちらに倒すかは業務要件。コードには判断ではなく設定として現れるべき</li>
+<li>通知履歴のように独立したライフサイクルを持つものは、元エンティティに列を足さず別テーブルにする</li>
+</ul>
+<h2 id="実務ではどうだったか">実務ではどうだったか</h2>
+<p><code>order_mail_log</code> 方式に切り替えて 2 か月、重複送信の報告はゼロ。
+<code>failed</code> の再送は運用が手動で叩く SQL にしてあり、自動リトライは <code>sending</code> / <code>sent</code> を触らない。
+<code>attempts</code> 列は今のところ監視のダッシュボードにしか使っていない。</p>
+    </article>
+  </main>
+  <!-- ARTICLE-AD-HTML-START -->
+  <div class="article-ad">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-1944739806788973"
+         data-ad-slot="8552518214"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+  </div>
+  <!-- ARTICLE-AD-HTML-END -->
+
+  <div class="footer-note">
+    本記事は筆者の設計判断と AI レビューの記録であり、特定環境での正しさを保証するものではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../index.html">トップ</a>
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+</body>
+</html>
