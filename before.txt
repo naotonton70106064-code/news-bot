@@ -1,0 +1,9 @@
+=== 対象記事 ===
+[2026-09-13] OpenAI・サム・アルトマンCEO、2026年のIPO（株式公開）は「得策でない」と明言
+
+=== 関連する過去記事: 2件 ===
+Traceback (most recent call last):
+  File "C:\Users\n_mab\news-bot\test_rag.py", line 109, in <module>
+    print(f"  距離 {r[4]:.4f} [{r[3]}] {r[1]}")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'cp932' codec can't encode character '\u2014' in position 60: illegal multibyte sequence

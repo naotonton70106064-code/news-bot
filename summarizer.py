@@ -6,6 +6,30 @@ load_dotenv()
 
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
+# 全カテゴリ共通の制約。
+# 2026-09-19 追加:
+# AIが記事内に「2026年は未来の日付であり実在しない情報」「本文が空欄のため
+# 分析が不可能」といった自己注記を書き込み、それがそのまま公開されていた。
+# AdSenseの「有用性の低いコンテンツ」による不承認の一因。
+COMMON_CONSTRAINTS = """
+
+【出力に関する制約】
+
+1. 記事の真偽・日付・実在性について言及しないこと。
+   「未来の日付である」「学習データの範囲外」「架空の可能性がある」
+   「実在しない情報」といった注記・免責事項を書かないこと。
+   提供された記事は事実として扱うこと。
+
+2. 情報が不足していることを記事内に書かないこと。
+   「本文が空欄のため分析できない」「情報が限られているため推論を含む」
+   といった断り書きを書かないこと。
+
+3. 情報が少ない場合は、書ける範囲で簡潔にまとめること。
+   無理に埋めようとして推測を重ねないこと。
+
+4. 指定された見出し以外の見出し・注記・区切り線（---）を出力しないこと。
+"""
+
 # カテゴリ別プロンプトテンプレート
 PROMPTS = {
     "it": """
@@ -107,6 +131,7 @@ def summarize_article(article, category="it"):
         title=article["title"],
         summary=article["summary"],
     )
+    prompt += COMMON_CONSTRAINTS
 
     message = client.messages.create(
         model="claude-sonnet-4-6",
@@ -128,3 +153,4 @@ if __name__ == "__main__":
     print()
     summary = summarize_article(article, "it")
     print(summary)
+# --- end of file ---

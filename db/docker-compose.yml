@@ -1,0 +1,15 @@
+services:
+  db:                              # サービス名（このDBを"db"と呼ぶ）
+    image: pgvector/pgvector:pg16   # postgres:16 にpgvectorを載せた公式イメージ（素のpostgres:16では拡張が使えない）
+    container_name: newsbot-db    # コンテナの名前
+    environment:                   # DBの初期設定
+      POSTGRES_USER: newsbot       # DBのユーザー名
+      POSTGRES_PASSWORD: localdevpass   # パスワード（ローカル専用の仮のもの）
+      POSTGRES_DB: newsbot         # 作成するデータベース名
+    ports:
+      - "5432:5432"               # PCの5432番ポートを、コンテナのPostgreSQLに繋ぐ
+    volumes:
+      - newsbot_pgdata:/var/lib/postgresql/data   # データを永続化（コンテナを消してもDBの中身は残る）
+
+volumes:
+  newsbot_pgdata:                  # 上で使うデータ保存領域の定義

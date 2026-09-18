@@ -1,4 +1,9 @@
 venv/
 .env
+*.env
+bak.env
+!.env.example
+*.dump
+db/*.dump
 __pycache__/
 *.pyc
