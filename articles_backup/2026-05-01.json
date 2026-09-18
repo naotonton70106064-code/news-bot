@@ -1,0 +1,23 @@
+[
+  {
+    "title": "Coatue has a plan to buy up land for data centers, possibly for Anthropic",
+    "url": "https://techcrunch.com/2026/05/01/coatue-has-a-plan-to-buy-up-land-for-data-centers-possibly-for-anthropic/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. 大手ベンチャーキャピタルのCoatueが、データセンター用の土地を購入する新事業を立ち上げた。\n2. 同社は大規模な電力源の近くに位置する土地を買収していると報じられている。\n3. この動きはAI企業Anthropicのためである可能性も示唆されている。\n\n【背景・ポイント】\nデータセンターの運営には膨大な電力が必要なため、発電所や送電網に近い土地の確保が戦略的に重要となっている。CoatueはAnthropicをはじめとするAI企業への投資でも知られており、今回の土地取得はAIインフラ需要の急拡大に対応した動きとみられる。AI産業の成長に伴い、データセンター用地の争奪戦が加速している状況を反映している。",
+    "collected_at": "2026-05-01T20:06:05.348794"
+  },
+  {
+    "title": "Pentagon inks deals with Nvidia, Microsoft, and AWS to deploy AI on classified networks",
+    "url": "https://techcrunch.com/2026/05/01/pentagon-inks-deals-with-nvidia-microsoft-and-aws-to-deploy-ai-on-classified-networks/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. 米国防総省（ペンタゴン）は、Nvidia・Microsoft・AWSと機密ネットワーク上へのAI導入に関する契約を締結した。\n2. この動きは、国防総省がAIベンダーの多様化を推進する方針を強化する中で行われた。\n3. 背景には、AI企業Anthropicとの利用規約をめぐる論争的な対立があった。\n\n【背景・ポイント】\n国防総省はAnthropic社とAIモデルの利用条件について対立したことを受け、特定のベンダーへの依存リスクを軽減するため、複数の大手テクノロジー企業との契約分散化を加速させている。今回のNvidia・Microsoft・AWSとの契約は、機密性の高い軍事ネットワーク環境へのAI技術導入を目的としており、国防分野におけるAI活用の本格化を示している。",
+    "collected_at": "2026-05-01T20:06:12.161766"
+  },
+  {
+    "title": "Ubuntu services hit by outages after DDoS attack",
+    "url": "https://techcrunch.com/2026/05/01/ubuntu-services-hit-by-outages-after-ddos-attack/",
+    "source": "TechCrunch",
+    "summary": "【3行要約】\n1. ハクティビストグループがUbuntuおよびCanonicalの複数のウェブサイトに対してDDoS攻撃を実施した。\n2. この攻撃により、複数のUbuntu・Canonicalのウェブサービスが停止・障害状態に陥った。\n3. ユーザーはLinuxベースのOS（Ubuntu）のアップデートが行えない状態となった。\n\n【背景・ポイント】\nDDoS（分散型サービス妨害）攻撃とは、大量のトラフィックをターゲットのサーバーに送り込みサービスを停止させるサイバー攻撃手法です。今回の攻撃はハクティビスト（政治的・社会的主張を持つハッカー集団）によるものとされており、単なる金銭目的ではなく何らかの思想的動機が背景にある可能性があります。Ubuntuは世界中で広く利用されているLinuxディストリビューションであるため、この障害は多数のユーザーや企業に影響を与えたとみられます。",
+    "collected_at": "2026-05-01T20:06:18.638987"
+  }
+]

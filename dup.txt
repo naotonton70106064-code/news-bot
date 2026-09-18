@@ -1,0 +1,44 @@
+  id  | article_date | category |       source_file        |              left              
+------+--------------+----------+--------------------------+--------------------------------
+ 2567 | 2026-04-22   |          | articles/2026-04-22.json | Apple fixes bug that cops used
+ 2618 | 2026-04-22   |          | news_20260422.json       | Apple fixes bug that cops used
+ 2566 | 2026-04-22   |          | articles/2026-04-22.json | France confirms data breach at
+ 2617 | 2026-04-22   |          | news_20260422.json       | France confirms data breach at
+ 2565 | 2026-04-22   |          | articles/2026-04-22.json | How SpaceX preempted a $2B fun
+ 2616 | 2026-04-22   |          | news_20260422.json       | How SpaceX preempted a $2B fun
+ 2568 | 2026-04-23   |          | articles/2026-04-23.json | Instagram tests a new ‘Instant
+ 2619 | 2026-04-23   |          | news_20260423.json       | Instagram tests a new ‘Instant
+ 2569 | 2026-04-23   |          | articles/2026-04-23.json | Meet Noscroll, an AI bot that 
+ 2620 | 2026-04-23   |          | news_20260423.json       | Meet Noscroll, an AI bot that 
+ 2570 | 2026-04-23   |          | articles/2026-04-23.json | Trump’s pick to run US cyber a
+ 2621 | 2026-04-23   |          | news_20260423.json       | Trump’s pick to run US cyber a
+ 2571 | 2026-04-24   |          | articles/2026-04-24.json | ComfyUI hits $500M valuation a
+ 2622 | 2026-04-24   |          | news_20260424.json       | ComfyUI hits $500M valuation a
+ 2573 | 2026-04-24   |          | articles/2026-04-24.json | Google to invest up to $40B in
+ 2624 | 2026-04-24   |          | news_20260424.json       | Google to invest up to $40B in
+ 2572 | 2026-04-24   |          | articles/2026-04-24.json | X launches standalone XChat ap
+ 2623 | 2026-04-24   |          | news_20260424.json       | X launches standalone XChat ap
+ 2574 | 2026-04-25   |          | articles/2026-04-25.json | OpenAI CEO apologizes to Tumbl
+ 2625 | 2026-04-25   |          | news_20260425.json       | OpenAI CEO apologizes to Tumbl
+ 2575 | 2026-04-25   |          | articles/2026-04-25.json | The climate tech IPO window co
+ 2626 | 2026-04-25   |          | news_20260425.json       | The climate tech IPO window co
+ 2576 | 2026-04-25   |          | articles/2026-04-25.json | Why Cohere is merging with Ale
+ 2627 | 2026-04-25   |          | news_20260425.json       | Why Cohere is merging with Ale
+ 2579 | 2026-04-26   |          | articles/2026-04-26.json | SpeakOn’s dictation device is 
+ 2630 | 2026-04-26   |          | news_20260426.json       | SpeakOn’s dictation device is 
+ 2577 | 2026-04-26   |          | articles/2026-04-26.json | TechCrunch Mobility: Elon’s ad
+ 2628 | 2026-04-26   |          | news_20260426.json       | TechCrunch Mobility: Elon’s ad
+ 2578 | 2026-04-26   |          | articles/2026-04-26.json | To buy this Bay Area home, you
+ 2629 | 2026-04-26   |          | news_20260426.json       | To buy this Bay Area home, you
+ 2580 | 2026-04-27   |          | articles/2026-04-27.json | Consumers lost $2.1 billion to
+ 2631 | 2026-04-27   |          | news_20260427.json       | Consumers lost $2.1 billion to
+ 2582 | 2026-04-27   |          | articles/2026-04-27.json | DeepMind’s David Silver just r
+ 2633 | 2026-04-27   |          | news_20260427.json       | DeepMind’s David Silver just r
+ 2581 | 2026-04-27   |          | articles/2026-04-27.json | OpenAI ends Microsoft legal pe
+ 2632 | 2026-04-27   |          | news_20260427.json       | OpenAI ends Microsoft legal pe
+ 2583 | 2026-04-28   |          | articles/2026-04-28.json | Amazon is already offering new
+ 2634 | 2026-04-28   |          | news_20260428.json       | Amazon is already offering new
+ 2584 | 2026-04-28   |          | articles/2026-04-28.json | Amazon launches an AI-powered 
+ 2635 | 2026-04-28   |          | news_20260428.json       | Amazon launches an AI-powered 
+(40 rows)
+

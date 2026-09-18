@@ -9,6 +9,12 @@ import feedparser
 JST = ZoneInfo("Asia/Tokyo")
 COLLECTED_URLS_FILE = Path("collected_urls.json")
 
+# 本文がこれより短い記事は収集しない。
+# タイトルのみ（NHK首相動静など）の記事をAIに分析させると、
+# 推測だけの中身のない記事になり「有用性の低いコンテンツ」になるため。
+# 60文字: Ars Technicaの概要が73〜112文字のため、100では通らなかった。
+MIN_SUMMARY_LEN = 60
+
 # ITカテゴリのキーワードフィルタ（タイトル/概要のいずれかに含まれればOK）
 # Wired/Ars Technicaなど汎用フィードからIT関連記事のみを抽出するために使う。
 # 英語キーワードは単語境界でマッチ（"ai"が"again"にマッチしないようにするため）。
@@ -106,6 +112,7 @@ def collect_articles(category="it", collected_urls=None):
             picked = 0
             skipped = 0
             filtered = 0
+            thin = 0
             for entry in feed.entries:
                 if picked >= limit:
                     break
@@ -115,6 +122,10 @@ def collect_articles(category="it", collected_urls=None):
                     continue
                 title = entry.title
                 summary = entry.get("summary", "")
+                # 本文が薄い記事は、AIが推測で埋めるしかなくなるので収集しない
+                if len(summary) < MIN_SUMMARY_LEN:
+                    thin += 1
+                    continue
                 if apply_filter and not _matches_it_keywords(title, summary):
                     filtered += 1
                     continue
@@ -129,6 +140,8 @@ def collect_articles(category="it", collected_urls=None):
                 picked += 1
             if skipped:
                 print(f"  [情報] {feed_url}: 取得済み{skipped}件をスキップ")
+            if thin:
+                print(f"  [情報] {feed_url}: 本文が短い{thin}件をスキップ")
             if filtered:
                 print(f"  [情報] {feed_url}: キーワード不一致{filtered}件をスキップ")
         except Exception as e:
@@ -168,3 +181,4 @@ if __name__ == "__main__":
         print(f"\n=== {FEEDS[cat]['name']} ===")
         for i, article in enumerate(articles):
             print(f"  {i+1}. {article['title'][:50]}")
+# --- end of file ---
