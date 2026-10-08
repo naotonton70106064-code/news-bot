@@ -21,7 +21,16 @@
     .tab-btn.active { color: #111; border-bottom-color: #111; font-weight: 600; }
     .layout { display: flex; max-width: 1100px; margin: 0 auto; min-height: calc(100vh - 250px); }
     .sidebar { width: 220px; padding: 1.5rem 1rem; border-right: 1px solid #e5e5e5; background: #fff; flex-shrink: 0; }
-    .sidebar h2 { font-size: 14px; font-weight: 600; color: #555; margin-bottom: 12px; }
+    /* 週次サマリーは <details> のネイティブ開閉（JS 不要）。HTML 側で open を付けてあるので JS 無効時は開いた状態 */
+    .sidebar-weekly > summary { font-size: 14px; font-weight: 600; color: #555; margin-bottom: 12px; padding: 4px 0; cursor: pointer; list-style: none; user-select: none; }
+    .sidebar-weekly > summary::-webkit-details-marker { display: none; }
+    .sidebar-weekly > summary::before { content: "\25B6"; display: inline-block; width: 1.2em; font-size: 10px; color: #888; transition: transform 0.15s; }
+    .sidebar-weekly[open] > summary::before { transform: rotate(90deg); }
+    .sidebar-weekly > summary:hover { color: #111; }
+    .sidebar-sep { border: none; border-top: 1px solid #e5e5e5; margin: 1rem 0; }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 4px; }
+    .sidebar-nav-link { display: block; padding: 10px 12px; font-size: 14px; font-weight: 600; color: #111; text-decoration: none; border: 1px solid #e5e5e5; border-radius: 8px; background: #f8f9fa; }
+    .sidebar-nav-link:hover { background: #f0f0f0; }
     .sidebar-cat[hidden] { display: none; }
     .sidebar-cat-name { display: none; font-size: 12px; font-weight: 600; color: #888; margin: 8px 0 4px; }
     .sidebar-link { display: block; padding: 8px 12px; font-size: 13px; color: #1a73e8; text-decoration: none; border-radius: 6px; margin-bottom: 4px; }
@@ -52,6 +61,8 @@
       .layout { flex-direction: column; }
       .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e5e5e5; padding: 1rem; }
       .sidebar-link { display: inline-block; margin-right: 4px; }
+      .sidebar-nav { flex-direction: row; flex-wrap: wrap; }
+      .sidebar-nav-link { flex: 1 1 auto; text-align: center; }
       .main { padding: 1rem; }
       .tab-btn { padding: 10px 14px; font-size: 13px; }
     }
@@ -79,12 +90,18 @@
 
   <div class="layout">
     <aside class="sidebar">
-      <h2>週次サマリー</h2>
-      <div id="sidebar-content">
+      <details class="sidebar-weekly" id="sidebar-weekly" open>
+        <summary>週次サマリー</summary>
+        <div id="sidebar-content">
         <div class="sidebar-cat" data-cat="it"><div class="sidebar-cat-name">IT・テクノロジー</div><a href="articles/it/weekly-2026-W40.html" class="sidebar-link">2026-W40</a><a href="articles/it/weekly-2026-W39.html" class="sidebar-link">2026-W39</a><a href="articles/it/weekly-2026-W38.html" class="sidebar-link">2026-W38</a><a href="articles/it/weekly-2026-W37.html" class="sidebar-link">2026-W37</a><a href="articles/it/weekly-2026-W36.html" class="sidebar-link">2026-W36</a><a href="articles/it/weekly-2026-W35.html" class="sidebar-link">2026-W35</a><a href="articles/it/weekly-2026-W34.html" class="sidebar-link">2026-W34</a><a href="articles/it/weekly-2026-W33.html" class="sidebar-link">2026-W33</a><a href="articles/it/weekly-2026-W32.html" class="sidebar-link">2026-W32</a><a href="articles/it/weekly-2026-W31.html" class="sidebar-link">2026-W31</a><a href="articles/it/weekly-2026-W30.html" class="sidebar-link">2026-W30</a><a href="articles/it/weekly-2026-W29.html" class="sidebar-link">2026-W29</a><a href="articles/it/weekly-2026-W28.html" class="sidebar-link">2026-W28</a><a href="articles/it/weekly-2026-W27.html" class="sidebar-link">2026-W27</a><a href="articles/it/weekly-2026-W26.html" class="sidebar-link">2026-W26</a><a href="articles/it/weekly-2026-W25.html" class="sidebar-link">2026-W25</a><a href="articles/it/weekly-2026-W24.html" class="sidebar-link">2026-W24</a><a href="articles/it/weekly-2026-W23.html" class="sidebar-link">2026-W23</a><a href="articles/it/weekly-2026-W22.html" class="sidebar-link">2026-W22</a><a href="articles/it/weekly-2026-W21.html" class="sidebar-link">2026-W21</a><a href="articles/it/weekly-2026-W20.html" class="sidebar-link">2026-W20</a><a href="articles/it/weekly-2026-W19.html" class="sidebar-link">2026-W19</a><a href="articles/it/weekly-2026-W18.html" class="sidebar-link">2026-W18</a></div>
         <div class="sidebar-cat" data-cat="japan_economy" hidden><div class="sidebar-cat-name">日本経済</div><a href="articles/japan_economy/weekly-2026-W40.html" class="sidebar-link">2026-W40</a><a href="articles/japan_economy/weekly-2026-W39.html" class="sidebar-link">2026-W39</a><a href="articles/japan_economy/weekly-2026-W38.html" class="sidebar-link">2026-W38</a><a href="articles/japan_economy/weekly-2026-W37.html" class="sidebar-link">2026-W37</a><a href="articles/japan_economy/weekly-2026-W36.html" class="sidebar-link">2026-W36</a><a href="articles/japan_economy/weekly-2026-W35.html" class="sidebar-link">2026-W35</a><a href="articles/japan_economy/weekly-2026-W34.html" class="sidebar-link">2026-W34</a><a href="articles/japan_economy/weekly-2026-W33.html" class="sidebar-link">2026-W33</a><a href="articles/japan_economy/weekly-2026-W32.html" class="sidebar-link">2026-W32</a><a href="articles/japan_economy/weekly-2026-W31.html" class="sidebar-link">2026-W31</a><a href="articles/japan_economy/weekly-2026-W30.html" class="sidebar-link">2026-W30</a><a href="articles/japan_economy/weekly-2026-W29.html" class="sidebar-link">2026-W29</a><a href="articles/japan_economy/weekly-2026-W28.html" class="sidebar-link">2026-W28</a><a href="articles/japan_economy/weekly-2026-W27.html" class="sidebar-link">2026-W27</a><a href="articles/japan_economy/weekly-2026-W26.html" class="sidebar-link">2026-W26</a><a href="articles/japan_economy/weekly-2026-W25.html" class="sidebar-link">2026-W25</a><a href="articles/japan_economy/weekly-2026-W24.html" class="sidebar-link">2026-W24</a><a href="articles/japan_economy/weekly-2026-W23.html" class="sidebar-link">2026-W23</a><a href="articles/japan_economy/weekly-2026-W22.html" class="sidebar-link">2026-W22</a><a href="articles/japan_economy/weekly-2026-W21.html" class="sidebar-link">2026-W21</a><a href="articles/japan_economy/weekly-2026-W20.html" class="sidebar-link">2026-W20</a><a href="articles/japan_economy/weekly-2026-W19.html" class="sidebar-link">2026-W19</a></div>
         <div class="sidebar-cat" data-cat="world_economy" hidden><div class="sidebar-cat-name">世界経済</div><a href="articles/world_economy/weekly-2026-W40.html" class="sidebar-link">2026-W40</a><a href="articles/world_economy/weekly-2026-W39.html" class="sidebar-link">2026-W39</a><a href="articles/world_economy/weekly-2026-W38.html" class="sidebar-link">2026-W38</a><a href="articles/world_economy/weekly-2026-W37.html" class="sidebar-link">2026-W37</a><a href="articles/world_economy/weekly-2026-W36.html" class="sidebar-link">2026-W36</a><a href="articles/world_economy/weekly-2026-W35.html" class="sidebar-link">2026-W35</a><a href="articles/world_economy/weekly-2026-W34.html" class="sidebar-link">2026-W34</a><a href="articles/world_economy/weekly-2026-W33.html" class="sidebar-link">2026-W33</a><a href="articles/world_economy/weekly-2026-W32.html" class="sidebar-link">2026-W32</a><a href="articles/world_economy/weekly-2026-W31.html" class="sidebar-link">2026-W31</a><a href="articles/world_economy/weekly-2026-W30.html" class="sidebar-link">2026-W30</a><a href="articles/world_economy/weekly-2026-W29.html" class="sidebar-link">2026-W29</a><a href="articles/world_economy/weekly-2026-W28.html" class="sidebar-link">2026-W28</a><a href="articles/world_economy/weekly-2026-W27.html" class="sidebar-link">2026-W27</a><a href="articles/world_economy/weekly-2026-W26.html" class="sidebar-link">2026-W26</a><a href="articles/world_economy/weekly-2026-W25.html" class="sidebar-link">2026-W25</a><a href="articles/world_economy/weekly-2026-W24.html" class="sidebar-link">2026-W24</a><a href="articles/world_economy/weekly-2026-W23.html" class="sidebar-link">2026-W23</a><a href="articles/world_economy/weekly-2026-W22.html" class="sidebar-link">2026-W22</a><a href="articles/world_economy/weekly-2026-W21.html" class="sidebar-link">2026-W21</a><a href="articles/world_economy/weekly-2026-W20.html" class="sidebar-link">2026-W20</a><a href="articles/world_economy/weekly-2026-W19.html" class="sidebar-link">2026-W19</a></div>
-      </div>
+        </div>
+      </details>
+      <hr class="sidebar-sep">
+      <nav class="sidebar-nav" aria-label="コンテンツ">
+        <a href="case-studies/" class="sidebar-nav-link">設計ケーススタディ &rarr;</a>
+      </nav>
     </aside>
 
     <main class="main">
@@ -2790,6 +2807,13 @@
           render();
         });
       });
+
+      // 週次サマリーの開閉は <details> がネイティブに処理する。モバイル幅では初期状態だけ閉じる
+      // （サイドバーが記事一覧の上に縦積みされるため）。JS 無効時は HTML の open のまま = 開いた状態。
+      var weekly = document.getElementById("sidebar-weekly");
+      if (weekly && window.matchMedia && window.matchMedia("(max-width: 768px)").matches) {
+        weekly.open = false;
+      }
 
       var urlCat = new URLSearchParams(window.location.search).get("cat");
       if (validCategories.indexOf(urlCat) >= 0) {
