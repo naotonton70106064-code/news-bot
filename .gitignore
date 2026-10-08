@@ -8,3 +8,4 @@ db/*.dump
 __pycache__/
 *.pyc
 .claude/
+_site/

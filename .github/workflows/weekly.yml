@@ -43,30 +43,69 @@ jobs:
           git diff --staged --quiet || git commit -m "週次サマリー更新: $(date '+%Y-%m-%d')"
           git push
 
-      # templates/ は記事ページ生成用のテンプレート本体で、未置換のプレースホルダが
-      # 残った空ページになるため公開しない。content/ はケーススタディの Markdown ソース
-      # （生成物は case-studies/ に別途コミット済み）で、生の .md を公開しないため同様に退避する。
-      # リポジトリへのコミット&pushは上のステップで完了済みなので、ここで作業ツリーから
-      # 退避してもリポジトリの内容には影響しない。
-      - name: 公開対象から templates/ と content/ を除外
+      # 公開するものだけを _site/ に集めてから配信する。
+      #
+      # 以前は path: '.' でリポジトリ全体を配信し、templates/ と content/ だけを
+      # 退避していた。これは「除外し忘れたものが公開される」構造で、
+      # 2026-10-09 時点で以下が意図せず公開されていた:
+      #   - articles_backup/ … 484ページ分の重複コンテンツ(SSR移行前のバックアップ)
+      #   - すべての .py / CLAUDE.md / requirements.txt / go.bat
+      #   - 9月の作業で出た一時ファイル(notes.txt, m5_variance_sample.txt など)
+      #   - 0バイトの空ファイル docker(削除済み)
+      # 「重複コンテンツ」と「空ページ」はどちらも過去のAdSense不承認理由だった。
+      #
+      # ホワイトリスト方式にすると、書き忘れたときの結果が「公開されない」になる。
+      # 失敗の向きを安全側に倒すのがこの変更の狙い。
+      - name: 公開するものだけを _site/ に集める
         run: |
-          mkdir -p "$RUNNER_TEMP/excluded"
-          for d in templates content; do
-            if [ -d "$d" ]; then
-              mv "$d" "$RUNNER_TEMP/excluded/"
-            fi
-            test ! -e "$d"
+          set -eu
+          rm -rf _site
+          mkdir -p _site
+
+          # 固定ページと ads.txt。1つでも欠けていたら失敗させる
+          for f in index.html about.html contact.html privacy.html ads.txt; do
+            test -f "$f"
+            cp "$f" _site/
           done
-          test -f index.html
-          test -d articles
-          echo "公開する直下HTML:"
-          ls *.html
-          echo "公開する記事HTML: $(find articles -name '*.html' | wc -l) 件"
+
+          # 記事とストックコンテンツ。blog/ はまだ無いので存在チェックつき
+          for d in articles case-studies blog; do
+            if [ -d "$d" ]; then
+              cp -R "$d" _site/
+            fi
+          done
+
+          # 非公開にすべきものが混ざっていないかの最終検査。
+          # find の条件を変数に入れてはいけない。展開前にシェルが *.py を
+          # カレントディレクトリのファイル名に置き換えてしまい、find が壊れる。
+          # そのとき標準出力は空になるので、検査は「黙って通る」。
+          # 1回の find の結果を変数に受けて中身の有無で判定する。
+          FORBIDDEN=$(find _site \( -name '*.py' -o -name '*.md' -o -name '*.bat' \
+            -o -name '.env*' -o -name '*.sql' -o -name 'requirements.txt' \) -print)
+          if [ -n "$FORBIDDEN" ]; then
+            echo "::error::公開対象に非公開ファイルが含まれています"
+            echo "$FORBIDDEN"
+            exit 1
+          fi
+          test ! -e _site/articles_backup
+          test ! -e _site/templates
+          test ! -e _site/content
+          test -f _site/index.html
+          test -d _site/articles
+
+          echo "公開する直下ファイル:"
+          ls -1 _site
+          echo "記事HTML: $(find _site/articles -name '*.html' | wc -l) 件"
+          for d in case-studies blog; do
+            if [ -d "_site/$d" ]; then
+              echo "$d: $(find "_site/$d" -name 'index.html' | wc -l) 件"
+            fi
+          done
 
       - name: GitHub Pagesのアーティファクトをアップロード
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
 
       - name: GitHub Pagesにデプロイ
         id: deployment
