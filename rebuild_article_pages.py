@@ -15,6 +15,7 @@ HTML ソースに存在する」状態にそろえる。
 """
 import json
 import re
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from render import (
@@ -39,6 +40,73 @@ def write_page(out_path, articles, date_str, category, related, depth, template)
         articles, date_str, category, related=related, depth=depth, template=template
     )
     out_path.write_text(html, encoding="utf-8")
+
+
+def rebuild_one(category, date_str, template=None):
+    """指定カテゴリ・指定日のページを JSON から作り直す。
+
+    関連リンクは呼び出し時点のファイル存在状況で再計算されるため、
+    他カテゴリや翌日のファイルが揃ったあとに呼べば、欠けていたリンクが埋まる。
+    JSON が無い／壊れている場合は何もせず False を返す。
+    """
+    cat_dir = Path("articles") / category
+    articles = load_json(cat_dir / f"{date_str}.json")
+    if not articles:
+        return False
+    if template is None:
+        template = TEMPLATE_PATH.read_text(encoding="utf-8")
+    related = build_related_links(date_str, category)
+    write_page(
+        cat_dir / f"{date_str}.html", articles, date_str, category, related, 2, template
+    )
+    return True
+
+
+def _previous_article_date(category, date_str, max_back=366):
+    """date_str より前で記事JSONが存在する最も近い日付を返す。無ければ None。"""
+    try:
+        current = datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError:
+        return None
+    cat_dir = Path("articles") / category
+    for delta in range(1, max_back + 1):
+        cand = (current - timedelta(days=delta)).strftime("%Y-%m-%d")
+        if (cat_dir / f"{cand}.json").exists():
+            return cand
+    return None
+
+
+def refresh_related_links(date_str, categories=None):
+    """指定日の全カテゴリと、その直前の記事日のページを作り直す。
+
+    main.py はカテゴリを順に処理するため、先に生成されるカテゴリのページは
+    まだ存在しない他カテゴリへの「同じ日の他カテゴリ」リンクを張れない。
+    また前日のページは、生成された時点で当日のファイルが無いため
+    「翌日の記事へ」を持てない。日次実行の最後にこれを呼ぶと両方が埋まる。
+
+    この穴は 2026-10-09 に発覚した。冪等なはずの rebuild_article_pages.py を
+    実行したら74ページに差分が出たのが発見のきっかけで、原因は出力が
+    カテゴリの処理順に依存していたこと。エラーにならないため気づけなかった。
+
+    返り値は作り直したページのパス文字列のリスト。
+    """
+    if categories is None:
+        categories = ALL_CATEGORIES
+    template = TEMPLATE_PATH.read_text(encoding="utf-8")
+    updated = []
+
+    # 1. 当日 — 全カテゴリのファイルが揃った状態で「同じ日の他カテゴリ」を埋める
+    for category in categories:
+        if rebuild_one(category, date_str, template):
+            updated.append(f"articles/{category}/{date_str}.html")
+
+    # 2. 直前の記事日 — 当日のファイルができたので「翌日の記事へ」を埋める
+    for category in categories:
+        prev = _previous_article_date(category, date_str)
+        if prev and rebuild_one(category, prev, template):
+            updated.append(f"articles/{category}/{prev}.html")
+
+    return updated
 
 
 def main():

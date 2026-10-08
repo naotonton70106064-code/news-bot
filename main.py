@@ -6,6 +6,7 @@ from pathlib import Path
 from collector import collect_articles, collect_all, FEEDS
 from summarizer import summarize_article
 from render import render_page, build_related_links
+from rebuild_article_pages import refresh_related_links
 
 JST = ZoneInfo("Asia/Tokyo")
 
@@ -80,8 +81,10 @@ def generate_article_page(results, category="it"):
     date_str = now_jst().strftime('%Y-%m-%d')
     output_filename = articles_dir / f"{date_str}.html"
 
-    # 関連リンク情報を計算して注入（自身を含めるためファイル保存後に再計算する場合もあるが、
-    # 自身の存在は前後日・他カテゴリ計算に影響しないため先に計算してよい）
+    # 関連リンク情報を計算して注入する。
+    # ただしこの時点では「同じ日の他カテゴリ」が揃っていない。main() はカテゴリを
+    # 順に処理するため、先に生成されるカテゴリからは後続カテゴリのファイルが見えない。
+    # 全カテゴリ生成後に main() が refresh_related_links() で張り直す。
     related = build_related_links(date_str, category)
 
     # 記事本文は生成時に HTML へ直接書き出す（JS 無しでもクローラに内容が見える）
@@ -145,11 +148,25 @@ def main():
     print("ニュース収集を開始します...")
     all_articles = collect_all()
 
+    generated_any = False
     for category, articles in all_articles.items():
         if articles:
             process_category(category, articles)
+            generated_any = True
         else:
             print(f"\n[{FEEDS[category]['name']}] 記事なし - スキップ")
+
+    # 関連リンクの張り直し。2つの穴を埋める:
+    #   1. 当日の「同じ日の他カテゴリ」 — カテゴリを順に処理するため、
+    #      先に生成されるページは後続カテゴリのファイルをまだ見られない
+    #   2. 前日の「翌日の記事へ」 — 前日のページは生成時に当日のファイルが無い
+    # どちらもエラーにならず、リンクが欠けるだけなので気づきにくい。
+    if generated_any:
+        date_str = now_jst().strftime("%Y-%m-%d")
+        updated = refresh_related_links(date_str)
+        print(f"\n関連リンクを張り直しました: {len(updated)}件")
+        for path in updated:
+            print(f"  {path}")
 
     print("\n全カテゴリの処理が完了しました")
 
