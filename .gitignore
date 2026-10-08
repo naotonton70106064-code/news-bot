@@ -7,3 +7,4 @@ bak.env
 db/*.dump
 __pycache__/
 *.pyc
+.claude/

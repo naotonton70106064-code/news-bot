@@ -1,0 +1,41 @@
+# 改行コードの扱いをリポジトリ自身に記録する。
+#
+# これが無いと、環境ごとの core.autocrlf 設定に依存する。
+# 2026-10-08、チャット経由の Linux 側から git を操作したときに
+# 「インデックスは LF / ディスクは CRLF」の食い違いが露出し、
+# 追跡中の約2,000ファイル全部が「変更あり」と表示された。
+# あのまま git add . していたら、改行コードだけを書き換える
+# 巨大なコミットが main に入っていた。
+#
+# core.autocrlf はリポジトリではなく個人の設定で、.git/config にしか
+# 残らないためクローンし直すと消える。プロジェクトとしての取り決めは
+# このファイルに書く。
+
+# リポジトリ内は常に LF、作業ツリーは各OSのネイティブ改行にする。
+# 導入時点で追跡中の2,030ファイルはすべてインデックス上 LF だったため
+# （git ls-files --eol で確認済み）、追加しても再正規化の差分は出ない。
+* text=auto
+
+# Windows のバッチファイルは CRLF でないと挙動が不安定になるので固定する。
+# go.bat が該当（venv を有効化してエンコーディングを設定するランチャ）。
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# シェルスクリプトは LF 固定。CRLF だと shebang が壊れて実行できない。
+*.sh text eol=lf
+
+# バイナリは変換しない。現時点で追跡しているバイナリは無いが、
+# 画像やフォントを追加したときに壊さないよう先に宣言しておく。
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.svg  text
+*.woff  binary
+*.woff2 binary
+*.pdf  binary
+*.zip  binary
+*.dump binary
