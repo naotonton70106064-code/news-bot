@@ -18,6 +18,15 @@ CATEGORIES = {
 
 WEEKDAYS_JA = ["月", "火", "水", "木", "金", "土", "日"]
 
+# 手書き Markdown コンテンツ（build_content.py が生成。ニュースとは別系統）。
+# トップのタブには入れず、左サイドバーから各一覧ページへ遷移させる。
+# 一覧ページ ({dir}/index.html) がリポジトリに存在するときだけリンクを出す
+# （build_content.py 未実行の環境 = 現在の main でも 404 リンクを出さない）。
+SIDEBAR_CONTENT_LINKS = [
+    {"dir": "case-studies", "label": "設計ケーススタディ"},
+    {"dir": "blog", "label": "管理人ブログ"},
+]
+
 
 def esc(text):
     if text is None:
@@ -158,6 +167,23 @@ def render_panels(all_data, initial_category):
     return "".join(parts)
 
 
+def render_sidebar_content_links():
+    """サイドバー下部のコンテンツ導線（一覧ページが存在するものだけ）。無ければ空文字"""
+    links = "".join(
+        f'        <a href="{esc(item["dir"])}/" class="sidebar-nav-link">{esc(item["label"])} &rarr;</a>\n'
+        for item in SIDEBAR_CONTENT_LINKS
+        if (Path(item["dir"]) / "index.html").exists()
+    )
+    if not links:
+        return ""
+    return (
+        '      <hr class="sidebar-sep">\n'
+        '      <nav class="sidebar-nav" aria-label="コンテンツ">\n'
+        f"{links}"
+        "      </nav>\n"
+    )
+
+
 def render_sidebar(all_weeklies, initial_category):
     """週次サマリーリンクを全カテゴリ分書き出す"""
     parts = []
@@ -244,6 +270,9 @@ def generate_index():
     panels_html = render_panels(all_data, initial_category)
     sidebar_html = render_sidebar(all_weeklies, initial_category)
 
+    sidebar_nav_html = render_sidebar_content_links()
+    valid_categories_js = json.dumps(list(CATEGORIES))
+
     tabs_html = "".join(
         f'    <button class="tab-btn{" active" if cat_id == initial_category else ""}"'
         f' data-cat="{cat_id}" type="button">{esc(cat_name)}</button>\n'
@@ -273,7 +302,16 @@ def generate_index():
     .tab-btn.active {{ color: #111; border-bottom-color: #111; font-weight: 600; }}
     .layout {{ display: flex; max-width: 1100px; margin: 0 auto; min-height: calc(100vh - 250px); }}
     .sidebar {{ width: 220px; padding: 1.5rem 1rem; border-right: 1px solid #e5e5e5; background: #fff; flex-shrink: 0; }}
-    .sidebar h2 {{ font-size: 14px; font-weight: 600; color: #555; margin-bottom: 12px; }}
+    /* 週次サマリーは <details> のネイティブ開閉（JS 不要）。HTML 側で open を付けてあるので JS 無効時は開いた状態 */
+    .sidebar-weekly > summary {{ font-size: 14px; font-weight: 600; color: #555; margin-bottom: 12px; padding: 4px 0; cursor: pointer; list-style: none; user-select: none; }}
+    .sidebar-weekly > summary::-webkit-details-marker {{ display: none; }}
+    .sidebar-weekly > summary::before {{ content: "\\25B6"; display: inline-block; width: 1.2em; font-size: 10px; color: #888; transition: transform 0.15s; }}
+    .sidebar-weekly[open] > summary::before {{ transform: rotate(90deg); }}
+    .sidebar-weekly > summary:hover {{ color: #111; }}
+    .sidebar-sep {{ border: none; border-top: 1px solid #e5e5e5; margin: 1rem 0; }}
+    .sidebar-nav {{ display: flex; flex-direction: column; gap: 4px; }}
+    .sidebar-nav-link {{ display: block; padding: 10px 12px; font-size: 14px; font-weight: 600; color: #111; text-decoration: none; border: 1px solid #e5e5e5; border-radius: 8px; background: #f8f9fa; }}
+    .sidebar-nav-link:hover {{ background: #f0f0f0; }}
     .sidebar-cat[hidden] {{ display: none; }}
     .sidebar-cat-name {{ display: none; font-size: 12px; font-weight: 600; color: #888; margin: 8px 0 4px; }}
     .sidebar-link {{ display: block; padding: 8px 12px; font-size: 13px; color: #1a73e8; text-decoration: none; border-radius: 6px; margin-bottom: 4px; }}
@@ -304,6 +342,8 @@ def generate_index():
       .layout {{ flex-direction: column; }}
       .sidebar {{ width: 100%; border-right: none; border-bottom: 1px solid #e5e5e5; padding: 1rem; }}
       .sidebar-link {{ display: inline-block; margin-right: 4px; }}
+      .sidebar-nav {{ flex-direction: row; flex-wrap: wrap; }}
+      .sidebar-nav-link {{ flex: 1 1 auto; text-align: center; }}
       .main {{ padding: 1rem; }}
       .tab-btn {{ padding: 10px 14px; font-size: 13px; }}
     }}
@@ -328,10 +368,12 @@ def generate_index():
 
   <div class="layout">
     <aside class="sidebar">
-      <h2>週次サマリー</h2>
-      <div id="sidebar-content">
-{sidebar_html}      </div>
-    </aside>
+      <details class="sidebar-weekly" id="sidebar-weekly" open>
+        <summary>週次サマリー</summary>
+        <div id="sidebar-content">
+{sidebar_html}        </div>
+      </details>
+{sidebar_nav_html}    </aside>
 
     <main class="main">
       <div class="week-nav" id="week-nav">
@@ -357,7 +399,7 @@ def generate_index():
     // 記事タイトル一覧は生成時に HTML へ書き出し済み。
     // JS は既存 DOM の表示切り替え（カテゴリタブ・週送り）だけを担当する。
     (function () {{
-      var validCategories = ["it", "japan_economy", "world_economy"];
+      var validCategories = {valid_categories_js};
       var panels = Array.prototype.slice.call(document.querySelectorAll(".week-panel"));
       var sidebarCats = Array.prototype.slice.call(document.querySelectorAll(".sidebar-cat"));
       var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab-btn"));
@@ -403,6 +445,13 @@ def generate_index():
           render();
         }});
       }});
+
+      // 週次サマリーの開閉は <details> がネイティブに処理する。モバイル幅では初期状態だけ閉じる
+      // （サイドバーが記事一覧の上に縦積みされるため）。JS 無効時は HTML の open のまま = 開いた状態。
+      var weekly = document.getElementById("sidebar-weekly");
+      if (weekly && window.matchMedia && window.matchMedia("(max-width: 768px)").matches) {{
+        weekly.open = false;
+      }}
 
       var urlCat = new URLSearchParams(window.location.search).get("cat");
       if (validCategories.indexOf(urlCat) >= 0) {{

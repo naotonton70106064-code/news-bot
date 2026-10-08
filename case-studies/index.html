@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- ADSENSE-START -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1944739806788973"
+     crossorigin="anonymous"></script>
+  <!-- ADSENSE-END -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>設計ケーススタディ一覧 - AIニュースまとめ</title>
+  <meta name="description" content="実務の設計課題を「問題→自分の回答→AIレビュー→再考」の順で記録する設計ケーススタディの一覧（1本）。">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f5; color: #111; padding: 1rem; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .header { max-width: 800px; margin: 0 auto 1.5rem; }
+    .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .header p { font-size: 13px; color: #666; line-height: 1.7; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+    .case-card { display: block; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; text-decoration: none; color: inherit; transition: box-shadow 0.2s; }
+    .case-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .case-card-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; color: #666; }
+    .case-no { display: inline-block; font-weight: 600; padding: 2px 8px; background: #111; color: #fff; border-radius: 20px; }
+    .case-genre { display: inline-block; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; }
+    .case-date { color: #888; }
+    .case-title { font-size: 15px; font-weight: 600; line-height: 1.5; margin-bottom: 6px; }
+    .case-tags { font-size: 12px; color: #666; }
+    .case-desc { font-size: 13px; color: #555; line-height: 1.7; margin-bottom: 6px; }
+    .case-tag { display: inline-block; padding: 1px 8px; background: #eee; border-radius: 20px; margin-right: 4px; }
+    .empty-message { text-align: center; padding: 3rem; color: #888; font-size: 14px; }
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../index.html" class="back-btn">&larr; トップに戻る</a>
+  </div>
+  <div class="header">
+    <h1>設計ケーススタディ</h1>
+    <p>実務で出会った設計課題を「問題 → 自分の回答 → AIレビュー → 再考」の順で記録するシリーズです（全 1 本）。</p>
+  </div>
+  <main class="container">
+    <a class="case-card" href="010-email-duplicate/">
+      <div class="case-card-top"><span class="case-no">No. 010</span><span class="case-genre">信頼性設計</span><span class="case-date">2026年9月13日</span></div>
+      <div class="case-title">通知メールの重複送信をどう防ぐか</div>
+      <div class="case-desc">リトライで同じ通知メールが 2 通届く問題を題材に、送信ジョブの冪等性をどこで担保するかを設計ケーススタディとして整理する。</div>
+      <div class="case-tags"><span class="case-tag">#冪等性</span><span class="case-tag">#メッセージング</span><span class="case-tag">#DB</span></div>
+    </a>
+  </main>
+  <div class="footer-note">
+    本シリーズは筆者の設計判断と AI レビューの記録であり、特定環境での正しさを保証するものではありません。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../index.html">トップ</a>
+    <a href="../privacy.html">プライバシーポリシー</a>
+    <a href="../about.html">運営者情報</a>
+    <a href="../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+</body>
+</html>

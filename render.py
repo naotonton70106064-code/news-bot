@@ -22,6 +22,48 @@ WEEKDAYS_JA = ["月", "火", "水", "木", "金", "土", "日"]
 
 ALL_CATEGORIES = ["it", "japan_economy", "world_economy"]
 
+# --- AdSense --------------------------------------------------------------
+# 広告コードの単一ソース。ケーススタディ (build_case_studies.py) はここから取得して
+# frontmatter の ads フラグで出し分ける。ニュース記事の templates/dashboard.html には
+# 同じ内容が直接書かれている（= 常に ads=true 相当。既存 HTML を書き換えないため据え置き）。
+ADS_CLIENT = "ca-pub-1944739806788973"
+ADS_SLOT_ARTICLE = "8552518214"  # 記事下の手動ユニット（news と共用）
+
+ADS_HEAD_HTML = '''  <!-- ADSENSE-START -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=''' + ADS_CLIENT + '''"
+     crossorigin="anonymous"></script>
+  <!-- ADSENSE-END -->
+'''
+
+ADS_UNIT_HTML = '''  <!-- ARTICLE-AD-HTML-START -->
+  <div class="article-ad">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="''' + ADS_CLIENT + '''"
+         data-ad-slot="{slot}"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+  </div>
+  <!-- ARTICLE-AD-HTML-END -->
+'''
+
+
+def render_ads_head(enabled):
+    """<head> 内に置く AdSense ローダ。enabled=False なら空文字（自動広告も含め一切出さない）"""
+    if not enabled:
+        return ""
+    return ADS_HEAD_HTML
+
+
+def render_ads_unit(enabled, slot=ADS_SLOT_ARTICLE):
+    """記事下に置く手動広告ユニット 1 つ。enabled=False なら空文字"""
+    if not enabled:
+        return ""
+    return ADS_UNIT_HTML.replace("{slot}", slot)
+
 
 def build_related_links(date_str, category):
     """記事ページの関連リンク情報を構築する。

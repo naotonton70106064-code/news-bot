@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+__ADS_HEAD__
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>__PAGE_TITLE__</title>
+  <meta name="description" content="__META_DESCRIPTION__">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f5; color: #111; padding: 1rem; -webkit-text-size-adjust: 100%; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .case-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 12px; color: #666; }
+    .case-no { display: inline-block; font-weight: 600; padding: 2px 8px; background: #111; color: #fff; border-radius: 20px; }
+    .case-genre { display: inline-block; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; }
+    .case-tag { display: inline-block; padding: 2px 8px; background: #eee; color: #555; border-radius: 20px; }
+    .case-date { color: #888; }
+    .case-x { color: #888; }
+    .case-x a { color: #1a73e8; text-decoration: none; }
+
+    /* ---- 本文（Markdown 由来） ---- */
+    .article-body { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.5rem; font-size: 15px; line-height: 1.85; color: #222; overflow-wrap: anywhere; }
+    .article-body h1 { font-size: 22px; font-weight: 700; line-height: 1.5; margin: 0 0 1.25rem; padding-bottom: 12px; border-bottom: 2px solid #e5e5e5; }
+    .article-body h2 { font-size: 17px; font-weight: 700; margin: 2rem 0 0.75rem; padding-left: 10px; border-left: 4px solid #111; line-height: 1.5; }
+    .article-body h3 { font-size: 15px; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+    .article-body h4 { font-size: 14px; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #333; }
+    .article-body p { margin: 0 0 1rem; }
+    .article-body ul, .article-body ol { margin: 0 0 1rem 1.5rem; }
+    .article-body li { margin-bottom: 4px; }
+    .article-body li > ul, .article-body li > ol { margin-bottom: 0; }
+    .article-body blockquote { margin: 0 0 1rem; padding: 8px 14px; border-left: 4px solid #ddd; background: #fafafa; color: #555; }
+    .article-body blockquote p:last-child { margin-bottom: 0; }
+    .article-body hr { border: none; border-top: 1px solid #e5e5e5; margin: 1.5rem 0; }
+    .article-body a { color: #1a73e8; }
+    .article-body strong { font-weight: 700; }
+    .article-body img { max-width: 100%; height: auto; }
+    .article-body .table-wrap { overflow-x: auto; margin: 0 0 1rem; }
+    .article-body table { border-collapse: collapse; font-size: 13px; min-width: 50%; }
+    .article-body th, .article-body td { border: 1px solid #ddd; padding: 6px 10px; text-align: left; vertical-align: top; }
+    .article-body th { background: #f5f5f5; font-weight: 600; }
+
+    /* ---- コードブロック / ASCII 図（最優先: 桁がずれない） ----
+       ・white-space: pre で折り返さず、はみ出しは pre の中だけ横スクロール
+       ・字間・リガチャ・iOS の文字拡大を無効化して等幅を厳密に保つ
+       ・全角混在図のために 1:2 幅の CJK 等幅フォントをスタック先頭に置く */
+    .article-body pre,
+    .article-body code {
+      font-family: "BIZ UDGothic", "Noto Sans Mono CJK JP", "Source Han Mono", "Osaka-Mono",
+                   ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+      font-variant-ligatures: none;
+      font-feature-settings: "liga" 0, "calt" 0;
+      letter-spacing: 0;
+    }
+    .article-body pre {
+      white-space: pre;
+      overflow-x: auto;
+      overflow-wrap: normal;
+      word-break: normal;
+      max-width: 100%;
+      tab-size: 4;
+      -moz-tab-size: 4;
+      font-size: 13px;
+      line-height: 1.45;
+      background: #f6f8fa;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0 0 1rem;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+    .article-body pre code { font: inherit; white-space: inherit; background: none; padding: 0; border: 0; color: inherit; }
+    .article-body p code, .article-body li code, .article-body td code, .article-body h2 code, .article-body h3 code {
+      font-size: 0.88em; background: #f0f0f0; padding: 1px 5px; border-radius: 4px; color: #c7254e;
+    }
+    .codehilite { margin: 0 0 1rem; }
+    .codehilite pre { margin: 0; }
+    /* Pygments のトークン色（ビルド時に埋め込み、JS 不要） */
+__CODE_CSS__
+
+    /* ---- 記事下の広告（ads: true のときだけ出力される） ---- */
+    .article-ad { max-width: 800px; margin: 1.5rem auto 0; }
+
+    /* ---- 関連リンク ---- */
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+      .article-body { padding: 1.1rem; font-size: 14px; }
+      .article-body h1 { font-size: 19px; }
+    }
+
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="__BACK_HREF__" class="back-btn">&larr; __BACK_LABEL__</a>
+  </div>
+  <main class="container">
+    <div class="case-meta">
+__META_HTML__
+    </div>
+    <article class="article-body">
+__BODY_HTML__
+    </article>
+  </main>
+__ADS_BOTTOM__
+__RELATED_HTML__
+  <div class="footer-note">
+    __FOOTER_NOTE__
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="__ROOT__index.html">トップ</a>
+    <a href="__ROOT__privacy.html">プライバシーポリシー</a>
+    <a href="__ROOT__about.html">運営者情報</a>
+    <a href="__ROOT__contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+</body>
+</html>
