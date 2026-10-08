@@ -1,0 +1,59 @@
+name: デプロイのみ
+
+# 記事を生成せず、既にコミット済みの HTML をそのまま GitHub Pages に出す。
+# テンプレートや手書きコンテンツを直したあと、Claude API に課金せず反映したいときに使う。
+#
+# daily.yml / weekly.yml は push では起動しない（schedule と workflow_dispatch のみ）ため、
+# push しただけではサイトに反映されない。かつて daily.yml を手動実行して反映させていたが、
+# それだと記事収集と要約が一緒に走り、課金が発生し同日の記事が再生成されてしまう。
+# このワークフローはその副作用を持たない。
+#
+# 公開内容は「リポジトリにコミットされている HTML」なので、
+# generate_index.py や rebuild_article_pages.py の実行結果は
+# あらかじめコミットして push しておく必要がある。
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: コードを取得
+        uses: actions/checkout@v4
+
+      # daily.yml と同じ退避処理。path: '.' でリポジトリ全体が配信されるため、
+      # 退避しないと未置換プレースホルダのままのテンプレートが公開される。
+      - name: 公開対象から templates/ と content/ を除外
+        run: |
+          mkdir -p "$RUNNER_TEMP/excluded"
+          for d in templates content; do
+            if [ -d "$d" ]; then
+              mv "$d" "$RUNNER_TEMP/excluded/"
+            fi
+            test ! -e "$d"
+          done
+          test -f index.html
+          test -d articles
+          echo "公開する直下HTML:"
+          ls *.html
+          echo "公開する記事HTML: $(find articles -name '*.html' | wc -l) 件"
+          echo "公開する手書きコンテンツ:"
+          find case-studies blog -name 'index.html' 2>/dev/null || echo "  (なし)"
+
+      - name: GitHub Pagesのアーティファクトをアップロード
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: GitHub Pagesにデプロイ
+        id: deployment
+        uses: actions/deploy-pages@v4
