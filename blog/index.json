@@ -1,0 +1,16 @@
+[
+  {
+    "slug": "rds-migration-env-only",
+    "title": "ローカルのPostgreSQLをRDSに移したとき、変えたのは .env だけだった",
+    "date": "2026-10-09",
+    "tags": [
+      "個人開発",
+      "PostgreSQL",
+      "AWS",
+      "設計判断"
+    ],
+    "ads": true,
+    "description": "個人開発のDBをローカルのDockerからAWS RDSへ移した。コードの変更はゼロで、書き換えたのは .env の数行だけだった。狙ってそうなったわけではなく、1週間前の判断が効いた話と、その副作用。",
+    "href": "blog/rds-migration-env-only/"
+  }
+]

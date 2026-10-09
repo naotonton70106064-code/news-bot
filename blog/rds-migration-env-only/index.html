@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <!-- ADSENSE-START -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1944739806788973"
+     crossorigin="anonymous"></script>
+  <!-- ADSENSE-END -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ローカルのPostgreSQLをRDSに移したとき、変えたのは .env だけだった - 管理人ブログ | AIニュースまとめ</title>
+  <meta name="description" content="個人開発のDBをローカルのDockerからAWS RDSへ移した。コードの変更はゼロで、書き換えたのは .env の数行だけだった。狙ってそうなったわけではなく、1週間前の判断が効いた話と、その副作用。">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f5; color: #111; padding: 1rem; -webkit-text-size-adjust: 100%; }
+    .back-nav { max-width: 800px; margin: 0 auto 1rem; }
+    .back-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 18px; background: #fff; border: 1px solid #ddd; border-radius: 8px; color: #333; font-size: 14px; text-decoration: none; line-height: 1.2; }
+    .back-btn:hover { background: #f0f0f0; }
+    .back-btn:active { background: #e8e8e8; }
+    .container { max-width: 800px; margin: 0 auto; }
+    .case-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 12px; color: #666; }
+    .case-no { display: inline-block; font-weight: 600; padding: 2px 8px; background: #111; color: #fff; border-radius: 20px; }
+    .case-genre { display: inline-block; font-weight: 600; padding: 2px 8px; background: #E1F5EE; color: #085041; border-radius: 20px; }
+    .case-tag { display: inline-block; padding: 2px 8px; background: #eee; color: #555; border-radius: 20px; }
+    .case-date { color: #888; }
+    .case-x { color: #888; }
+    .case-x a { color: #1a73e8; text-decoration: none; }
+
+    /* ---- 本文（Markdown 由来） ---- */
+    .article-body { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.5rem; font-size: 15px; line-height: 1.85; color: #222; overflow-wrap: anywhere; }
+    .article-body h1 { font-size: 22px; font-weight: 700; line-height: 1.5; margin: 0 0 1.25rem; padding-bottom: 12px; border-bottom: 2px solid #e5e5e5; }
+    .article-body h2 { font-size: 17px; font-weight: 700; margin: 2rem 0 0.75rem; padding-left: 10px; border-left: 4px solid #111; line-height: 1.5; }
+    .article-body h3 { font-size: 15px; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+    .article-body h4 { font-size: 14px; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #333; }
+    .article-body p { margin: 0 0 1rem; }
+    .article-body ul, .article-body ol { margin: 0 0 1rem 1.5rem; }
+    .article-body li { margin-bottom: 4px; }
+    .article-body li > ul, .article-body li > ol { margin-bottom: 0; }
+    .article-body blockquote { margin: 0 0 1rem; padding: 8px 14px; border-left: 4px solid #ddd; background: #fafafa; color: #555; }
+    .article-body blockquote p:last-child { margin-bottom: 0; }
+    .article-body hr { border: none; border-top: 1px solid #e5e5e5; margin: 1.5rem 0; }
+    .article-body a { color: #1a73e8; }
+    .article-body strong { font-weight: 700; }
+    .article-body img { max-width: 100%; height: auto; }
+    .article-body .table-wrap { overflow-x: auto; margin: 0 0 1rem; }
+    .article-body table { border-collapse: collapse; font-size: 13px; min-width: 50%; }
+    .article-body th, .article-body td { border: 1px solid #ddd; padding: 6px 10px; text-align: left; vertical-align: top; }
+    .article-body th { background: #f5f5f5; font-weight: 600; }
+
+    /* ---- コードブロック / ASCII 図（最優先: 桁がずれない） ----
+       ・white-space: pre で折り返さず、はみ出しは pre の中だけ横スクロール
+       ・字間・リガチャ・iOS の文字拡大を無効化して等幅を厳密に保つ
+       ・全角混在図のために 1:2 幅の CJK 等幅フォントをスタック先頭に置く */
+    .article-body pre,
+    .article-body code {
+      font-family: "BIZ UDGothic", "Noto Sans Mono CJK JP", "Source Han Mono", "Osaka-Mono",
+                   ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+      font-variant-ligatures: none;
+      font-feature-settings: "liga" 0, "calt" 0;
+      letter-spacing: 0;
+    }
+    .article-body pre {
+      white-space: pre;
+      overflow-x: auto;
+      overflow-wrap: normal;
+      word-break: normal;
+      max-width: 100%;
+      tab-size: 4;
+      -moz-tab-size: 4;
+      font-size: 13px;
+      line-height: 1.45;
+      background: #f6f8fa;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 0 0 1rem;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+    .article-body pre code { font: inherit; white-space: inherit; background: none; padding: 0; border: 0; color: inherit; }
+    .article-body p code, .article-body li code, .article-body td code, .article-body h2 code, .article-body h3 code {
+      font-size: 0.88em; background: #f0f0f0; padding: 1px 5px; border-radius: 4px; color: #c7254e;
+    }
+    .codehilite { margin: 0 0 1rem; }
+    .codehilite pre { margin: 0; }
+    /* Pygments のトークン色（ビルド時に埋め込み、JS 不要） */
+    pre { line-height: 125%; }
+    td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+    span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+    td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+    span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+    .codehilite .hll { background-color: #ffffcc }
+    .codehilite { background: #f8f8f8; }
+    .codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+    .codehilite .err { border: 1px solid #F00 } /* Error */
+    .codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+    .codehilite .o { color: #666 } /* Operator */
+    .codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+    .codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+    .codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+    .codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+    .codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+    .codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+    .codehilite .gd { color: #A00000 } /* Generic.Deleted */
+    .codehilite .ge { font-style: italic } /* Generic.Emph */
+    .codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+    .codehilite .gr { color: #E40000 } /* Generic.Error */
+    .codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+    .codehilite .gi { color: #008400 } /* Generic.Inserted */
+    .codehilite .go { color: #717171 } /* Generic.Output */
+    .codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+    .codehilite .gs { font-weight: bold } /* Generic.Strong */
+    .codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+    .codehilite .gt { color: #04D } /* Generic.Traceback */
+    .codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+    .codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+    .codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+    .codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+    .codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+    .codehilite .kt { color: #B00040 } /* Keyword.Type */
+    .codehilite .m { color: #666 } /* Literal.Number */
+    .codehilite .s { color: #BA2121 } /* Literal.String */
+    .codehilite .na { color: #687822 } /* Name.Attribute */
+    .codehilite .nb { color: #008000 } /* Name.Builtin */
+    .codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+    .codehilite .no { color: #800 } /* Name.Constant */
+    .codehilite .nd { color: #A2F } /* Name.Decorator */
+    .codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+    .codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+    .codehilite .nf { color: #00F } /* Name.Function */
+    .codehilite .nl { color: #767600 } /* Name.Label */
+    .codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+    .codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+    .codehilite .nv { color: #19177C } /* Name.Variable */
+    .codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+    .codehilite .w { color: #BBB } /* Text.Whitespace */
+    .codehilite .mb { color: #666 } /* Literal.Number.Bin */
+    .codehilite .mf { color: #666 } /* Literal.Number.Float */
+    .codehilite .mh { color: #666 } /* Literal.Number.Hex */
+    .codehilite .mi { color: #666 } /* Literal.Number.Integer */
+    .codehilite .mo { color: #666 } /* Literal.Number.Oct */
+    .codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+    .codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+    .codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+    .codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+    .codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+    .codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+    .codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+    .codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+    .codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+    .codehilite .sx { color: #008000 } /* Literal.String.Other */
+    .codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+    .codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+    .codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+    .codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+    .codehilite .fm { color: #00F } /* Name.Function.Magic */
+    .codehilite .vc { color: #19177C } /* Name.Variable.Class */
+    .codehilite .vg { color: #19177C } /* Name.Variable.Global */
+    .codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+    .codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+    .codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+
+    /* ---- 記事下の広告（ads: true のときだけ出力される） ---- */
+    .article-ad { max-width: 800px; margin: 1.5rem auto 0; }
+
+    /* ---- 関連リンク ---- */
+    .related-section { max-width: 800px; margin: 1.5rem auto 0; background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; }
+    .related-section h2 { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    .related-nav-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .related-link { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 8px; color: #1a73e8; font-size: 13px; text-decoration: none; line-height: 1.4; flex: 1 1 auto; }
+    .related-link:hover { background: #f0f0f0; }
+    @media (max-width: 480px) {
+      .related-nav-row { flex-direction: column; }
+      .article-body { padding: 1.1rem; font-size: 14px; }
+      .article-body h1 { font-size: 19px; }
+    }
+
+    .footer-note { max-width: 800px; margin: 2rem auto 0; font-size: 11px; color: #aaa; text-align: center; line-height: 1.6; }
+    /* === SITE-FOOTER-CSS-START === */
+    .site-footer-links { max-width: 800px; margin: 1.5rem auto 0; padding-top: 1rem; border-top: 1px solid #e5e5e5; text-align: center; }
+    .site-footer-links a { font-size: 12px; color: #1a73e8; text-decoration: none; margin: 0 10px; }
+    .site-footer-links a:hover { text-decoration: underline; }
+    /* === SITE-FOOTER-CSS-END === */
+  </style>
+</head>
+<body>
+  <div class="back-nav">
+    <a href="../" class="back-btn">&larr; ブログ一覧に戻る</a>
+  </div>
+  <main class="container">
+    <div class="case-meta">
+      <span class="case-date">2026年10月9日</span>
+      <span class="case-tag">#個人開発</span>
+      <span class="case-tag">#PostgreSQL</span>
+      <span class="case-tag">#AWS</span>
+      <span class="case-tag">#設計判断</span>
+    </div>
+    <article class="article-body">
+<h1 id="ローカルのpostgresqlをrdsに移したとき変えたのは-env-だけだった">ローカルのPostgreSQLをRDSに移したとき、変えたのは .env だけだった</h1>
+<p>このサイトは、RSSで集めたニュースをAIに要約させて毎朝公開している。
+記事データの置き場所を、2026年9月のうちに2回動かした。</p>
+<div class="codehilite"><pre><span></span><code>JSONファイル  -&gt;  ローカルDockerのPostgreSQL  -&gt;  AWS RDS
+   (〜9/13)            (9/13)                      (9/14)
+</code></pre></div>
+
+<p>後半の「ローカル -&gt; RDS」で、<strong>アプリケーションコードの変更は1行もなかった。</strong>
+書き換えたのは <code>.env</code> の接続情報だけだ。</p>
+<p>狙ってそうなったわけではない。前日に決めた取り決めが、たまたま効いた。</p>
+<h2 id="証拠">証拠</h2>
+<p>接続処理は <code>db.py</code> の1ファイルに置いてある。このファイルの変更履歴はこれだけだ。</p>
+<div class="codehilite"><pre><span></span><code>$ git log --format='%h %ad %s' --date=short -- db.py
+3ed5ecb 2026-09-13 feat: JSON記事データのPostgreSQL移行スクリプトを追加
+</code></pre></div>
+
+<p>コミットは1本。追加した日のものだけで、<strong>RDSに移した9/14をまたいで一度も変更されていない。</strong></p>
+<h2 id="何をしていたか">何をしていたか</h2>
+<p><code>db.py</code> の中身はこれで全部だ。</p>
+<div class="codehilite"><pre><span></span><code><span class="n">REQUIRED_KEYS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"DB_HOST"</span><span class="p">,</span> <span class="s2">"DB_PORT"</span><span class="p">,</span> <span class="s2">"DB_USER"</span><span class="p">,</span> <span class="s2">"DB_PASSWORD"</span><span class="p">,</span> <span class="s2">"DB_NAME"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_connection</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">""".env の DB_* を使って psycopg 接続を返す。不足があれば明示的に落とす。"""</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">REQUIRED_KEYS</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">".env に </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2"> が設定されていません"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">psycopg</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+        <span class="n">host</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DB_HOST"</span><span class="p">],</span>
+        <span class="n">port</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DB_PORT"</span><span class="p">]),</span>
+        <span class="n">user</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DB_USER"</span><span class="p">],</span>
+        <span class="n">password</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DB_PASSWORD"</span><span class="p">],</span>
+        <span class="n">dbname</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DB_NAME"</span><span class="p">],</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div>
+
+<p>特別なことは何もしていない。決めたのは一つだけで、
+<strong>他のスクリプトでは <code>psycopg.connect()</code> を直接書かない</strong>、というものだった。</p>
+<h2 id="正直に言うと3ファイルの話である">正直に言うと、3ファイルの話である</h2>
+<p>ここで話を終えると、設計判断が効いた美しい話になってしまう。実際はそうではない。</p>
+<p>今このデータベースを触っているスクリプトは3つしかない。</p>
+<div class="codehilite"><pre><span></span><code>embed_articles.py   記事をベクトル化して保存
+migrate_to_db.py    JSONからの一括投入
+test_rag.py         過去記事のベクトル検索
+</code></pre></div>
+
+<p>3ファイルなら、仮に接続処理を各ファイルに直接書いていたとしても、
+3箇所を置換すれば終わりだ。15分の差もつかない。</p>
+<p>だからこの話の価値は「手間が減った」ことではない。</p>
+<h2 id="効いたのは見積もれたこと">効いたのは、見積もれたこと</h2>
+<p>RDSに移すかどうかを決める場面で、私は<strong>コードを読み直さなくてよかった。</strong></p>
+<p>やることが「<code>.env</code> を書き換えて動作確認」だと最初から分かっていたので、
+作業量をその場で見積もれた。見積もれたから着手できた。</p>
+<p>逆の状態を想像してみる。接続文字列がどこに何個あるか分からない。
+まず調べないと作業量が読めない。調べるのに30分かかるかもしれないし、
+2時間かもしれない。今日はそんな時間がない。だから来週にする。
+そして来週も同じことを考える。</p>
+<p>個人開発で止まるのは、たいていここだ。
+<strong>難しくて止まるのではなく、どれくらい大変かが分からなくて止まる。</strong></p>
+<p>集約しておくことの効果は、作業時間ではなく、
+<strong>着手するかどうかの判断に効いていた。</strong></p>
+<h2 id="取り残されたもの">取り残されたもの</h2>
+<p>かっこ悪い話も書いておく。</p>
+<p>移行から3週間経って気づいたのだが、<code>db.py</code> の先頭はまだこうなっている。</p>
+<div class="codehilite"><pre><span></span><code><span class="sd">"""ローカル PostgreSQL への接続ヘルパー。接続情報は .env (DB_*) から読む。"""</span>
+</code></pre></div>
+
+<p>もうローカルではない。AWSのRDSを指している。<code>.env.example</code> も同様で、
+「ローカル PostgreSQL (db/docker-compose.yml で起動したコンテナ newsbot-db)」
+というコメントが残ったままだ。</p>
+<p>コードを変えずに済んだ結果、<strong>変えるべき場所が一つも目に入らなかった。</strong>
+差分が出なければレビューも起きない。</p>
+<p><strong>「変更不要」は「確認不要」ではない。</strong> 当たり前のようだが、
+実際に差分ゼロで移行が通ってしまうと、確認する動機がどこにもなくなる。</p>
+<h2 id="移行できたことをどう確かめたか">移行できたことをどう確かめたか</h2>
+<p>コードが変わっていないので、動作確認は出力の一致で見た。</p>
+<p>このサイトは記事をベクトル化して関連記事を引いている。
+移行前と移行後で、同じ記事に対する検索結果の距離を比べた。</p>
+<div class="codehilite"><pre><span></span><code>ローカル : x86 / pgvector 0.8.6
+RDS      : ARM (Graviton) / pgvector 0.8.1
+</code></pre></div>
+
+<p>CPUのアーキテクチャも拡張のバージョンも違う。
+それでも距離の値は小数4桁まで一致した。</p>
+<p>浮動小数点の計算なので、環境が変われば下位の桁は動くと思っていた。
+動かなかった。ここは正直、確認するまで分からなかった部分だ。</p>
+<h2 id="まとめ">まとめ</h2>
+<ul>
+<li>接続処理を1箇所に集約しておくと、移行の作業量が<strong>事前に見積もれる</strong></li>
+<li>効くのは作業時間ではなく、着手の判断</li>
+<li>ただし効くかどうかは、移行する日まで分からない</li>
+<li>分かっているのは、散らばっていたら着手していなかった、ということだけ</li>
+<li>そして差分が出ない変更は、ドキュメントを取り残す</li>
+</ul>
+    </article>
+  </main>
+  <!-- ARTICLE-AD-HTML-START -->
+  <div class="article-ad">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-1944739806788973"
+         data-ad-slot="8552518214"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+  </div>
+  <!-- ARTICLE-AD-HTML-END -->
+
+  <div class="footer-note">
+    本記事には商品・サービスのアフィリエイトリンクを含む場合があります。
+  </div>
+  <!-- SITE-FOOTER-HTML-START -->
+  <div class="site-footer-links">
+    <a href="../../index.html">トップ</a>
+    <a href="../../privacy.html">プライバシーポリシー</a>
+    <a href="../../about.html">運営者情報</a>
+    <a href="../../contact.html">お問い合わせ</a>
+  </div>
+  <!-- SITE-FOOTER-HTML-END -->
+</body>
+</html>
